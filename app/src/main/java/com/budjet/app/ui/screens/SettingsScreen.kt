@@ -1,0 +1,728 @@
+package com.budjet.app.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Euro
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.SettingsBrightness
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.budjet.app.data.Account
+import com.budjet.app.data.AppData
+import com.budjet.app.data.Category
+import com.budjet.app.data.Currency
+import com.budjet.app.data.ThemeMode
+import com.budjet.app.data.TxType
+import com.budjet.app.ui.components.BudCard
+import com.budjet.app.ui.components.InitialsAvatar
+import com.budjet.app.ui.components.Overline
+import com.budjet.app.ui.components.SectionHeader
+import com.budjet.app.ui.components.SoftIconButton
+import com.budjet.app.ui.components.categoryColor
+import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.iconChoices
+import com.budjet.app.ui.components.parseHex
+import com.budjet.app.ui.theme.BudTheme
+import com.budjet.app.ui.theme.CategoryPalette
+import com.budjet.app.util.formatMoney
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun SettingsScreen(
+    data: AppData,
+    onClose: () -> Unit,
+    onSetName: (String) -> Unit,
+    onSetCurrency: (String) -> Unit,
+    onSetTheme: (ThemeMode) -> Unit,
+    onAddCategory: (name: String, icon: String, colorHex: String, type: TxType) -> Unit,
+    onExport: () -> Unit,
+    onResetDemo: () -> Unit,
+    onClearTransactions: () -> Unit,
+) {
+    val colors = BudTheme.colors
+    var nameDialog by remember { mutableStateOf(false) }
+    var currencyDialog by remember { mutableStateOf(false) }
+    var categoryDialog by remember { mutableStateOf(false) }
+    var confirmReset by remember { mutableStateOf(false) }
+    var confirmClear by remember { mutableStateOf(false) }
+    val currency = Currency.from(data.settings.currencyCode)
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 40.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                SoftIconButton(
+                    icon = Icons.Rounded.ArrowBack,
+                    contentDescription = "Volver",
+                    onClick = onClose,
+                    size = 38.dp,
+                )
+                Overline("AJUSTES")
+                Spacer(Modifier.size(38.dp))
+            }
+            Spacer(Modifier.height(22.dp))
+            Text(
+                text = "Hazlo tuyo.",
+                style = MaterialTheme.typography.headlineLarge,
+                color = colors.ink,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Preferencias y datos de tu Bud Jet.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.inkMuted,
+            )
+            Spacer(Modifier.height(22.dp))
+        }
+
+        item {
+            BudCard(onClick = { nameDialog = true }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    InitialsAvatar(name = data.settings.name, size = 52.dp)
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = data.settings.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = colors.ink,
+                        )
+                        Text(
+                            text = "Perfil local · este dispositivo",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.inkMuted,
+                        )
+                    }
+                    Icon(
+                        Icons.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = colors.inkMuted,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
+            SectionHeader(title = "Apariencia")
+            Spacer(Modifier.height(10.dp))
+            BudCard(padding = 6.dp) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    ThemeOption(
+                        label = "Claro",
+                        icon = Icons.Rounded.LightMode,
+                        selected = data.settings.themeMode == ThemeMode.LIGHT,
+                        onClick = { onSetTheme(ThemeMode.LIGHT) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    ThemeOption(
+                        label = "Oscuro",
+                        icon = Icons.Rounded.DarkMode,
+                        selected = data.settings.themeMode == ThemeMode.DARK,
+                        onClick = { onSetTheme(ThemeMode.DARK) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    ThemeOption(
+                        label = "Sistema",
+                        icon = Icons.Rounded.SettingsBrightness,
+                        selected = data.settings.themeMode == ThemeMode.SYSTEM,
+                        onClick = { onSetTheme(ThemeMode.SYSTEM) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
+            SectionHeader(title = "Preferencias")
+            Spacer(Modifier.height(10.dp))
+            BudCard(padding = 0.dp) {
+                SettingsRow(
+                    icon = Icons.Rounded.Euro,
+                    title = "Moneda",
+                    subtitle = "${currency.symbol} · ${currency.code}",
+                    onClick = { currencyDialog = true },
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.Download,
+                    title = "Exportar movimientos",
+                    subtitle = "Archivo CSV para hoja de cálculo",
+                    onClick = onExport,
+                )
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
+            SectionHeader(title = "Categorías", trailing = null)
+            Spacer(Modifier.height(10.dp))
+            BudCard {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    data.categories.forEach { category ->
+                        CategoryChip(category = category)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .border(1.dp, colors.line, CircleShape)
+                            .clickable { categoryDialog = true }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Rounded.Add,
+                            contentDescription = null,
+                            tint = colors.primary,
+                            modifier = Modifier.size(13.dp),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "Nueva",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colors.primary,
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
+            SectionHeader(title = "Cuentas")
+            Spacer(Modifier.height(10.dp))
+            BudCard(padding = 0.dp) {
+                data.accounts.forEachIndexed { index, account ->
+                    AccountRow(account)
+                    if (index != data.accounts.lastIndex) SettingsDivider()
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
+            SectionHeader(title = "Datos")
+            Spacer(Modifier.height(10.dp))
+            BudCard(padding = 0.dp) {
+                SettingsRow(
+                    icon = Icons.Rounded.Refresh,
+                    title = "Restaurar ejemplo",
+                    subtitle = "Vuelve a los datos de demostración",
+                    onClick = { confirmReset = true },
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.DeleteOutline,
+                    title = "Borrar movimientos",
+                    subtitle = "Mantiene categorías y presupuestos",
+                    destructive = true,
+                    onClick = { confirmClear = true },
+                )
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(30.dp))
+            BudCard(color = colors.primarySoft, border = false) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Row {
+                            Text(
+                                text = "Bud ",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = colors.ink,
+                            )
+                            Text(
+                                text = "Jet",
+                                style = MaterialTheme.typography.headlineSmall.copy(fontStyle = FontStyle.Italic),
+                                color = colors.primary,
+                            )
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Un lugar tranquilo para tu dinero. Versión 0.1.0 · boceto.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.inkMuted,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (nameDialog) {
+        var value by remember { mutableStateOf(data.settings.name) }
+        AlertDialog(
+            onDismissRequest = { nameDialog = false },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(26.dp),
+            title = { Text("¿Cómo te llamas?", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+            text = {
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = { value = it.take(24) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text("Nombre") },
+                    shape = RoundedCornerShape(14.dp),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onSetName(value)
+                        nameDialog = false
+                    },
+                    enabled = value.isNotBlank(),
+                ) { Text("Guardar", color = colors.primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { nameDialog = false }) { Text("Cancelar", color = colors.inkMuted) }
+            },
+        )
+    }
+
+    if (currencyDialog) {
+        AlertDialog(
+            onDismissRequest = { currencyDialog = false },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(26.dp),
+            title = { Text("Moneda", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+            text = {
+                Column {
+                    Currency.entries.forEach { option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    onSetCurrency(option.code)
+                                    currencyDialog = false
+                                }
+                                .padding(vertical = 11.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = option.symbol,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = colors.ink,
+                                modifier = Modifier.width(30.dp),
+                            )
+                            Column(Modifier.weight(1f)) {
+                                Text(option.code, style = MaterialTheme.typography.bodyLarge, color = colors.ink)
+                            }
+                            if (option.code == data.settings.currencyCode) {
+                                Icon(
+                                    Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = colors.primary,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { currencyDialog = false }) { Text("Cerrar", color = colors.primary) }
+            },
+        )
+    }
+
+    if (categoryDialog) {
+        AddCategoryDialog(
+            onDismiss = { categoryDialog = false },
+            onSave = { name, icon, color, type ->
+                onAddCategory(name, icon, color, type)
+                categoryDialog = false
+            },
+        )
+    }
+
+    if (confirmReset) {
+        ConfirmDialog(
+            title = "¿Restaurar el ejemplo?",
+            message = "Se sustituirán todos tus movimientos y presupuestos por los datos de demostración.",
+            confirm = "Restaurar",
+            onDismiss = { confirmReset = false },
+            onConfirm = {
+                onResetDemo()
+                confirmReset = false
+            },
+        )
+    }
+
+    if (confirmClear) {
+        ConfirmDialog(
+            title = "¿Borrar todos los movimientos?",
+            message = "Esta acción no se puede deshacer. Las categorías y los presupuestos se mantendrán.",
+            confirm = "Borrar",
+            onDismiss = { confirmClear = false },
+            onConfirm = {
+                onClearTransactions()
+                confirmClear = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun ThemeOption(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = BudTheme.colors
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) colors.primarySoft else Color.Transparent)
+            .border(1.dp, if (selected) colors.primary.copy(alpha = 0.4f) else Color.Transparent, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (selected) colors.primary else colors.inkMuted,
+            modifier = Modifier.size(19.dp),
+        )
+        Spacer(Modifier.height(5.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) colors.primary else colors.inkMuted,
+        )
+    }
+}
+
+@Composable
+private fun SettingsRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    onClick: (() -> Unit)? = null,
+    destructive: Boolean = false,
+) {
+    val colors = BudTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(if (destructive) colors.expense.copy(alpha = 0.1f) else colors.surfaceMuted),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (destructive) colors.expense else colors.inkMuted,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (destructive) colors.expense else colors.ink,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        if (onClick != null) {
+            Icon(
+                Icons.Rounded.ChevronRight,
+                contentDescription = null,
+                tint = colors.inkMuted.copy(alpha = 0.6f),
+                modifier = Modifier.size(16.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsDivider() {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 60.dp)
+            .height(1.dp)
+            .background(BudTheme.colors.line.copy(alpha = 0.7f)),
+    )
+}
+
+@Composable
+private fun CategoryChip(category: Category) {
+    val colors = BudTheme.colors
+    val color = categoryColor(category.colorHex, colors.isDark)
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(color.copy(alpha = 0.1f))
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(6.dp).background(color, CircleShape))
+        Spacer(Modifier.width(5.dp))
+        Text(
+            text = category.name,
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.ink,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun AccountRow(account: Account) {
+    val colors = BudTheme.colors
+    val color = categoryColor(account.colorHex, colors.isDark)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(color.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = categoryIcon(account.icon),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(17.dp),
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = account.name,
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.ink,
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AddCategoryDialog(
+    onDismiss: () -> Unit,
+    onSave: (String, String, String, TxType) -> Unit,
+) {
+    val colors = BudTheme.colors
+    var name by remember { mutableStateOf("") }
+    var type by remember { mutableStateOf(TxType.EXPENSE) }
+    var icon by remember { mutableStateOf("groceries") }
+    var color by remember { mutableStateOf(CategoryPalette.swatches.first()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        shape = RoundedCornerShape(26.dp),
+        title = {
+            Column {
+                Overline("NUEVA CATEGORÍA")
+                Spacer(Modifier.height(4.dp))
+                Text("Ponle nombre", style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+            }
+        },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it.take(22) },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Nombre") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                )
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TypeChoice("Gasto", type == TxType.EXPENSE) { type = TxType.EXPENSE }
+                    TypeChoice("Ingreso", type == TxType.INCOME) { type = TxType.INCOME }
+                }
+                Spacer(Modifier.height(14.dp))
+                Text("Icono", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Spacer(Modifier.height(6.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    iconChoices.forEach { (key, _) ->
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(if (icon == key) colors.primarySoft else colors.surfaceMuted)
+                                .border(
+                                    1.dp,
+                                    if (icon == key) colors.primary else Color.Transparent,
+                                    CircleShape,
+                                )
+                                .clickable { icon = key },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = categoryIcon(key),
+                                contentDescription = null,
+                                tint = if (icon == key) colors.primary else colors.inkMuted,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+                Text("Color", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Spacer(Modifier.height(6.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    CategoryPalette.swatches.take(10).forEach { hex ->
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(parseHex(hex))
+                                .border(
+                                    width = if (color == hex) 2.dp else 0.dp,
+                                    color = colors.ink,
+                                    shape = CircleShape,
+                                )
+                                .clickable { color = hex },
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(name, icon, color, type) },
+                enabled = name.isNotBlank(),
+            ) { Text("Crear", color = if (name.isNotBlank()) colors.primary else colors.inkMuted) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+        },
+    )
+}
+
+@Composable
+private fun TypeChoice(label: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = BudTheme.colors
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (selected) colors.primarySoft else Color.Transparent)
+            .border(1.dp, if (selected) colors.primary else colors.line, CircleShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 7.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) colors.primary else colors.inkMuted,
+        )
+    }
+}
+
+@Composable
+private fun ConfirmDialog(
+    title: String,
+    message: String,
+    confirm: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val colors = BudTheme.colors
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        shape = RoundedCornerShape(26.dp),
+        title = { Text(title, style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+        text = { Text(message, style = MaterialTheme.typography.bodyMedium, color = colors.inkMuted) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(confirm, color = colors.expense) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+        },
+    )
+}
