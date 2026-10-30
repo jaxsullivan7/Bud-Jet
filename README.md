@@ -100,4 +100,9 @@ app/src/main/java/com/budjet/app/
 - [ ] Copia de seguridad / importación CSV
 - [ ] Widget y notificaciones
 
-El backlog priorizado está en [`docs/BACKLOG.md`](docs/BACKLOG.md). También hay un CSV listo para importar en Jira: [`docs/jira-import.csv`](docs/jira-import.csv).
+El backlog priorizado está en [`docs/BACKLOG.md`](docs/BACKLOG.md) y **ya está creado en Jira**:
+
+- Proyecto: [BUD · Bud Jet](https://jaxsullivan7.atlassian.net/jira/software/projects/BUD/summary)
+- 5 épicas (BUD-1, BUD-3, BUD-4, BUD-5, BUD-6) y 24 historias/tareas (BUD-2, BUD-7…BUD-29).
+- Mapa de claves: [`docs/jira-created.md`](docs/jira-created.md).
+- Snapshot importable: [`docs/jira-import.csv`](docs/jira-import.csv).

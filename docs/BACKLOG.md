@@ -1,75 +1,86 @@
 # Backlog · Bud Jet
 
-Propuesta de backlog para el proyecto **BUD** de Jira. Las historias están escritas para poder copiarse tal cual.
+Proyecto de Jira: **[BUD · Bud Jet](https://jaxsullivan7.atlassian.net/jira/software/projects/BUD/summary)**  
+Creado el 30 de octubre de 2026: **5 épicas + 24 historias/tareas**.
 
-## Hecho en v0.2
+El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, así que la prioridad propuesta queda indicada al principio de la descripción de cada issue.
 
-| Historia | Entrega |
-|---|---|
-| BUD-10 | **Movimientos recurrentes** mensuales con día del mes, pausa, edición, borrado y registro automático al abrir la app. |
-| BUD-20 | **Objetivos de ahorro** con meta, fecha límite, aportaciones/retiradas, progreso y sugerencia mensual. |
-| BUD-30 | **Detalle de categoría** desde el donut o la leyenda: evolución 6 meses, métricas y movimientos editables. |
-| BUD-41 | **Bloqueo biométrico** con huella/PIN al abrir y tras 30 s en segundo plano. |
+## Hecho
 
-## Épica 1 · Fundamentos (v0.1 — hecho)
+### v0.2
 
-| Historia | Descripción | Prioridad |
+- **Movimientos recurrentes** mensuales: día del mes, pausa, edición, borrado y registro automático al abrir la app.
+- **Objetivos de ahorro** con meta, fecha límite, aportaciones/retiradas, progreso y sugerencia mensual.
+- **Detalle de categoría** desde el donut o la leyenda: evolución, métricas y movimientos editables.
+- **Bloqueo biométrico** con huella/PIN al abrir y tras 30 segundos en segundo plano.
+- Cargo de ejemplo de “Gimnasio” generado automáticamente para demostrar las recurrencias.
+
+### v0.1
+
+- Saldo total, evolución de 6 meses y resumen mensual.
+- Alta, edición y borrado de movimientos con deshacer.
+- Presupuesto general y por categorías.
+- Análisis por categorías, comparativa y estadísticas.
+- Tema claro/oscuro/sistema, monedas, categorías, cuentas y exportación CSV.
+
+## Épica BUD-1 · Control del día a día
+
+> Mejoras para el uso diario de Bud Jet: presupuestos, recurrencias, búsqueda y captura rápida.
+
+| Clave | Historia | Prioridad propuesta |
 |---|---|---|
-| BUD-1 | Como usuario quiero ver mi saldo total y la evolución reciente al abrir la app. | Must |
-| BUD-2 | Como usuario quiero apuntar un gasto o ingreso en pocos toques con teclado numérico. | Must |
-| BUD-3 | Como usuario quiero editar y eliminar movimientos y poder deshacer el borrado. | Must |
-| BUD-4 | Como usuario quiero definir un presupuesto mensual general y por categorías. | Must |
-| BUD-5 | Como usuario quiero ver en qué categorías se va mi dinero cada mes. | Must |
-| BUD-6 | Como usuario quiero cambiar entre tema claro, oscuro o el del sistema. | Should |
-| BUD-7 | Como usuario quiero exportar mis movimientos a CSV. | Should |
-| BUD-8 | Como usuario quiero elegir mi moneda (EUR, USD, GBP, MXN). | Should |
+| BUD-2 | Aviso al acercarse al límite de presupuesto (80 % y 100 %, sin repetir más de una vez al día). | Alta |
+| BUD-7 | Plantillas de movimientos frecuentes para registrarlos en un toque. | Media |
+| BUD-8 | Búsqueda avanzada por texto, fechas, importe, cuenta y categoría. | Media |
+| BUD-9 | Adjuntar ticket (foto o PDF) a un movimiento. | Baja |
+| BUD-10 | Recurrencias semanales y anuales además de las mensuales. | Media |
 
-## Épica 2 · Control del día a día
+## Épica BUD-3 · Ahorro y objetivos
 
-| Historia | Criterios de aceptación | Prioridad |
+> Todo lo relacionado con apartar dinero, objetivos y transferencias entre cuentas.
+
+| Clave | Historia | Prioridad propuesta |
 |---|---|---|
-| BUD-11 | **Aviso de presupuesto**: notificación local al superar el 80 % y el 100 % de un presupuesto. | Must |
-| BUD-12 | **Plantillas rápidas**: guardar movimientos frecuentes para apuntarlos en un toque. | Should |
-| BUD-13 | **Búsqueda avanzada**: filtrar por rango de fechas, importe, cuenta y categoría. | Should |
-| BUD-14 | **Adjuntar ticket**: asociar una foto o PDF a un movimiento. | Could |
-| BUD-15 | **Recurrencias semanales/anuales** además de las mensuales. | Should |
+| BUD-11 | Transferencias entre cuentas sin contabilizarlas como gasto o ingreso. | Alta |
+| BUD-14 | Aportaciones automáticas mensuales a objetivos. | Media |
+| BUD-15 | Objetivo vinculado a una cuenta de ahorro real. | Media |
 
-## Épica 3 · Ahorro y objetivos
+## Épica BUD-4 · Análisis
 
-| Historia | Criterios de aceptación | Prioridad |
+> Comparativas, suscripciones, insights y detalle cada vez más fino del gasto.
+
+| Clave | Historia | Prioridad propuesta |
 |---|---|---|
-| BUD-21 | **Transferencias entre cuentas**: mover dinero sin contar como gasto o ingreso. | Must |
-| BUD-22 | **Patrimonio**: evolución del saldo total y de cada cuenta en el tiempo. | Should |
-| BUD-23 | **Regla 50/30/20**: comparar gastos fijos, variables y ahorro con la recomendación. | Could |
-| BUD-24 | **Aportaciones automáticas a objetivos** cada mes. | Should |
-| BUD-25 | **Objetivo vinculado a una cuenta**: apartar dinero real de la cuenta de ahorro. | Should |
+| BUD-12 | Evolución del patrimonio total y por cuenta. | Media |
+| BUD-13 | Comparación con la regla 50/30/20. | Baja |
+| BUD-16 | Comparativa con el mismo mes del año anterior. | Media |
+| BUD-17 | Detección de suscripciones repetidas y su coste anual. | Media |
+| BUD-18 | Insights de hábitos de gasto basados en reglas. | Baja |
+| BUD-19 | Drill-down de categoría a comercio o nota frecuente. | Baja |
 
-## Épica 4 · Análisis
+## Épica BUD-5 · Producto y confianza
 
-| Historia | Criterios de aceptación | Prioridad |
+> Copia de seguridad, onboarding, widget y funciones de producto.
+
+| Clave | Historia | Prioridad propuesta |
 |---|---|---|
-| BUD-31 | **Comparativa interanual**: mismo mes del año anterior y estacionalidad. | Should |
-| BUD-32 | **Suscripciones**: detectar cargos repetidos y avisar de su coste anual. | Should |
-| BUD-33 | **Insights**: recomendaciones basadas en hábitos (sin IA generativa al principio). | Could |
-| BUD-34 | **Drill-down de dos niveles**: categoría → comercio/nota frecuente. | Could |
+| BUD-20 | Copia de seguridad: exportar e importar JSON validando versión. | Alta |
+| BUD-21 | Widget con saldo del mes y acceso rápido a añadir gasto. | Media |
+| BUD-22 | Onboarding de nombre, moneda y primer presupuesto. | Media |
+| BUD-23 | Modo familia con perfiles locales. | Baja |
 
-## Épica 5 · Producto y confianza
+## Épica BUD-6 · Deuda técnica
 
-| Historia | Criterios de aceptación | Prioridad |
+> Calidad interna, pruebas, rendimiento y mantenimiento.
+
+| Clave | Historia | Prioridad propuesta |
 |---|---|---|
-| BUD-40 | **Copia de seguridad**: exportar e importar un JSON cifrado. | Must |
-| BUD-42 | **Widget**: saldo del mes y acceso rápido a añadir gasto. | Should |
-| BUD-43 | **Onboarding**: 3 pantallas para nombre, moneda y primer presupuesto. | Should |
-| BUD-44 | **Modo familia**: varios perfiles locales (sin nube en v1). | Could |
-
-## Deuda técnica
-
-- Migrar la persistencia JSON a Room cuando el volumen de movimientos crezca.
-- Añadir pruebas de UI de flujos completos (crear, editar, borrar, deshacer, aportar a objetivo).
-- Internacionalización ES/EN y formatos regionales.
-- Baseline profile para arranque en frío.
-- Reducir el tamaño del APK sustituyendo `material-icons-extended` por iconos propios.
-- Probar el desbloqueo biométrico en dispositivos con huella y con PIN como alternativa.
+| BUD-24 | Migrar la persistencia JSON a Room con migración de datos. | Media |
+| BUD-25 | Pruebas de UI de flujos completos (movimientos, objetivos y recurrencias). | Media |
+| BUD-26 | Probar biometría en dispositivos reales (huella y PIN, Android 8/12/16+). | Alta |
+| BUD-27 | Internacionalización ES/EN y formatos regionales. | Baja |
+| BUD-28 | Reducir el tamaño del APK sustituyendo `material-icons-extended`. | Baja |
+| BUD-29 | Baseline profile para arranque en frío. | Baja |
 
 ## Criterios de diseño
 
