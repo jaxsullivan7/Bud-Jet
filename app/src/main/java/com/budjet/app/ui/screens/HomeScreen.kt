@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,6 +37,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -43,8 +45,10 @@ import androidx.compose.ui.unit.sp
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
+import com.budjet.app.data.SavingsGoal
 import com.budjet.app.data.Transaction
 import com.budjet.app.data.TxType
+import com.budjet.app.ui.components.BrandWordmark
 import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.CashflowChart
 import com.budjet.app.ui.components.CategoryBadge
@@ -59,6 +63,8 @@ import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.components.Sparkline
 import com.budjet.app.ui.components.ThinDivider
 import com.budjet.app.ui.components.TransactionRow
+import com.budjet.app.ui.components.categoryColor
+import com.budjet.app.ui.components.categoryIcon
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.capitalizeEs
 import com.budjet.app.util.formatMoney
@@ -77,6 +83,7 @@ fun HomeScreen(
     onSeeTransactions: () -> Unit,
     onSeeBudgets: () -> Unit,
     onSeeAnalysis: () -> Unit,
+    onSeeGoals: () -> Unit,
     onOpenTransaction: (Transaction) -> Unit,
 ) {
     val colors = BudTheme.colors
@@ -116,7 +123,9 @@ fun HomeScreen(
     val dailyAllowance = budget?.let { Finance.dailyAllowance(it.limitCents - budgetSpent, today, month) } ?: 0L
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("home-list"),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 150.dp),
     ) {
         item {
@@ -126,40 +135,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clip(RoundedCornerShape(9.dp))
-                            .background(colors.primary),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Canvas(Modifier.size(15.dp)) {
-                            val barWidth = size.width / 6
-                            val heights = listOf(0.45f, 0.72f, 1f)
-                            heights.forEachIndexed { index, h ->
-                                drawRoundRect(
-                                    color = Color(0xFFF4F1EA),
-                                    topLeft = Offset(index * (barWidth * 2), size.height * (1 - h)),
-                                    size = androidx.compose.ui.geometry.Size(barWidth, size.height * h),
-                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(barWidth / 2),
-                                )
-                            }
-                        }
-                    }
-                    Spacer(Modifier.width(9.dp))
-                    Text(
-                        text = "Bud ",
-                        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 21.sp),
-                        color = colors.ink,
-                    )
-                    Text(
-                        text = "Jet",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontSize = 21.sp,
-                            fontStyle = FontStyle.Italic,
-                        ),
-                        color = colors.primary,
-                    )
+                    BrandWordmark(fontSize = 21.sp, markSize = 30.dp)
                 }
                 SoftIconButton(
                     icon = Icons.Rounded.Settings,
@@ -354,6 +330,53 @@ fun HomeScreen(
         item {
             Spacer(Modifier.height(26.dp))
             SectionHeader(
+                title = "Objetivos",
+                trailing = if (data.savingsGoals.isNotEmpty()) "Ver todos" else null,
+                onTrailingClick = onSeeGoals,
+            )
+            Spacer(Modifier.height(12.dp))
+            if (data.savingsGoals.isEmpty()) {
+                BudCard(onClick = onSeeGoals) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Ponle nombre a tu próximo ahorro",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colors.ink,
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Icon(
+                            Icons.Rounded.ArrowOutward,
+                            contentDescription = null,
+                            tint = colors.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "Crea un objetivo y ve apartando poco a poco.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.inkMuted,
+                    )
+                }
+            } else {
+                androidx.compose.foundation.lazy.LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(end = 20.dp),
+                ) {
+                    items(data.savingsGoals.take(4), key = { it.id }) { goal ->
+                        HomeGoalCard(
+                            goal = goal,
+                            currency = currency,
+                            onClick = onSeeGoals,
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
+            SectionHeader(
                 title = "Últimos movimientos",
                 trailing = "Ver todos",
                 onTrailingClick = onSeeTransactions,
@@ -395,8 +418,75 @@ fun HomeScreen(
 }
 
 @Composable
-private fun BalanceHero(
-    balance: Long,
+private fun HomeGoalCard(
+    goal: SavingsGoal,
+    currency: Currency,
+    onClick: () -> Unit,
+) {
+    val colors = BudTheme.colors
+    val color = categoryColor(goal.colorHex, colors.isDark)
+    val progress = Finance.goalProgress(goal)
+    val remaining = Finance.goalRemaining(goal)
+    BudCard(
+        modifier = Modifier
+            .width(224.dp)
+            .height(158.dp),
+        padding = 16.dp,
+        onClick = onClick,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = if (colors.isDark) 0.2f else 0.13f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = categoryIcon(goal.icon),
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Spacer(Modifier.width(9.dp))
+            Text(
+                text = goal.name,
+                style = MaterialTheme.typography.titleSmall,
+                color = colors.ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = formatMoney(goal.savedCents, currency, decimals = false),
+            style = BudTheme.type.moneyMedium,
+            color = colors.ink,
+            maxLines = 1,
+        )
+        Text(
+            text = "de ${formatMoney(goal.targetCents, currency, decimals = false)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.inkMuted,
+            maxLines = 1,
+        )
+        Spacer(Modifier.weight(1f))
+        LinearProgressBar(progress = progress, color = color, height = 5.dp)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = if (remaining == 0L) "Conseguido" else "${percentText(progress)} · faltan ${formatMoney(remaining, currency, decimals = false)}",
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+            color = colors.inkMuted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun BalanceHero(    balance: Long,
     change: Float?,
     series: List<Float>,
     currency: Currency,

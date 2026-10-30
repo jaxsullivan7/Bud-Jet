@@ -11,6 +11,9 @@ import com.budjet.app.data.BudRepository
 import com.budjet.app.data.Budget
 import com.budjet.app.data.Category
 import com.budjet.app.data.DemoData
+import com.budjet.app.data.Recurring
+import com.budjet.app.data.RecurringRule
+import com.budjet.app.data.SavingsGoal
 import com.budjet.app.data.Settings
 import com.budjet.app.data.ThemeMode
 import com.budjet.app.data.Transaction
@@ -37,7 +40,34 @@ data class EditorDraft(
     val note: String = "",
 )
 
+data class RecurringDraft(
+    val id: String? = null,
+    val amountCents: Long = 0,
+    val type: TxType = TxType.EXPENSE,
+    val categoryId: String = "home",
+    val accountId: String = "main",
+    val dayOfMonth: Int = 1,
+    val note: String = "",
+    val active: Boolean = true,
+)
+
+data class GoalDraft(
+    val id: String? = null,
+    val name: String = "",
+    val targetCents: Long = 0,
+    val deadline: LocalDate? = null,
+    val icon: String = "savings",
+    val colorHex: String = "#2F6B54",
+)
+
 class AppViewModel(private val repository: BudRepository) : ViewModel() {
+
+    /** True once the user has unlocked the current app session. Not persisted. */
+    var sessionUnlocked: Boolean = false
+
+    init {
+        processRecurring()
+    }
 
     val data: StateFlow<AppData> = repository.data.stateIn(
         scope = viewModelScope,
@@ -63,6 +93,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
         if (cents <= 0L) return
         viewModelScope.launch {
             repository.update { current ->
+                val previous = current.transactions.firstOrNull { it.id == draft.id }
                 val transaction = Transaction(
                     id = draft.id ?: UUID.randomUUID().toString(),
                     amountCents = cents,
@@ -71,6 +102,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     accountId = draft.accountId,
                     dateEpochDay = draft.date.toEpochDay(),
                     note = draft.note.trim(),
+                    recurringId = previous?.recurringId,
                 )
                 val list = if (draft.id == null) {
                     current.transactions + transaction
@@ -99,6 +131,140 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
         }
     }
 
+    // ---------------------------------------------------------------- recurrentes
+
+    fun saveRecurring(draft: RecurringDraft) {
+        if (draft.amountCents <= 0L) return
+        viewModelScope.launch {
+            repository.update { current ->
+                val existing = current.recurring(draft.id)
+                val rule = RecurringRule(
+                    id = existing?.id ?: "r_" + UUID.randomUUID().toString().take(8),
+                    amountCents = draft.amountCents,
+                    type = draft.type,
+                    categoryId = draft.categoryId,
+                    accountId = draft.accountId,
+                    dayOfMonth = draft.dayOfMonth.coerceIn(1, 31),
+                    note = draft.note.trim(),
+                    startEpochDay = existing?.startEpochDay ?: LocalDate.now().toEpochDay(),
+                    lastPostedMonth = existing?.lastPostedMonth,
+                    active = draft.active,
+                )
+                val list = if (existing == null) {
+                    current.recurringRules + rule
+                } else {
+                    current.recurringRules.map { if (it.id == existing.id) rule else it }
+                }
+                current.copy(recurringRules = list)
+            }
+            processRecurring()
+        }
+    }
+
+    fun deleteRecurring(id: String) {
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(recurringRules = current.recurringRules.filterNot { it.id == id })
+            }
+        }
+    }
+
+    fun setRecurringActive(id: String, active: Boolean) {
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(
+                    recurringRules = current.recurringRules.map {
+                        if (it.id == id) it.copy(active = active) else it
+                    },
+                )
+            }
+            if (active) processRecurring()
+        }
+    }
+
+    /** Posts any rule that is due today. Safe to call repeatedly. */
+    fun processRecurring() {
+        viewModelScope.launch {
+            val today = LocalDate.now()
+            repository.update { current ->
+                val generated = mutableListOf<Transaction>()
+                val updatedRules = current.recurringRules.map { rule ->
+                    val due = Recurring.dueToday(rule, today) ?: return@map rule
+                    val key = YearMonth.from(due)
+                    val txId = "rec-${rule.id}-$key"
+                    if (current.transactions.none { it.id == txId }) {
+                        generated += Transaction(
+                            id = txId,
+                            amountCents = rule.amountCents,
+                            type = rule.type,
+                            categoryId = rule.categoryId,
+                            accountId = rule.accountId,
+                            dateEpochDay = due.toEpochDay(),
+                            note = rule.note.ifBlank {
+                                current.category(rule.categoryId)?.name ?: "Movimiento recurrente"
+                            },
+                            recurringId = rule.id,
+                        )
+                    }
+                    rule.copy(lastPostedMonth = key.toString())
+                }
+                if (generated.isEmpty()) current
+                else current.copy(
+                    recurringRules = updatedRules,
+                    transactions = (current.transactions + generated).sortedByDescending { it.dateEpochDay },
+                )
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------- objetivos
+
+    fun saveGoal(draft: GoalDraft) {
+        if (draft.targetCents <= 0L || draft.name.isBlank()) return
+        viewModelScope.launch {
+            repository.update { current ->
+                val existing = current.goal(draft.id)
+                val goal = SavingsGoal(
+                    id = existing?.id ?: "g_" + UUID.randomUUID().toString().take(8),
+                    name = draft.name.trim(),
+                    targetCents = draft.targetCents,
+                    savedCents = existing?.savedCents ?: 0L,
+                    deadlineEpochDay = draft.deadline?.toEpochDay(),
+                    icon = draft.icon,
+                    colorHex = draft.colorHex,
+                )
+                val list = if (existing == null) {
+                    current.savingsGoals + goal
+                } else {
+                    current.savingsGoals.map { if (it.id == existing.id) goal else it }
+                }
+                current.copy(savingsGoals = list)
+            }
+        }
+    }
+
+    fun deleteGoal(id: String) {
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(savingsGoals = current.savingsGoals.filterNot { it.id == id })
+            }
+        }
+    }
+
+    /** Positive delta adds money, negative withdraws it (never below zero). */
+    fun adjustGoal(id: String, deltaCents: Long) {
+        if (deltaCents == 0L) return
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(
+                    savingsGoals = current.savingsGoals.map {
+                        if (it.id == id) it.copy(savedCents = (it.savedCents + deltaCents).coerceAtLeast(0L)) else it
+                    },
+                )
+            }
+        }
+    }
+
     fun setBudget(categoryId: String?, limitCents: Long) {
         viewModelScope.launch {
             repository.update { current ->
@@ -122,6 +288,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
     fun setName(name: String) = updateSettings { it.copy(name = name.ifBlank { "Tú" }) }
     fun setCurrency(code: String) = updateSettings { it.copy(currencyCode = code) }
     fun setTheme(mode: ThemeMode) = updateSettings { it.copy(themeMode = mode) }
+    fun setBiometricLock(enabled: Boolean) = updateSettings { it.copy(biometricLock = enabled) }
 
     fun addCategory(name: String, icon: String, colorHex: String, type: TxType) {
         val clean = name.trim()
@@ -160,6 +327,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
         viewModelScope.launch {
             repository.replaceAll(DemoData.build())
             _month.value = YearMonth.now()
+            processRecurring()
         }
     }
 

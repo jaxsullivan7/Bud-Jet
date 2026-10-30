@@ -6,7 +6,9 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
@@ -35,8 +37,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.budjet.app.data.AppData
+import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Transaction
 import com.budjet.app.data.TxType
@@ -44,11 +48,16 @@ import com.budjet.app.ui.components.AppTab
 import com.budjet.app.ui.components.BudBottomBar
 import com.budjet.app.ui.screens.AnalysisScreen
 import com.budjet.app.ui.screens.BudgetsScreen
+import com.budjet.app.ui.screens.CategoryDetailScreen
+import com.budjet.app.ui.screens.GoalsScreen
 import com.budjet.app.ui.screens.HomeScreen
+import com.budjet.app.ui.screens.LockScreen
+import com.budjet.app.ui.screens.RecurringScreen
 import com.budjet.app.ui.screens.SettingsScreen
 import com.budjet.app.ui.screens.TransactionEditorScreen
 import com.budjet.app.ui.screens.TransactionsScreen
 import com.budjet.app.ui.theme.BudTheme
+import com.budjet.app.util.BiometricAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -63,17 +72,91 @@ fun BudJetApp(
     val month by viewModel.month.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(AppTab.HOME) }
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
+    var goalsOpen by rememberSaveable { mutableStateOf(false) }
+    var recurringOpen by rememberSaveable { mutableStateOf(false) }
     var editorDraft by remember { mutableStateOf<EditorDraft?>(null) }
     var editorVisible by remember { mutableStateOf(false) }
+    var categoryDetail by remember { mutableStateOf<Category?>(null) }
+    var categoryVisible by remember { mutableStateOf(false) }
+    var locked by remember {
+        mutableStateOf(data.settings.biometricLock && !viewModel.sessionUnlocked)
+    }
+    var lockError by remember { mutableStateOf<String?>(null) }
+    var authenticating by remember { mutableStateOf(false) }
+    var backgroundedAt by remember { mutableStateOf(android.os.SystemClock.elapsedRealtime()) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val activity = context as? FragmentActivity
 
     LaunchedEffect(editorVisible) {
         if (!editorVisible) {
             delay(340)
             editorDraft = null
         }
+    }
+    LaunchedEffect(categoryVisible) {
+        if (!categoryVisible) {
+            delay(340)
+            categoryDetail = null
+        }
+    }
+
+    fun requestUnlock() {
+        val host = activity ?: return
+        lockError = null
+        authenticating = true
+        BiometricAuth.request(
+            activity = host,
+            title = "Desbloquear Bud Jet",
+            subtitle = "Confirma tu identidad para ver tus cuentas",
+            onSuccess = {
+                authenticating = false
+                locked = false
+                viewModel.sessionUnlocked = true
+                backgroundedAt = android.os.SystemClock.elapsedRealtime()
+            },
+            onError = { message ->
+                authenticating = false
+                lockError = message
+            },
+        )
+    }
+
+    LaunchedEffect(locked) {
+        if (locked) requestUnlock()
+    }
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lockEnabledNow by androidx.compose.runtime.rememberUpdatedState(data.settings.biometricLock)
+    val authenticatingNow by androidx.compose.runtime.rememberUpdatedState(authenticating)
+
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_STOP -> {
+                    if (lockEnabledNow && !authenticatingNow) {
+                        backgroundedAt = android.os.SystemClock.elapsedRealtime()
+                    }
+                }
+                androidx.lifecycle.Lifecycle.Event.ON_START -> {
+                    val awayFor = android.os.SystemClock.elapsedRealtime() - backgroundedAt
+                    if (lockEnabledNow && awayFor in 30_000..Long.MAX_VALUE && !authenticatingNow) {
+                        locked = true
+                        viewModel.sessionUnlocked = false
+                    }
+                    backgroundedAt = android.os.SystemClock.elapsedRealtime()
+                }
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    fun openCategory(category: Category) {
+        categoryDetail = category
+        categoryVisible = true
     }
 
     fun openEditor(draft: EditorDraft) {
@@ -122,10 +205,20 @@ fun BudJetApp(
         }
     }
 
-    BackHandler(enabled = editorVisible || settingsOpen) {
-        if (editorVisible) editorVisible = false else settingsOpen = false
+    BackHandler(enabled = locked) { }
+    BackHandler(enabled = editorVisible || goalsOpen || recurringOpen || categoryVisible || settingsOpen) {
+        when {
+            editorVisible -> editorVisible = false
+            categoryVisible -> categoryVisible = false
+            goalsOpen -> goalsOpen = false
+            recurringOpen -> recurringOpen = false
+            settingsOpen -> settingsOpen = false
+        }
     }
-    BackHandler(enabled = !editorVisible && !settingsOpen && tab != AppTab.HOME) {
+    BackHandler(
+        enabled = !locked && !editorVisible && !goalsOpen && !recurringOpen &&
+            !categoryVisible && !settingsOpen && tab != AppTab.HOME,
+    ) {
         tab = AppTab.HOME
     }
 
@@ -150,6 +243,7 @@ fun BudJetApp(
                         onSeeTransactions = { tab = AppTab.TRANSACTIONS },
                         onSeeBudgets = { tab = AppTab.BUDGETS },
                         onSeeAnalysis = { tab = AppTab.ANALYSIS },
+                        onSeeGoals = { goalsOpen = true },
                         onOpenTransaction = { openEditor(draftFor(it)) },
                     )
 
@@ -174,6 +268,7 @@ fun BudJetApp(
                         month = month,
                         onPreviousMonth = viewModel::previousMonth,
                         onNextMonth = viewModel::nextMonth,
+                        onOpenCategory = { openCategory(it) },
                     )
                 }
             }
@@ -202,21 +297,6 @@ fun BudJetApp(
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
-        SnackbarHost(
-            hostState = snackbar,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 20.dp, vertical = 100.dp),
-        ) { data ->
-            Snackbar(
-                snackbarData = data,
-                containerColor = colors.ink,
-                contentColor = colors.background,
-                actionColor = colors.primary,
-                shape = MaterialTheme.shapes.medium,
-            )
-        }
-
         AnimatedVisibility(
             visible = settingsOpen,
             enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
@@ -235,6 +315,36 @@ fun BudJetApp(
                     onSetCurrency = viewModel::setCurrency,
                     onSetTheme = viewModel::setTheme,
                     onAddCategory = viewModel::addCategory,
+                    onOpenGoals = { goalsOpen = true },
+                    onOpenRecurring = { recurringOpen = true },
+                    onSetBiometric = { enabled ->
+                        if (!enabled) {
+                            viewModel.setBiometricLock(false)
+                        } else {
+                            val host = activity
+                            when {
+                                host == null -> scope.launch {
+                                    snackbar.showSnackbar("No se pudo abrir la autenticación")
+                                }
+                                !BiometricAuth.canAuthenticate(host) -> scope.launch {
+                                    snackbar.showSnackbar(BiometricAuth.unavailableReason(host))
+                                }
+                                else -> BiometricAuth.request(
+                                    activity = host,
+                                    title = "Activar bloqueo",
+                                    subtitle = "Confirma tu huella o el PIN del dispositivo",
+                                    onSuccess = {
+                                        viewModel.setBiometricLock(true)
+                                        backgroundedAt = android.os.SystemClock.elapsedRealtime()
+                                        scope.launch { snackbar.showSnackbar("Bloqueo biométrico activado") }
+                                    },
+                                    onError = { message ->
+                                        scope.launch { snackbar.showSnackbar(message) }
+                                    },
+                                )
+                            }
+                        }
+                    },
                     onExport = {
                         val intent = viewModel.buildExport(context, data)
                         if (intent != null) {
@@ -252,6 +362,79 @@ fun BudJetApp(
                         viewModel.clearEverything()
                         scope.launch { snackbar.showSnackbar("Movimientos borrados") }
                     },
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = categoryVisible,
+            enter = slideInHorizontally(tween(320)) { it } + fadeIn(tween(220)),
+            exit = slideOutHorizontally(tween(280)) { it } + fadeOut(tween(160)),
+        ) {
+            val category = categoryDetail
+            if (category != null) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(colors.background)
+                        .statusBarsPadding(),
+                ) {
+                    CategoryDetailScreen(
+                        data = data,
+                        category = category,
+                        month = month,
+                        onClose = { categoryVisible = false },
+                        onOpenTransaction = { openEditor(draftFor(it)) },
+                    )
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = goalsOpen,
+            enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
+            exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(colors.background)
+                    .statusBarsPadding(),
+            ) {
+                GoalsScreen(
+                    data = data,
+                    onClose = { goalsOpen = false },
+                    onSaveGoal = viewModel::saveGoal,
+                    onDeleteGoal = viewModel::deleteGoal,
+                    onAdjustGoal = { id, delta ->
+                        viewModel.adjustGoal(id, delta)
+                        scope.launch {
+                            snackbar.showSnackbar(
+                                if (delta > 0) "Aportación añadida" else "Retirada realizada",
+                            )
+                        }
+                    },
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = recurringOpen,
+            enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
+            exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(colors.background)
+                    .statusBarsPadding(),
+            ) {
+                RecurringScreen(
+                    data = data,
+                    onClose = { recurringOpen = false },
+                    onSave = viewModel::saveRecurring,
+                    onDelete = viewModel::deleteRecurring,
+                    onToggle = viewModel::setRecurringActive,
                 )
             }
         }
@@ -282,6 +465,34 @@ fun BudJetApp(
                     )
                 }
             }
+        }
+
+        SnackbarHost(
+            hostState = snackbar,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 20.dp, vertical = 100.dp),
+        ) { data ->
+            Snackbar(
+                snackbarData = data,
+                containerColor = colors.ink,
+                contentColor = colors.background,
+                actionColor = colors.primary,
+                shape = MaterialTheme.shapes.medium,
+            )
+        }
+
+        AnimatedVisibility(
+            visible = locked,
+            enter = fadeIn(tween(250)),
+            exit = fadeOut(tween(220)),
+        ) {
+            LockScreen(
+                name = data.settings.name,
+                error = lockError,
+                authenticating = authenticating,
+                onUnlock = { requestUnlock() },
+            )
         }
     }
 }

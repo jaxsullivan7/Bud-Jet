@@ -1,6 +1,8 @@
 package com.budjet.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.PieChartOutline
 import androidx.compose.material3.Icon
@@ -28,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +68,7 @@ fun AnalysisScreen(
     month: YearMonth,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
+    onOpenCategory: (com.budjet.app.data.Category) -> Unit,
 ) {
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
@@ -148,23 +153,54 @@ fun AnalysisScreen(
                     )
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        DonutChart(
-                            segments = donutSegments,
-                            modifier = Modifier.size(132.dp),
-                            strokeWidth = 16.dp,
+                        Box(
+                            modifier = Modifier
+                                .size(132.dp)
+                                .pointerInput(shown) {
+                                    detectTapGestures { offset ->
+                                        val cx = size.width / 2f
+                                        val cy = size.height / 2f
+                                        val dx = offset.x - cx
+                                        val dy = offset.y - cy
+                                        val distance = kotlin.math.hypot(dx, dy)
+                                        val outer = size.width / 2f
+                                        val inner = outer - 22.dp.toPx()
+                                        if (distance in inner..outer) {
+                                            var angle = Math.toDegrees(
+                                                kotlin.math.atan2(dy.toDouble(), dx.toDouble()),
+                                            ).toFloat() + 90f
+                                            if (angle < 0f) angle += 360f
+                                            var accumulated = 0f
+                                            for (segment in shown) {
+                                                val sweep = segment.share * 360f
+                                                if (angle <= accumulated + sweep) {
+                                                    data.category(segment.category.id)?.let(onOpenCategory)
+                                                    break
+                                                }
+                                                accumulated += sweep
+                                            }
+                                        }
+                                    }
+                                },
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = formatMoney(totals.expense, currency, decimals = false),
-                                    style = BudTheme.type.moneyMedium.copy(fontSize = 16.sp),
-                                    color = colors.ink,
-                                    maxLines = 1,
-                                )
-                                Text(
-                                    text = "gastos",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.inkMuted,
-                                )
+                            DonutChart(
+                                segments = donutSegments,
+                                modifier = Modifier.fillMaxSize(),
+                                strokeWidth = 16.dp,
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = formatMoney(totals.expense, currency, decimals = false),
+                                        style = BudTheme.type.moneyMedium.copy(fontSize = 16.sp),
+                                        color = colors.ink,
+                                        maxLines = 1,
+                                    )
+                                    Text(
+                                        text = "gastos",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.inkMuted,
+                                    )
+                                }
                             }
                         }
                         Spacer(Modifier.width(18.dp))
@@ -173,7 +209,12 @@ fun AnalysisScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             shown.forEach { item ->
-                                LegendRow(item = item, currency = currency)
+                                val target = data.category(item.category.id)
+                                LegendRow(
+                                    item = item,
+                                    currency = currency,
+                                    onClick = target?.let { { onOpenCategory(it) } },
+                                )
                             }
                         }
                     }
@@ -294,10 +335,15 @@ private fun LegendRow(
     item: CategorySpend,
     currency: Currency,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     val colors = BudTheme.colors
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -327,6 +373,14 @@ private fun LegendRow(
             color = colors.inkMuted,
             modifier = Modifier.width(30.dp),
         )
+        if (onClick != null) {
+            Icon(
+                Icons.Rounded.ChevronRight,
+                contentDescription = null,
+                tint = colors.inkMuted.copy(alpha = 0.55f),
+                modifier = Modifier.size(13.dp),
+            )
+        }
     }
 }
 

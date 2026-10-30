@@ -89,6 +89,35 @@ object Finance {
             .filter { it.type == TxType.EXPENSE && it.categoryId == categoryId }
             .sumOf { it.amountCents }
 
+    fun categoryTransactions(data: AppData, month: YearMonth, categoryId: String): List<Transaction> =
+        transactionsOfMonth(data, month)
+            .filter { it.categoryId == categoryId }
+            .sortedByDescending { it.dateEpochDay }
+
+    fun categorySeries(
+        data: AppData,
+        anchor: YearMonth,
+        categoryId: String,
+        months: Int = 6,
+    ): List<Pair<YearMonth, Long>> =
+        (months - 1 downTo 0).map { back ->
+            val month = anchor.minusMonths(back.toLong())
+            month to spentForCategory(data, month, categoryId)
+        }
+
+    fun goalProgress(goal: SavingsGoal): Float =
+        if (goal.targetCents <= 0L) 0f else (goal.savedCents.toFloat() / goal.targetCents).coerceIn(0f, 1f)
+
+    fun goalRemaining(goal: SavingsGoal): Long = (goal.targetCents - goal.savedCents).coerceAtLeast(0L)
+
+    fun goalMonthlySuggestion(goal: SavingsGoal, today: LocalDate = LocalDate.now()): Long {
+        val deadline = goal.deadlineEpochDay?.let(LocalDate::ofEpochDay) ?: return 0L
+        if (!deadline.isAfter(today)) return 0L
+        val days = java.time.temporal.ChronoUnit.DAYS.between(today, deadline).coerceAtLeast(1)
+        val months = (days / 30).coerceAtLeast(1)
+        return (goalRemaining(goal) / months).coerceAtLeast(0L)
+    }
+
     fun budgetFor(data: AppData, categoryId: String?): Budget? =
         data.budgets.firstOrNull { it.categoryId == categoryId }
 

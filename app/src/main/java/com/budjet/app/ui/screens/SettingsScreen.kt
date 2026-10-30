@@ -30,13 +30,18 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Euro
+import androidx.compose.material.icons.rounded.EventRepeat
+import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Savings
 import androidx.compose.material.icons.rounded.SettingsBrightness
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,6 +67,7 @@ import com.budjet.app.data.Currency
 import com.budjet.app.data.ThemeMode
 import com.budjet.app.data.TxType
 import com.budjet.app.ui.components.BudCard
+import com.budjet.app.ui.components.BudSwitch
 import com.budjet.app.ui.components.InitialsAvatar
 import com.budjet.app.ui.components.Overline
 import com.budjet.app.ui.components.SectionHeader
@@ -82,6 +89,9 @@ fun SettingsScreen(
     onSetCurrency: (String) -> Unit,
     onSetTheme: (ThemeMode) -> Unit,
     onAddCategory: (name: String, icon: String, colorHex: String, type: TxType) -> Unit,
+    onOpenGoals: () -> Unit,
+    onOpenRecurring: () -> Unit,
+    onSetBiometric: (Boolean) -> Unit,
     onExport: () -> Unit,
     onResetDemo: () -> Unit,
     onClearTransactions: () -> Unit,
@@ -95,7 +105,9 @@ fun SettingsScreen(
     val currency = Currency.from(data.settings.currencyCode)
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("settings-list"),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 40.dp),
     ) {
         item {
@@ -209,6 +221,82 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
+            SectionHeader(title = "Ahorro y automatización")
+            Spacer(Modifier.height(10.dp))
+            BudCard(padding = 0.dp) {
+                SettingsRow(
+                    icon = Icons.Rounded.Savings,
+                    title = "Objetivos de ahorro",
+                    subtitle = if (data.savingsGoals.isEmpty()) {
+                        "Crea tu primer objetivo"
+                    } else {
+                        "${data.savingsGoals.size} objetivos · ${formatMoney(data.savingsGoals.sumOf { it.savedCents }, currency, decimals = false)} apartados"
+                    },
+                    onClick = onOpenGoals,
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.EventRepeat,
+                    title = "Movimientos recurrentes",
+                    subtitle = if (data.recurringRules.isEmpty()) {
+                        "Nómina, alquiler, suscripciones…"
+                    } else {
+                        "${data.recurringRules.count { it.active }} reglas activas"
+                    },
+                    onClick = onOpenRecurring,
+                )
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
+            SectionHeader(title = "Seguridad")
+            Spacer(Modifier.height(10.dp))
+            BudCard(padding = 0.dp) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSetBiometric(!data.settings.biometricLock) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceMuted),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Rounded.Fingerprint,
+                            contentDescription = null,
+                            tint = colors.inkMuted,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = "Bloqueo biométrico",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = colors.ink,
+                        )
+                        Text(
+                            text = "Pide huella o PIN al abrir la app",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.inkMuted,
+                        )
+                    }
+                    BudSwitch(
+                        checked = data.settings.biometricLock,
+                        onCheckedChange = onSetBiometric,
+                    )
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
             SectionHeader(title = "Categorías", trailing = null)
             Spacer(Modifier.height(10.dp))
             BudCard {
@@ -297,7 +385,7 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Un lugar tranquilo para tu dinero. Versión 0.1.0 · boceto.",
+                            text = "Un lugar tranquilo para tu dinero. Versión 0.2.0 · boceto.",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )

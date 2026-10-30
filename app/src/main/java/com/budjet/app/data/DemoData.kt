@@ -150,12 +150,74 @@ object DemoData {
             add(today, TxType.EXPENSE, "food", 2_780, account = "card", note = "Supermercado")
         }
 
+        val thisMonth = YearMonth.from(today)
+        val monthKey = thisMonth.toString()
+        val startOfMonth = thisMonth.atDay(1).toEpochDay()
+
+        val recurringRules = listOf(
+            RecurringRule(
+                id = "r_salary", amountCents = 245_000, type = TxType.INCOME,
+                categoryId = "salary", accountId = "main", dayOfMonth = 1,
+                note = "Nómina", startEpochDay = startOfMonth, lastPostedMonth = monthKey,
+            ),
+            RecurringRule(
+                id = "r_rent", amountCents = 85_000, type = TxType.EXPENSE,
+                categoryId = "home", accountId = "main", dayOfMonth = 2,
+                note = "Alquiler", startEpochDay = startOfMonth, lastPostedMonth = monthKey,
+            ),
+            RecurringRule(
+                id = "r_spotify", amountCents = 1_299, type = TxType.EXPENSE,
+                categoryId = "subs", accountId = "card", dayOfMonth = 3,
+                note = "Spotify", startEpochDay = startOfMonth, lastPostedMonth = monthKey,
+            ),
+            RecurringRule(
+                id = "r_icloud", amountCents = 999, type = TxType.EXPENSE,
+                categoryId = "subs", accountId = "card", dayOfMonth = 5,
+                note = "iCloud+", startEpochDay = startOfMonth, lastPostedMonth = monthKey,
+            ),
+            RecurringRule(
+                id = "r_internet", amountCents = 4_990, type = TxType.EXPENSE,
+                categoryId = "home", accountId = "main", dayOfMonth = 5,
+                note = "Internet", startEpochDay = startOfMonth, lastPostedMonth = monthKey,
+            ),
+            // This one is due the first time the demo runs, so the automatic
+            // posting can be seen in action (and then waits until next month).
+            RecurringRule(
+                id = "r_gym", amountCents = 3_990, type = TxType.EXPENSE,
+                categoryId = "health", accountId = "card", dayOfMonth = today.dayOfMonth,
+                note = "Gimnasio", startEpochDay = today.toEpochDay(), lastPostedMonth = null,
+            ),
+        )
+
+        val goals = listOf(
+            SavingsGoal(
+                id = "g_emergency", name = "Fondo de emergencia",
+                targetCents = 600_000, savedCents = 285_000,
+                icon = "savings", colorHex = "#2F6B54",
+            ),
+            SavingsGoal(
+                id = "g_japan", name = "Viaje a Japón",
+                targetCents = 450_000, savedCents = 128_000,
+                deadlineEpochDay = today.plusMonths(10).toEpochDay(),
+                icon = "flight", colorHex = "#3D6B6B",
+            ),
+            SavingsGoal(
+                id = "g_laptop", name = "Portátil nuevo",
+                targetCents = 160_000, savedCents = 64_000,
+                deadlineEpochDay = today.plusMonths(5).toEpochDay(),
+                icon = "bag", colorHex = "#6B6A9E",
+            ),
+        )
+
         return AppData(
+            version = 2,
             settings = Settings(),
             categories = categories,
             accounts = accounts,
             transactions = transactions.sortedByDescending { it.dateEpochDay },
             budgets = budgets,
+            recurringRules = recurringRules,
+            savingsGoals = goals,
         )
     }
 }

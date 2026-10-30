@@ -74,3 +74,14 @@ fun greetingForHour(hour: Int): String = when {
 
 fun percentText(value: Float, decimals: Int = 0): String =
     String.format(es, "%.${decimals}f%%", value * 100).replace('.', ',')
+
+/** "2100" -> 210000 cents; "2100,50" -> 210050; ignores thousand dots. */
+fun parseMoneyInput(text: String): Long {
+    if (text.isBlank()) return 0L
+    val normalized = text.replace(".", "").replace(',', '.')
+    return normalized.toDoubleOrNull()?.let { kotlin.math.round(it * 100).toLong() } ?: 0L
+}
+
+fun centsToInput(cents: Long): String =
+    if (cents % 100L == 0L) (cents / 100L).toString()
+    else "${cents / 100L},${(cents % 100L).toString().padStart(2, '0')}"

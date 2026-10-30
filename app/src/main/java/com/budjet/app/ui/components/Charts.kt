@@ -281,3 +281,61 @@ fun LegendDot(color: Color, label: String, modifier: Modifier = Modifier) {
         )
     }
 }
+
+@Composable
+fun MiniBarChart(
+    values: List<Pair<String, Long>>,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    val colors = BudTheme.colors
+    val anim = remember { Animatable(0f) }
+    val signature = values.joinToString { "${it.first}:${it.second}" }
+    LaunchedEffect(signature) {
+        anim.snapTo(0f)
+        anim.animateTo(1f, tween(700, easing = FastOutSlowInEasing))
+    }
+    val maxValue = values.maxOfOrNull { it.second }?.coerceAtLeast(1L) ?: 1L
+    Column(modifier) {
+        Canvas(
+            Modifier
+                .fillMaxWidth()
+                .height(84.dp),
+        ) {
+            val count = values.size.coerceAtLeast(1)
+            val group = size.width / count
+            val barWidth = 14.dp.toPx()
+            values.forEachIndexed { index, (_, value) ->
+                val height = (value.toFloat() / maxValue) * size.height * 0.92f * anim.value
+                if (height > 0.5f) {
+                    drawRoundRect(
+                        color = color.copy(alpha = 0.75f),
+                        topLeft = Offset(group * (index + 0.5f) - barWidth / 2, size.height - height),
+                        size = Size(barWidth, height),
+                        cornerRadius = CornerRadius(barWidth / 2, barWidth / 2),
+                    )
+                } else {
+                    drawRoundRect(
+                        color = colors.line,
+                        topLeft = Offset(group * (index + 0.5f) - barWidth / 2, size.height - 2.dp.toPx()),
+                        size = Size(barWidth, 2.dp.toPx()),
+                        cornerRadius = CornerRadius(1.dp.toPx()),
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(7.dp))
+        Row(Modifier.fillMaxWidth()) {
+            values.forEach { (label, _) ->
+                Text(
+                    text = label,
+                    modifier = Modifier.weight(1f),
+                    style = com.budjet.app.ui.theme.budMaterialTypography.labelMedium.copy(fontSize = 9.sp),
+                    color = colors.inkMuted,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
