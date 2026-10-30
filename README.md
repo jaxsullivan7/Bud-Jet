@@ -45,6 +45,14 @@ APK en `app/build/outputs/apk/debug/app-debug.apk`.
 
 Requiere JDK 17+ y Android SDK 37.
 
+## Probar el boceto
+
+1. Instala `BudJet-0.1.0-boceto.apk` en un Android 8.0 o superior (o compila con Gradle).
+2. La app arranca con datos de ejemplo de los últimos 6 meses para que puedas moverte por todas las pantallas.
+3. En **Ajustes → Datos** puedes restaurar el ejemplo o borrar los movimientos y empezar de cero.
+
+La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirve para probar, no para publicar en Google Play.
+
 ## Tests
 
 ```bash
@@ -72,4 +80,4 @@ app/src/main/java/com/budjet/app/
 - [ ] Copia de seguridad / importación CSV
 - [ ] Widget y notificaciones de presupuesto
 
-El backlog priorizado está en [`docs/BACKLOG.md`](docs/BACKLOG.md).
+El backlog priorizado está en [`docs/BACKLOG.md`](docs/BACKLOG.md). También hay un CSV listo para importar en Jira: [`docs/jira-import.csv`](docs/jira-import.csv).

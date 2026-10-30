@@ -40,6 +40,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -86,7 +87,7 @@ fun TransactionEditorScreen(
     val currency = Currency.from(data.settings.currencyCode)
     val haptic = LocalHapticFeedback.current
 
-    var amountCents by remember { mutableStateOf(initial.amountCents) }
+    var amountCents by remember { mutableLongStateOf(initial.amountCents) }
     var type by remember { mutableStateOf(initial.type) }
     var categoryId by remember { mutableStateOf(initial.categoryId) }
     var accountId by remember { mutableStateOf(initial.accountId) }

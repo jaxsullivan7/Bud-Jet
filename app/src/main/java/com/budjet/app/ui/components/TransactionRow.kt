@@ -91,10 +91,10 @@ fun TransactionRow(
 @Composable
 fun SectionRow(
     title: String,
+    modifier: Modifier = Modifier,
     subtitle: String? = null,
     trailing: String? = null,
     trailingColor: androidx.compose.ui.graphics.Color = BudTheme.colors.inkMuted,
-    modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
 ) {
     Row(

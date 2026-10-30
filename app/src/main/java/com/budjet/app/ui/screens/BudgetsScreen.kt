@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -88,7 +89,7 @@ fun BudgetsScreen(
     val dailyAllowance = overall?.let { Finance.dailyAllowance(it.limitCents - totals.expense, today, month) } ?: 0L
 
     var editingCategory by remember { mutableStateOf<String?>(null) }
-    var editingLimit by remember { mutableStateOf(0L) }
+    var editingLimit by remember { mutableLongStateOf(0L) }
     var dialogOpen by remember { mutableStateOf(false) }
     var dialogLocked by remember { mutableStateOf(false) }
 

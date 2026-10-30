@@ -1,6 +1,5 @@
 package com.budjet.app.ui.components
 
-import android.graphics.Color as AndroidColor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Bolt
@@ -25,8 +24,9 @@ import androidx.compose.material.icons.rounded.Work
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.lerp
+import androidx.core.graphics.toColorInt
 
-fun parseHex(hex: String): Color = runCatching { Color(AndroidColor.parseColor(hex)) }.getOrDefault(Color(0xFF8C8C84))
+fun parseHex(hex: String): Color = runCatching { Color(hex.toColorInt()) }.getOrDefault(Color(0xFF8C8C84))
 
 fun categoryIcon(key: String): ImageVector = when (key) {
     "groceries" -> Icons.Rounded.ShoppingBasket
