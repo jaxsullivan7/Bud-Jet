@@ -329,21 +329,59 @@ fun BudJetApp(
                                 !BiometricAuth.canAuthenticate(host) -> scope.launch {
                                     snackbar.showSnackbar(BiometricAuth.unavailableReason(host))
                                 }
-                                else -> BiometricAuth.request(
+                                else -> {
+                                    authenticating = true
+                                    BiometricAuth.request(
+                                        activity = host,
+                                        title = "Activar bloqueo",
+                                        subtitle = "Confirma tu huella o el PIN del dispositivo",
+                                        onSuccess = {
+                                            authenticating = false
+                                            viewModel.setBiometricLock(true)
+                                            backgroundedAt = android.os.SystemClock.elapsedRealtime()
+                                            scope.launch { snackbar.showSnackbar("Bloqueo biométrico activado") }
+                                        },
+                                        onError = { message ->
+                                            authenticating = false
+                                            scope.launch { snackbar.showSnackbar(message) }
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    onTestBiometric = {
+                        val host = activity
+                        when {
+                            host == null -> scope.launch {
+                                snackbar.showSnackbar("No se pudo abrir la autenticación")
+                            }
+                            !BiometricAuth.canAuthenticate(host) -> scope.launch {
+                                snackbar.showSnackbar(BiometricAuth.unavailableReason(host))
+                            }
+                            else -> {
+                                authenticating = true
+                                BiometricAuth.request(
                                     activity = host,
-                                    title = "Activar bloqueo",
+                                    title = "Probar desbloqueo",
                                     subtitle = "Confirma tu huella o el PIN del dispositivo",
                                     onSuccess = {
-                                        viewModel.setBiometricLock(true)
-                                        backgroundedAt = android.os.SystemClock.elapsedRealtime()
-                                        scope.launch { snackbar.showSnackbar("Bloqueo biométrico activado") }
+                                        authenticating = false
+                                        scope.launch { snackbar.showSnackbar("Desbloqueo verificado") }
                                     },
                                     onError = { message ->
+                                        authenticating = false
                                         scope.launch { snackbar.showSnackbar(message) }
                                     },
                                 )
                             }
                         }
+                    },
+                    onBuildBackup = viewModel::buildBackup,
+                    onValidateBackup = viewModel::parseBackup,
+                    onRestoreBackup = viewModel::restoreBackup,
+                    onNotify = { message ->
+                        scope.launch { snackbar.showSnackbar(message) }
                     },
                     onExport = {
                         val intent = viewModel.buildExport(context, data)

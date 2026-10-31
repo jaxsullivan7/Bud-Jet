@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
+import com.budjet.app.data.Backup
 import com.budjet.app.data.BudRepository
 import com.budjet.app.data.Budget
 import com.budjet.app.data.Category
@@ -328,6 +329,21 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
             repository.replaceAll(DemoData.build())
             _month.value = YearMonth.now()
             processRecurring()
+        }
+    }
+
+    // ---------------------------------------------------------------- copia de seguridad
+
+    fun buildBackup(): String = Backup.encode(data.value)
+
+    fun parseBackup(text: String): Result<AppData> = Backup.decode(text)
+
+    fun restoreBackup(backup: AppData) {
+        viewModelScope.launch {
+            repository.replaceAll(
+                backup.copy(settings = backup.settings.copy(biometricLock = false)),
+            )
+            _month.value = YearMonth.now()
         }
     }
 

@@ -7,6 +7,11 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.3
+
+- **Copia de seguridad y restauración** (BUD-20): JSON versionado con todos los datos, validación antes de importar, confirmación con resumen y protección contra activar el bloqueo biométrico desde un archivo.
+- **Bloqueo biométrico endurecido** (BUD-26): mapeo de errores (cancelación, bloqueo, sensor ausente), PIN de respaldo en Android 10+, botón “Probar desbloqueo” y checklist de validación en [`BIOMETRIC_TEST.md`](BIOMETRIC_TEST.md). Pendiente de firma en dispositivo real.
+
 ### v0.2
 
 - **Movimientos recurrentes** mensuales: día del mes, pausa, edición, borrado y registro automático al abrir la app.
@@ -64,7 +69,6 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 | Clave | Historia | Prioridad propuesta |
 |---|---|---|
-| BUD-20 | Copia de seguridad: exportar e importar JSON validando versión. | Alta |
 | BUD-21 | Widget con saldo del mes y acceso rápido a añadir gasto. | Media |
 | BUD-22 | Onboarding de nombre, moneda y primer presupuesto. | Media |
 | BUD-23 | Modo familia con perfiles locales. | Baja |
@@ -77,7 +81,6 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 |---|---|---|
 | BUD-24 | Migrar la persistencia JSON a Room con migración de datos. | Media |
 | BUD-25 | Pruebas de UI de flujos completos (movimientos, objetivos y recurrencias). | Media |
-| BUD-26 | Probar biometría en dispositivos reales (huella y PIN, Android 8/12/16+). | Alta |
 | BUD-27 | Internacionalización ES/EN y formatos regionales. | Baja |
 | BUD-28 | Reducir el tamaño del APK sustituyendo `material-icons-extended`. | Baja |
 | BUD-29 | Baseline profile para arranque en frío. | Baja |

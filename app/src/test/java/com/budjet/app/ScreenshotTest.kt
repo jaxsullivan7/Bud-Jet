@@ -64,6 +64,9 @@ class ScreenshotTest {
         compose.onNodeWithContentDescription("Ajustes").performClick()
         capture("09-ajustes")
 
+        compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Copia de seguridad"))
+        capture("09b-ajustes-datos")
+
         compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Movimientos recurrentes"))
         compose.onNodeWithText("Movimientos recurrentes").performClick()
         capture("10-recurrentes")

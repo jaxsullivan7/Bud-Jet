@@ -82,7 +82,7 @@ data class Settings(
 
 @Serializable
 data class AppData(
-    val version: Int = 2,
+    val version: Int = 3,
     val settings: Settings = Settings(),
     val categories: List<Category> = emptyList(),
     val accounts: List<Account> = emptyList(),

@@ -210,7 +210,7 @@ object DemoData {
         )
 
         return AppData(
-            version = 2,
+            version = 3,
             settings = Settings(),
             categories = categories,
             accounts = accounts,

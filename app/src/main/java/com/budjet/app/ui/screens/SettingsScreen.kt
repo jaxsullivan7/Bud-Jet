@@ -34,6 +34,8 @@ import androidx.compose.material.icons.rounded.EventRepeat
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Restore
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Savings
 import androidx.compose.material.icons.rounded.SettingsBrightness
 import androidx.compose.material3.AlertDialog
@@ -54,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardType
@@ -62,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
+import com.budjet.app.data.Backup
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
 import com.budjet.app.data.ThemeMode
@@ -79,6 +83,7 @@ import com.budjet.app.ui.components.parseHex
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.ui.theme.CategoryPalette
 import com.budjet.app.util.formatMoney
+import java.time.LocalDate
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -92,17 +97,64 @@ fun SettingsScreen(
     onOpenGoals: () -> Unit,
     onOpenRecurring: () -> Unit,
     onSetBiometric: (Boolean) -> Unit,
+    onTestBiometric: () -> Unit,
+    onBuildBackup: () -> String,
+    onValidateBackup: (String) -> Result<AppData>,
+    onRestoreBackup: (AppData) -> Unit,
+    onNotify: (String) -> Unit,
     onExport: () -> Unit,
     onResetDemo: () -> Unit,
     onClearTransactions: () -> Unit,
 ) {
     val colors = BudTheme.colors
+    val context = LocalContext.current
     var nameDialog by remember { mutableStateOf(false) }
     var currencyDialog by remember { mutableStateOf(false) }
     var categoryDialog by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }
     var confirmClear by remember { mutableStateOf(false) }
+    var pendingRestore by remember { mutableStateOf<AppData?>(null) }
+    var importError by remember { mutableStateOf<String?>(null) }
     val currency = Currency.from(data.settings.currencyCode)
+
+    val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { stream ->
+                    stream.write(onBuildBackup().toByteArray(Charsets.UTF_8))
+                } ?: error("No se pudo abrir el archivo.")
+            }.onSuccess {
+                onNotify("Copia de seguridad guardada")
+            }.onFailure {
+                onNotify("No se pudo guardar la copia")
+            }
+        }
+    }
+
+    val importLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            val text = runCatching {
+                val declaredSize = context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1L
+                if (declaredSize > Backup.MAX_BYTES) error("El archivo es demasiado grande.")
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: error("No se pudo leer el archivo.")
+                if (bytes.size > Backup.MAX_BYTES) error("El archivo es demasiado grande.")
+                String(bytes, Charsets.UTF_8)
+            }.getOrElse {
+                importError = it.message ?: "No se pudo leer el archivo."
+                null
+            }
+            if (text != null) {
+                onValidateBackup(text)
+                    .onSuccess { pendingRestore = it }
+                    .onFailure { importError = it.message ?: "El archivo no es una copia válida." }
+            }
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -292,6 +344,15 @@ fun SettingsScreen(
                         onCheckedChange = onSetBiometric,
                     )
                 }
+                if (data.settings.biometricLock) {
+                    SettingsDivider()
+                    SettingsRow(
+                        icon = Icons.Rounded.Fingerprint,
+                        title = "Probar desbloqueo",
+                        subtitle = "Comprueba ahora la huella o el PIN",
+                        onClick = onTestBiometric,
+                    )
+                }
             }
         }
 
@@ -350,9 +411,27 @@ fun SettingsScreen(
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 SettingsRow(
+                    icon = Icons.Rounded.Save,
+                    title = "Copia de seguridad",
+                    subtitle = "Guarda todos tus datos en un archivo JSON",
+                    onClick = { exportLauncher.launch("budjet-copia-${LocalDate.now()}.json") },
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.Restore,
+                    title = "Restaurar copia",
+                    subtitle = "Importa un archivo .json de Bud Jet",
+                    onClick = {
+                        importLauncher.launch(
+                            arrayOf("application/json", "application/octet-stream", "text/plain"),
+                        )
+                    },
+                )
+                SettingsDivider()
+                SettingsRow(
                     icon = Icons.Rounded.Refresh,
-                    title = "Restaurar ejemplo",
-                    subtitle = "Vuelve a los datos de demostración",
+                    title = "Cargar datos de ejemplo",
+                    subtitle = "Sustituye todo por la demostración",
                     onClick = { confirmReset = true },
                 )
                 SettingsDivider()
@@ -364,6 +443,12 @@ fun SettingsScreen(
                     onClick = { confirmClear = true },
                 )
             }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = "La copia incluye movimientos, presupuestos, objetivos, recurrentes y ajustes. Por seguridad, el bloqueo biométrico no se restaura.",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.inkMuted,
+            )
         }
 
         item {
@@ -385,7 +470,7 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Un lugar tranquilo para tu dinero. Versión 0.2.0 · boceto.",
+                            text = "Un lugar tranquilo para tu dinero. Versión 0.3.0 · boceto.",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )
@@ -506,6 +591,78 @@ fun SettingsScreen(
             onConfirm = {
                 onClearTransactions()
                 confirmClear = false
+            },
+        )
+    }
+
+    pendingRestore?.let { backup ->
+        AlertDialog(
+            onDismissRequest = { pendingRestore = null },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(26.dp),
+            title = {
+                Text(
+                    "¿Restaurar esta copia?",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.ink,
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "${backup.transactions.size} movimientos · ${backup.budgets.size} presupuestos · " +
+                            "${backup.savingsGoals.size} objetivos · ${backup.recurringRules.size} recurrentes",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.ink,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Se sustituirán todos los datos actuales. Por seguridad, el bloqueo biométrico se desactivará.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onRestoreBackup(backup)
+                        pendingRestore = null
+                        onNotify("Copia restaurada")
+                    },
+                ) { Text("Restaurar", color = colors.primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingRestore = null }) {
+                    Text("Cancelar", color = colors.inkMuted)
+                }
+            },
+        )
+    }
+
+    importError?.let { message ->
+        AlertDialog(
+            onDismissRequest = { importError = null },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(26.dp),
+            title = {
+                Text(
+                    "No se pudo importar",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.ink,
+                )
+            },
+            text = {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.inkMuted,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { importError = null }) {
+                    Text("Entendido", color = colors.primary)
+                }
             },
         )
     }
