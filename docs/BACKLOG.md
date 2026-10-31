@@ -7,6 +7,11 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.4.1
+
+- **Movimientos programados**: un ingreso o gasto con fecha futura se guarda, se marca como “Programado” y no afecta al saldo, resumen, presupuestos ni análisis hasta su fecha.
+- El aviso aparece también en el editor y en las pantallas de resumen.
+
 ### v0.4
 
 - **Tres gamas de color** (Business, Navy y Boss), cada una con variante clara y oscura, seleccionables en Ajustes → Apariencia.

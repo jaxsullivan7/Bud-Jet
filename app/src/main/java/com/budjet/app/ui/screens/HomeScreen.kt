@@ -90,7 +90,9 @@ fun HomeScreen(
     val currency = Currency.from(data.settings.currencyCode)
     val today = remember { LocalDate.now() }
     val monthTx = remember(data.transactions, month) { Finance.transactionsOfMonth(data, month) }
-    val totals = remember(monthTx) { Finance.totals(monthTx) }
+    val postedTx = remember(data.transactions, month) { Finance.postedTransactionsOfMonth(data, month, today) }
+    val futureCount = monthTx.size - postedTx.size
+    val totals = remember(postedTx) { Finance.totals(postedTx) }
     val balance = remember(data) { Finance.totalBalance(data) }
     val previousMonth = month.minusMonths(1)
     val previousTotals = remember(data, month) {
@@ -192,7 +194,7 @@ fun HomeScreen(
             )
             Spacer(Modifier.height(12.dp))
             BudCard(onClick = onSeeAnalysis) {
-                if (monthTx.isEmpty()) {
+                if (postedTx.isEmpty()) {
                     Overline("ESTE MES")
                     Spacer(Modifier.height(3.dp))
                     Text(
@@ -202,7 +204,11 @@ fun HomeScreen(
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "Apunta tu primer gasto o ingreso con el botón + y aquí verás tu flujo de caja.",
+                        text = if (futureCount > 0) {
+                            "Tienes $futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"}. Se contarán en el saldo en su fecha."
+                        } else {
+                            "Apunta tu primer gasto o ingreso con el botón + y aquí verás tu flujo de caja."
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -241,6 +247,14 @@ fun HomeScreen(
                             text = if (totals.income > 0) "${percentText(totals.savingsRate)} de ahorro" else "Sin ingresos",
                             style = MaterialTheme.typography.labelMedium,
                             color = colors.inkMuted,
+                        )
+                    }
+                    if (futureCount > 0) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} sin contar todavía.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.warning,
                         )
                     }
                 }
@@ -399,7 +413,10 @@ fun HomeScreen(
             )
         }
 
-        val recent = data.transactions.sortedByDescending { it.dateEpochDay }.take(4)
+        val recent = data.transactions
+            .filter { it.dateEpochDay <= today.toEpochDay() }
+            .sortedByDescending { it.dateEpochDay }
+            .take(4)
         if (recent.isEmpty()) {
             item {
                 BudCard {
@@ -424,6 +441,36 @@ fun HomeScreen(
                             showDate = true,
                         )
                         if (index != recent.lastIndex) {
+                            ThinDivider(Modifier.padding(horizontal = 4.dp))
+                        }
+                    }
+                }
+            }
+        }
+
+        val upcoming = data.transactions
+            .filter { it.dateEpochDay > today.toEpochDay() }
+            .sortedBy { it.dateEpochDay }
+        if (upcoming.isNotEmpty()) {
+            item {
+                Spacer(Modifier.height(26.dp))
+                SectionHeader(
+                    title = "Próximos",
+                    trailing = if (upcoming.size == 1) "1 programado" else "${upcoming.size} programados",
+                )
+            }
+            item {
+                Spacer(Modifier.height(8.dp))
+                BudCard(padding = 10.dp) {
+                    upcoming.forEachIndexed { index, tx ->
+                        TransactionRow(
+                            transaction = tx,
+                            category = data.category(tx.categoryId),
+                            account = data.account(tx.accountId),
+                            currency = currency,
+                            onClick = { onOpenTransaction(tx) },
+                        )
+                        if (index != upcoming.lastIndex) {
                             ThinDivider(Modifier.padding(horizontal = 4.dp))
                         }
                     }

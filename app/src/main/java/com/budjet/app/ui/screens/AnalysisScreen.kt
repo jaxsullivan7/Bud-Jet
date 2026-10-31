@@ -74,7 +74,11 @@ fun AnalysisScreen(
     val currency = Currency.from(data.settings.currencyCode)
     val today = remember { LocalDate.now() }
     val monthTx = remember(data.transactions, month) { Finance.transactionsOfMonth(data, month) }
-    val totals = remember(monthTx) { Finance.totals(monthTx) }
+    val postedTx = remember(data.transactions, month) {
+        Finance.postedTransactionsOfMonth(data, month)
+    }
+    val futureCount = monthTx.size - postedTx.size
+    val totals = remember(postedTx) { Finance.totals(postedTx) }
     val spends = remember(data, month) { Finance.spendByCategory(data, month) }
     val series = remember(data, month) { Finance.series(data, month, 6) }
     val average = remember(data, month) { Finance.monthlyAverageExpense(data, month, 3) }
@@ -101,8 +105,8 @@ fun AnalysisScreen(
 
     val daysElapsed = if (month == YearMonth.from(today)) today.dayOfMonth else month.lengthOfMonth()
     val dailyAverage = if (daysElapsed > 0) totals.expense / daysElapsed else 0L
-    val biggestExpense = monthTx.filter { it.type == TxType.EXPENSE }.maxByOrNull { it.amountCents }
-    val spentDays = monthTx.filter { it.type == TxType.EXPENSE }
+    val biggestExpense = postedTx.filter { it.type == TxType.EXPENSE }.maxByOrNull { it.amountCents }
+    val spentDays = postedTx.filter { it.type == TxType.EXPENSE }
         .map { LocalDate.ofEpochDay(it.dateEpochDay) }
         .toSet()
         .size
@@ -151,6 +155,13 @@ fun AnalysisScreen(
                         title = "Sin gastos este mes",
                         message = "Cuando apuntes gastos, aquí verás el desglose por categorías.",
                     )
+                    if (futureCount > 0) {
+                        Text(
+                            text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} sin incluir todavía.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.warning,
+                        )
+                    }
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
@@ -217,6 +228,14 @@ fun AnalysisScreen(
                                 )
                             }
                         }
+                    }
+                    if (futureCount > 0) {
+                        Spacer(Modifier.height(14.dp))
+                        Text(
+                            text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} sin incluir todavía.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.warning,
+                        )
                     }
                 }
             }

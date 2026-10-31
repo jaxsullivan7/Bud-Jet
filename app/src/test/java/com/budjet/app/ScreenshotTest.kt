@@ -11,12 +11,16 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.budjet.app.data.Transaction
+import com.budjet.app.data.TxType
 import com.github.takahirom.roborazzi.captureRoboImage
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.time.LocalDate
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -103,5 +107,30 @@ class ScreenshotTest {
         compose.onAllNodesWithText("Empezar de cero").onLast().performClick()
         back()
         capture("18-resumen-vacio")
+
+        compose.activityRule.scenario.onActivity { activity ->
+            val app = activity.application as BudJetApplication
+            runBlocking {
+                app.repository.update { current ->
+                    current.copy(
+                        transactions = listOf(
+                            Transaction(
+                                id = "future-salary",
+                                amountCents = 245_000,
+                                type = TxType.INCOME,
+                                categoryId = "salary",
+                                accountId = "main",
+                                dateEpochDay = LocalDate.now().plusDays(5).toEpochDay(),
+                                note = "Nómina",
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+        compose.waitForIdle()
+        capture("19-resumen-programado")
+        compose.onNodeWithTag("home-list").performScrollToNode(hasText("Próximos"))
+        capture("20-programado-detalle")
     }
 }

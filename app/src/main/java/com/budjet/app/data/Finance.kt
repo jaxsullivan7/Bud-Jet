@@ -43,6 +43,19 @@ object Finance {
         return data.transactions.filter { it.dateEpochDay in start..end }
     }
 
+    /**
+     * Movements that have already happened. Future-dated entries live in the
+     * list as "Programado" but must not touch balances, budgets or analysis
+     * until their date arrives.
+     */
+    fun postedTransactionsOfMonth(
+        data: AppData,
+        month: YearMonth,
+        today: LocalDate = LocalDate.now(),
+    ): List<Transaction> = transactionsOfMonth(data, month).filter {
+        it.dateEpochDay <= today.toEpochDay()
+    }
+
     fun totals(transactions: List<Transaction>): MonthTotals {
         var income = 0L
         var expense = 0L
@@ -52,10 +65,12 @@ object Finance {
         return MonthTotals(income, expense)
     }
 
-    fun totalBalance(data: AppData): Long =
-        data.settings.openingBalanceCents + data.transactions.sumOf {
+    fun totalBalance(data: AppData, today: LocalDate = LocalDate.now()): Long {
+        val limit = today.toEpochDay()
+        return data.settings.openingBalanceCents + data.transactions.filter { it.dateEpochDay <= limit }.sumOf {
             if (it.type == TxType.INCOME) it.amountCents else -it.amountCents
         }
+    }
 
     fun balanceAt(data: AppData, date: LocalDate): Long {
         val end = date.toEpochDay()
@@ -64,15 +79,24 @@ object Finance {
         }
     }
 
-    fun series(data: AppData, anchor: YearMonth, months: Int = 6): List<MonthPoint> =
+    fun series(
+        data: AppData,
+        anchor: YearMonth,
+        months: Int = 6,
+        today: LocalDate = LocalDate.now(),
+    ): List<MonthPoint> =
         (months - 1 downTo 0).map { back ->
             val month = anchor.minusMonths(back.toLong())
-            val totals = totals(transactionsOfMonth(data, month))
+            val totals = totals(postedTransactionsOfMonth(data, month, today))
             MonthPoint(month, totals.income, totals.expense)
         }
 
-    fun spendByCategory(data: AppData, month: YearMonth): List<CategorySpend> {
-        val txs = transactionsOfMonth(data, month).filter { it.type == TxType.EXPENSE }
+    fun spendByCategory(
+        data: AppData,
+        month: YearMonth,
+        today: LocalDate = LocalDate.now(),
+    ): List<CategorySpend> {
+        val txs = postedTransactionsOfMonth(data, month, today).filter { it.type == TxType.EXPENSE }
         val total = txs.sumOf { it.amountCents }
         if (total == 0L) return emptyList()
         return txs.groupBy { it.categoryId }
@@ -84,13 +108,23 @@ object Finance {
             .sortedByDescending { it.spent }
     }
 
-    fun spentForCategory(data: AppData, month: YearMonth, categoryId: String): Long =
-        transactionsOfMonth(data, month)
+    fun spentForCategory(
+        data: AppData,
+        month: YearMonth,
+        categoryId: String,
+        today: LocalDate = LocalDate.now(),
+    ): Long =
+        postedTransactionsOfMonth(data, month, today)
             .filter { it.type == TxType.EXPENSE && it.categoryId == categoryId }
             .sumOf { it.amountCents }
 
-    fun categoryTransactions(data: AppData, month: YearMonth, categoryId: String): List<Transaction> =
-        transactionsOfMonth(data, month)
+    fun categoryTransactions(
+        data: AppData,
+        month: YearMonth,
+        categoryId: String,
+        today: LocalDate = LocalDate.now(),
+    ): List<Transaction> =
+        postedTransactionsOfMonth(data, month, today)
             .filter { it.categoryId == categoryId }
             .sortedByDescending { it.dateEpochDay }
 
@@ -99,10 +133,11 @@ object Finance {
         anchor: YearMonth,
         categoryId: String,
         months: Int = 6,
+        today: LocalDate = LocalDate.now(),
     ): List<Pair<YearMonth, Long>> =
         (months - 1 downTo 0).map { back ->
             val month = anchor.minusMonths(back.toLong())
-            month to spentForCategory(data, month, categoryId)
+            month to spentForCategory(data, month, categoryId, today)
         }
 
     fun goalProgress(goal: SavingsGoal): Float =
@@ -123,9 +158,16 @@ object Finance {
 
     fun overallBudget(data: AppData): Budget? = budgetFor(data, null)
 
-    fun monthlyAverageExpense(data: AppData, anchor: YearMonth, months: Int = 3): Long {
+    fun monthlyAverageExpense(
+        data: AppData,
+        anchor: YearMonth,
+        months: Int = 3,
+        today: LocalDate = LocalDate.now(),
+    ): Long {
         if (months <= 0) return 0
-        val values = (1..months).map { totals(transactionsOfMonth(data, anchor.minusMonths(it.toLong()))).expense }
+        val values = (1..months).map {
+            totals(postedTransactionsOfMonth(data, anchor.minusMonths(it.toLong()), today)).expense
+        }
         if (values.isEmpty()) return 0
         return values.sum() / values.size
     }

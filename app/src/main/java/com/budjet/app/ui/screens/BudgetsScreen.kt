@@ -82,7 +82,11 @@ fun BudgetsScreen(
     val currency = Currency.from(data.settings.currencyCode)
     val today = remember { LocalDate.now() }
     val monthTx = remember(data.transactions, month) { Finance.transactionsOfMonth(data, month) }
-    val totals = remember(monthTx) { Finance.totals(monthTx) }
+    val postedTx = remember(data.transactions, month) {
+        Finance.postedTransactionsOfMonth(data, month)
+    }
+    val futureCount = monthTx.size - postedTx.size
+    val totals = remember(postedTx) { Finance.totals(postedTx) }
     val overall = Finance.overallBudget(data)
     val overallProgress = overall?.let { Finance.budgetProgress(totals.expense, it.limitCents) } ?: 0f
     val remaining = overall?.let { it.limitCents - totals.expense } ?: 0L
@@ -224,6 +228,14 @@ fun BudgetsScreen(
                         color = if (remaining < 0) colors.expense else colors.inkMuted,
                     )
                 }
+            }
+            if (futureCount > 0) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} sin contar hasta su fecha.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.warning,
+                )
             }
         }
 

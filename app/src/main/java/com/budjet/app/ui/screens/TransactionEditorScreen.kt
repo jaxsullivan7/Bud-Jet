@@ -29,6 +29,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.KeyboardBackspace
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -274,6 +275,31 @@ fun TransactionEditorScreen(
                     muted = note.isBlank(),
                     onClick = { showNote = true },
                 )
+            }
+
+            if (date.isAfter(LocalDate.now())) {
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(colors.warning.copy(alpha = 0.1f))
+                        .padding(horizontal = 14.dp, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Rounded.Schedule,
+                        contentDescription = null,
+                        tint = colors.warning,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Programado: no contará en tu saldo hasta el ${formatShortDate(date)}.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.warning,
+                    )
+                }
             }
 
             if (isEditing) {

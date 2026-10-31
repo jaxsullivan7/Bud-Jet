@@ -58,7 +58,53 @@ class FinanceTest {
                 tx("2", 120_00, TxType.EXPENSE),
             ),
         )
-        assertEquals(1_380_00L, Finance.totalBalance(app))
+        assertEquals(1_380_00L, Finance.totalBalance(app, today))
+    }
+
+    @Test
+    fun `future movements wait for their date to affect the balance`() {
+        val future = LocalDate.of(2026, 11, 5)
+        val app = data(
+            listOf(
+                tx("1", 500_00, TxType.INCOME, future),
+                tx("2", 100_00, TxType.EXPENSE, future),
+            ),
+        )
+        assertEquals(1_000_00L, Finance.totalBalance(app, LocalDate.of(2026, 11, 4)))
+        assertEquals(1_400_00L, Finance.totalBalance(app, future))
+    }
+
+    @Test
+    fun `future movements are not part of the posted month`() {
+        val november = YearMonth.of(2026, 11)
+        val app = data(
+            listOf(
+                tx("1", 200_00, TxType.INCOME, LocalDate.of(2026, 11, 1)),
+                tx("2", 300_00, TxType.EXPENSE, LocalDate.of(2026, 11, 5)),
+            ),
+        )
+        val posted = Finance.postedTransactionsOfMonth(app, november, LocalDate.of(2026, 11, 3))
+        assertEquals(listOf("1"), posted.map { it.id })
+    }
+
+    @Test
+    fun `future movements do not count in category spending yet`() {
+        val app = data(
+            listOf(
+                tx("1", 100_00, TxType.EXPENSE, today, category = "food"),
+                tx("2", 300_00, TxType.EXPENSE, today.plusDays(1), category = "home"),
+            ),
+        ).copy(
+            categories = com.budjet.app.data.DemoData.categories,
+            accounts = com.budjet.app.data.DemoData.accounts,
+        )
+        val spends = Finance.spendByCategory(app, month, today)
+        assertEquals(1, spends.size)
+        assertEquals("food", spends.first().category.id)
+        assertEquals(100_00L, Finance.spentForCategory(app, month, "food", today))
+        assertEquals(0L, Finance.spentForCategory(app, month, "home", today))
+        assertEquals(1, Finance.categoryTransactions(app, month, "food", today).size)
+        assertEquals(0, Finance.categoryTransactions(app, month, "home", today).size)
     }
 
     @Test
@@ -123,7 +169,7 @@ class FinanceTest {
             categories = com.budjet.app.data.DemoData.categories,
             accounts = com.budjet.app.data.DemoData.accounts,
         )
-        val spends = Finance.spendByCategory(app, month)
+        val spends = Finance.spendByCategory(app, month, today)
         assertEquals("home", spends.first().category.id)
         assertEquals(1f, spends.sumOf { it.share.toDouble() }.toFloat(), 0.0001f)
         assertEquals(0L, Finance.spentForCategory(app, month, "salary"))

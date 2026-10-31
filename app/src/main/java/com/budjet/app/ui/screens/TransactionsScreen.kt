@@ -89,7 +89,11 @@ fun TransactionsScreen(
     var query by rememberSaveable { mutableStateOf("") }
 
     val allMonthTx = remember(data.transactions, month) { Finance.transactionsOfMonth(data, month) }
-    val totals = remember(allMonthTx) { Finance.totals(allMonthTx) }
+    val postedMonthTx = remember(data.transactions, month) {
+        Finance.postedTransactionsOfMonth(data, month)
+    }
+    val futureCount = allMonthTx.size - postedMonthTx.size
+    val totals = remember(postedMonthTx) { Finance.totals(postedMonthTx) }
     val filtered = remember(allMonthTx, filter, query) {
         allMonthTx.filter { tx ->
             val matchesType = when (filter) {
@@ -200,6 +204,17 @@ fun TransactionsScreen(
                         modifier = Modifier.weight(1f),
                     )
                 }
+            }
+        }
+
+        if (futureCount > 0) {
+            item {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} · no afectan al saldo hasta su fecha.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.warning,
+                )
             }
         }
 

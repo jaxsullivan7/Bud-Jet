@@ -77,7 +77,7 @@ fun CategoryDetailScreen(
     }
     val total = monthTransactions.sumOf { it.amountCents }
     val monthTotals = remember(data.transactions, month) {
-        Finance.totals(Finance.transactionsOfMonth(data, month))
+        Finance.totals(Finance.postedTransactionsOfMonth(data, month))
     }
     val referenceTotal = if (category.type == TxType.INCOME) monthTotals.income else monthTotals.expense
     val share = if (referenceTotal > 0) total.toFloat() / referenceTotal else 0f

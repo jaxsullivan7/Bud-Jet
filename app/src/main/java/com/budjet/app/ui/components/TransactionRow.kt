@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.EventRepeat
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.budjet.app.data.Account
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
@@ -29,6 +31,7 @@ import com.budjet.app.data.Transaction
 import com.budjet.app.data.TxType
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.formatMoney
+import java.time.LocalDate
 
 @Composable
 fun TransactionRow(
@@ -41,6 +44,7 @@ fun TransactionRow(
     showDate: Boolean = false,
 ) {
     val colors = BudTheme.colors
+    val isFuture = LocalDate.ofEpochDay(transaction.dateEpochDay).isAfter(LocalDate.now())
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -70,6 +74,15 @@ fun TransactionRow(
                         modifier = Modifier.size(12.dp),
                     )
                 }
+                if (isFuture) {
+                    Spacer(Modifier.width(5.dp))
+                    Icon(
+                        imageVector = Icons.Rounded.Schedule,
+                        contentDescription = "Programado",
+                        tint = colors.warning,
+                        modifier = Modifier.size(12.dp),
+                    )
+                }
             }
             Text(
                 text = buildString {
@@ -91,10 +104,25 @@ fun TransactionRow(
                 text = (if (transaction.type == TxType.INCOME) "+" else "−") +
                     formatMoney(transaction.amountCents, currency),
                 style = BudTheme.type.moneySmall,
-                color = if (transaction.type == TxType.INCOME) colors.income else colors.ink,
+                color = when {
+                    isFuture -> colors.ink
+                    transaction.type == TxType.INCOME -> colors.income
+                    else -> colors.ink
+                },
                 maxLines = 1,
             )
-            if (showDate) {
+            if (isFuture) {
+                Text(
+                    text = "Programado",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                    color = colors.warning,
+                )
+                Text(
+                    text = com.budjet.app.util.formatShortDate(LocalDate.ofEpochDay(transaction.dateEpochDay)),
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
+                    color = colors.inkMuted,
+                )
+            } else if (showDate) {
                 Text(
                     text = com.budjet.app.util.formatDayLabel(java.time.LocalDate.ofEpochDay(transaction.dateEpochDay)),
                     style = MaterialTheme.typography.bodySmall,
