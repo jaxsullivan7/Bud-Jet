@@ -22,7 +22,10 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val data by viewModel.data.collectAsStateWithLifecycle()
-            BudJetTheme(themeMode = data.settings.themeMode) {
+            BudJetTheme(
+                themeMode = data.settings.themeMode,
+                paletteStyle = data.settings.palette,
+            ) {
                 BudJetApp(viewModel = viewModel, data = data)
             }
         }

@@ -210,8 +210,8 @@ object DemoData {
         )
 
         return AppData(
-            version = 3,
-            settings = Settings(),
+            version = 4,
+            settings = Settings(openingBalanceCents = 385_000),
             categories = categories,
             accounts = accounts,
             transactions = transactions.sortedByDescending { it.dateEpochDay },

@@ -33,6 +33,6 @@ class LockScreenScreenshotTest {
             }
         }
         compose.waitForIdle()
-        compose.onRoot().captureRoboImage("build/screenshots/13-bloqueo.png")
+        compose.onRoot().captureRoboImage("build/screenshots/17-bloqueo.png")
     }
 }

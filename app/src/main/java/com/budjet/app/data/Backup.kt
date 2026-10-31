@@ -20,7 +20,7 @@ object Backup {
 
     const val APP_NAME = "Bud Jet"
     const val FORMAT = 1
-    const val CURRENT_VERSION = 3
+    const val CURRENT_VERSION = 4
     const val MAX_BYTES = 10 * 1024 * 1024
 
     private val json = Json {

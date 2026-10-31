@@ -7,6 +7,14 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.4
+
+- **Tres gamas de color** (Business, Navy y Boss), cada una con variante clara y oscura, seleccionables en Ajustes → Apariencia.
+- **Saldo inicial visible y editable** en Ajustes → Datos.
+- **Empezar de cero**: borra movimientos, presupuestos, objetivos y recurrentes, y deja el saldo inicial a 0, manteniendo categorías, cuentas y apariencia.
+- **Migración v3 → v4** para eliminar el saldo oculto de 3.850 € en instalaciones que ya habían borrado los movimientos.
+- La pantalla de inicio muestra un estado vacío claro cuando no hay movimientos, en lugar de un gráfico a cero.
+
 ### v0.3
 
 - **Copia de seguridad y restauración** (BUD-20): JSON versionado con todos los datos, validación antes de importar, confirmación con resumen y protección contra activar el bloqueo biométrico desde un archivo.

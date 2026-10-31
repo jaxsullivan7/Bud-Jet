@@ -192,41 +192,57 @@ fun HomeScreen(
             )
             Spacer(Modifier.height(12.dp))
             BudCard(onClick = onSeeAnalysis) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column {
-                        Overline("ESTE MES")
-                        Spacer(Modifier.height(3.dp))
-                        Text(
-                            text = if (totals.balance >= 0) "Has ahorrado" else "Has gastado de más",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = colors.ink,
-                        )
-                    }
-                    val positive = totals.balance >= 0
-                    Pill(
-                        text = (if (positive) "+" else "−") + formatMoney(abs(totals.balance), currency, decimals = false),
-                        container = if (positive) colors.primarySoft else colors.expense.copy(alpha = 0.12f),
-                        content = if (positive) colors.primary else colors.expense,
-                        icon = if (positive) Icons.Rounded.TrendingUp else Icons.Rounded.TrendingDown,
-                    )
-                }
-                Spacer(Modifier.height(18.dp))
-                CashflowChart(points = series, highlightMonth = month)
-                Spacer(Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    LegendDot(colors.income, "Ingresos")
-                    Spacer(Modifier.width(16.dp))
-                    LegendDot(colors.expense, "Gastos")
-                    Spacer(Modifier.weight(1f))
+                if (monthTx.isEmpty()) {
+                    Overline("ESTE MES")
+                    Spacer(Modifier.height(3.dp))
                     Text(
-                        text = if (totals.income > 0) "${percentText(totals.savingsRate)} de ahorro" else "Sin ingresos",
-                        style = MaterialTheme.typography.labelMedium,
+                        text = "Aún no hay movimientos",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colors.ink,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "Apunta tu primer gasto o ingreso con el botón + y aquí verás tu flujo de caja.",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column {
+                            Overline("ESTE MES")
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                text = if (totals.balance >= 0) "Has ahorrado" else "Has gastado de más",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = colors.ink,
+                            )
+                        }
+                        val positive = totals.balance >= 0
+                        Pill(
+                            text = (if (positive) "+" else "−") + formatMoney(abs(totals.balance), currency, decimals = false),
+                            container = if (positive) colors.primarySoft else colors.expense.copy(alpha = 0.12f),
+                            content = if (positive) colors.primary else colors.expense,
+                            icon = if (positive) Icons.Rounded.TrendingUp else Icons.Rounded.TrendingDown,
+                        )
+                    }
+                    Spacer(Modifier.height(18.dp))
+                    CashflowChart(points = series, highlightMonth = month)
+                    Spacer(Modifier.height(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        LegendDot(colors.income, "Ingresos")
+                        Spacer(Modifier.width(16.dp))
+                        LegendDot(colors.expense, "Gastos")
+                        Spacer(Modifier.weight(1f))
+                        Text(
+                            text = if (totals.income > 0) "${percentText(totals.savingsRate)} de ahorro" else "Sin ingresos",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colors.inkMuted,
+                        )
+                    }
                 }
             }
         }

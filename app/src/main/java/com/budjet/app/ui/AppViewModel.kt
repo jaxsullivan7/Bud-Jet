@@ -17,8 +17,10 @@ import com.budjet.app.data.RecurringRule
 import com.budjet.app.data.SavingsGoal
 import com.budjet.app.data.Settings
 import com.budjet.app.data.ThemeMode
+import com.budjet.app.data.ThemePalette
 import com.budjet.app.data.Transaction
 import com.budjet.app.data.TxType
+import com.budjet.app.data.clearedFinancialData
 import com.budjet.app.util.formatShortDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -289,7 +291,9 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
     fun setName(name: String) = updateSettings { it.copy(name = name.ifBlank { "Tú" }) }
     fun setCurrency(code: String) = updateSettings { it.copy(currencyCode = code) }
     fun setTheme(mode: ThemeMode) = updateSettings { it.copy(themeMode = mode) }
+    fun setPalette(palette: ThemePalette) = updateSettings { it.copy(palette = palette) }
     fun setBiometricLock(enabled: Boolean) = updateSettings { it.copy(biometricLock = enabled) }
+    fun setOpeningBalance(cents: Long) = updateSettings { it.copy(openingBalanceCents = cents.coerceAtLeast(0L)) }
 
     fun addCategory(name: String, icon: String, colorHex: String, type: TxType) {
         val clean = name.trim()
@@ -347,11 +351,9 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
         }
     }
 
-    fun clearEverything() {
+    fun startFresh() {
         viewModelScope.launch {
-            repository.update { current ->
-                current.copy(transactions = emptyList())
-            }
+            repository.update { current -> current.clearedFinancialData() }
         }
     }
 

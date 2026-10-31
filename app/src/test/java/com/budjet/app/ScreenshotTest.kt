@@ -2,6 +2,8 @@ package com.budjet.app
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -67,16 +69,39 @@ class ScreenshotTest {
         compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Copia de seguridad"))
         capture("09b-ajustes-datos")
 
+        compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Navy"))
+        compose.onNodeWithText("Navy").performClick()
+        capture("10-ajustes-navy")
+        back()
+        capture("11-resumen-navy")
+
+        compose.onNodeWithContentDescription("Ajustes").performClick()
+        compose.onNodeWithText("Boss").performClick()
+        capture("12-ajustes-boss")
+        back()
+        capture("13-resumen-boss")
+
+        compose.onNodeWithContentDescription("Ajustes").performClick()
+        compose.onNodeWithText("Business").performClick()
         compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Movimientos recurrentes"))
         compose.onNodeWithText("Movimientos recurrentes").performClick()
-        capture("10-recurrentes")
+        capture("14-recurrentes")
         back()
 
         compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Oscuro"))
         compose.onNodeWithText("Oscuro").performClick()
-        capture("11-ajustes-oscuro")
+        capture("15-ajustes-oscuro")
 
         back()
-        capture("12-resumen-oscuro")
+        capture("16-resumen-oscuro")
+
+        compose.onNodeWithContentDescription("Ajustes").performClick()
+        compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Claro"))
+        compose.onNodeWithText("Claro").performClick()
+        compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Empezar de cero"))
+        compose.onNodeWithText("Empezar de cero").performClick()
+        compose.onAllNodesWithText("Empezar de cero").onLast().performClick()
+        back()
+        capture("18-resumen-vacio")
     }
 }

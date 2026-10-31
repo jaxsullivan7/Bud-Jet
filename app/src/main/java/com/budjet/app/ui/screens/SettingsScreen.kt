@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
@@ -69,6 +70,7 @@ import com.budjet.app.data.Backup
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
 import com.budjet.app.data.ThemeMode
+import com.budjet.app.data.ThemePalette
 import com.budjet.app.data.TxType
 import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.BudSwitch
@@ -81,8 +83,13 @@ import com.budjet.app.ui.components.categoryIcon
 import com.budjet.app.ui.components.iconChoices
 import com.budjet.app.ui.components.parseHex
 import com.budjet.app.ui.theme.BudTheme
+import com.budjet.app.ui.theme.BossLight
 import com.budjet.app.ui.theme.CategoryPalette
+import com.budjet.app.ui.theme.NavyLight
+import com.budjet.app.ui.theme.PaperLight
+import com.budjet.app.util.centsToInput
 import com.budjet.app.util.formatMoney
+import com.budjet.app.util.parseMoneyInput
 import java.time.LocalDate
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -93,6 +100,7 @@ fun SettingsScreen(
     onSetName: (String) -> Unit,
     onSetCurrency: (String) -> Unit,
     onSetTheme: (ThemeMode) -> Unit,
+    onSetPalette: (ThemePalette) -> Unit,
     onAddCategory: (name: String, icon: String, colorHex: String, type: TxType) -> Unit,
     onOpenGoals: () -> Unit,
     onOpenRecurring: () -> Unit,
@@ -102,9 +110,10 @@ fun SettingsScreen(
     onValidateBackup: (String) -> Result<AppData>,
     onRestoreBackup: (AppData) -> Unit,
     onNotify: (String) -> Unit,
+    onSetOpeningBalance: (Long) -> Unit,
     onExport: () -> Unit,
     onResetDemo: () -> Unit,
-    onClearTransactions: () -> Unit,
+    onStartFresh: () -> Unit,
 ) {
     val colors = BudTheme.colors
     val context = LocalContext.current
@@ -112,7 +121,8 @@ fun SettingsScreen(
     var currencyDialog by remember { mutableStateOf(false) }
     var categoryDialog by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }
-    var confirmClear by remember { mutableStateOf(false) }
+    var confirmFresh by remember { mutableStateOf(false) }
+    var openingDialog by remember { mutableStateOf(false) }
     var pendingRestore by remember { mutableStateOf<AppData?>(null) }
     var importError by remember { mutableStateOf<String?>(null) }
     val currency = Currency.from(data.settings.currencyCode)
@@ -246,6 +256,21 @@ fun SettingsScreen(
                         onClick = { onSetTheme(ThemeMode.SYSTEM) },
                         modifier = Modifier.weight(1f),
                     )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            BudCard(padding = 14.dp) {
+                Overline("GAMA DE COLOR")
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ThemePalette.entries.forEach { palette ->
+                        PaletteOption(
+                            palette = palette,
+                            selected = data.settings.palette == palette,
+                            onClick = { onSetPalette(palette) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
         }
@@ -411,6 +436,14 @@ fun SettingsScreen(
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 SettingsRow(
+                    icon = Icons.Rounded.AccountBalance,
+                    title = "Saldo inicial",
+                    subtitle = "Punto de partida de tu economía",
+                    trailing = formatMoney(data.settings.openingBalanceCents, currency),
+                    onClick = { openingDialog = true },
+                )
+                SettingsDivider()
+                SettingsRow(
                     icon = Icons.Rounded.Save,
                     title = "Copia de seguridad",
                     subtitle = "Guarda todos tus datos en un archivo JSON",
@@ -437,10 +470,10 @@ fun SettingsScreen(
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.DeleteOutline,
-                    title = "Borrar movimientos",
-                    subtitle = "Mantiene categorías y presupuestos",
+                    title = "Empezar de cero",
+                    subtitle = "Borra movimientos, presupuestos, objetivos y recurrentes",
                     destructive = true,
-                    onClick = { confirmClear = true },
+                    onClick = { confirmFresh = true },
                 )
             }
             Spacer(Modifier.height(10.dp))
@@ -470,7 +503,7 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Un lugar tranquilo para tu dinero. Versión 0.3.0 · boceto.",
+                            text = "Un lugar tranquilo para tu dinero. Versión 0.4.0 · boceto.",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )
@@ -582,15 +615,78 @@ fun SettingsScreen(
         )
     }
 
-    if (confirmClear) {
+    if (confirmFresh) {
         ConfirmDialog(
-            title = "¿Borrar todos los movimientos?",
-            message = "Esta acción no se puede deshacer. Las categorías y los presupuestos se mantendrán.",
-            confirm = "Borrar",
-            onDismiss = { confirmClear = false },
+            title = "¿Empezar de cero?",
+            message = "Se borrarán movimientos, presupuestos, objetivos y recurrentes. El saldo inicial pasará a 0 €. Se mantienen categorías, cuentas, nombre y apariencia.",
+            confirm = "Empezar de cero",
+            onDismiss = { confirmFresh = false },
             onConfirm = {
-                onClearTransactions()
-                confirmClear = false
+                onStartFresh()
+                confirmFresh = false
+            },
+        )
+    }
+
+    if (openingDialog) {
+        var openingText by remember { mutableStateOf(centsToInput(data.settings.openingBalanceCents)) }
+        val parsed = parseMoneyInput(openingText)
+        AlertDialog(
+            onDismissRequest = { openingDialog = false },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(26.dp),
+            title = {
+                Text(
+                    "Saldo inicial",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.ink,
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Es el dinero que ya tenías antes de empezar a apuntar. Se suma a tus ingresos y se resta con tus gastos. Puede ser 0 €.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = openingText,
+                        onValueChange = { text ->
+                            if (text.length <= 10 && text.all { it.isDigit() || it == ',' }) {
+                                openingText = text
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Importe") },
+                        placeholder = { Text("0") },
+                        suffix = { Text(currency.symbol, color = colors.inkMuted) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(14.dp),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onSetOpeningBalance(parsed)
+                        openingDialog = false
+                    },
+                ) { Text("Guardar", color = colors.primary) }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(
+                        onClick = {
+                            onSetOpeningBalance(0L)
+                            openingDialog = false
+                        },
+                    ) { Text("Poner 0", color = colors.inkMuted) }
+                    TextButton(onClick = { openingDialog = false }) {
+                        Text("Cancelar", color = colors.inkMuted)
+                    }
+                }
             },
         )
     }
@@ -669,14 +765,70 @@ fun SettingsScreen(
 }
 
 @Composable
+private fun PaletteOption(
+    palette: ThemePalette,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = BudTheme.colors
+    val swatches = when (palette) {
+        ThemePalette.BUSINESS -> listOf(PaperLight.background, PaperLight.primary, PaperLight.expense)
+        ThemePalette.NAVY -> listOf(NavyLight.background, NavyLight.primary, NavyLight.expense)
+        ThemePalette.BOSS -> listOf(BossLight.surfaceMuted, BossLight.ink, BossLight.primary)
+    }
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (selected) colors.primarySoft else colors.surfaceMuted.copy(alpha = 0.55f))
+            .border(
+                1.dp,
+                if (selected) colors.primary else Color.Transparent,
+                RoundedCornerShape(14.dp),
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                swatches.forEach { color ->
+                    Box(
+                        Modifier
+                            .size(13.dp)
+                            .clip(CircleShape)
+                            .background(color)
+                            .border(1.dp, colors.line.copy(alpha = 0.6f), CircleShape),
+                    )
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            if (selected) {
+                Icon(
+                    Icons.Rounded.Check,
+                    contentDescription = null,
+                    tint = colors.primary,
+                    modifier = Modifier.size(13.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = palette.label,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) colors.primary else colors.inkMuted,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
 private fun ThemeOption(
     label: String,
     icon: ImageVector,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-) {
-    val colors = BudTheme.colors
+) {    val colors = BudTheme.colors
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
@@ -706,6 +858,7 @@ private fun SettingsRow(
     icon: ImageVector,
     title: String,
     subtitle: String? = null,
+    trailing: String? = null,
     onClick: (() -> Unit)? = null,
     destructive: Boolean = false,
 ) {
@@ -747,6 +900,15 @@ private fun SettingsRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+        if (trailing != null) {
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = trailing,
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.ink,
+                maxLines = 1,
+            )
         }
         if (onClick != null) {
             Icon(

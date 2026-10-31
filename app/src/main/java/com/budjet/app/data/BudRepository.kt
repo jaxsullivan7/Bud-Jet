@@ -32,7 +32,12 @@ class BudRepository(context: Context) {
             return demo
         }
         return runCatching {
-            json.decodeFromString(AppData.serializer(), file.readText())
+            val stored = json.decodeFromString(AppData.serializer(), file.readText())
+            val migrated = stored.migratedToCurrent()
+            if (migrated != stored) {
+                runCatching { file.writeText(json.encodeToString(AppData.serializer(), migrated)) }
+            }
+            migrated
         }.getOrElse { DemoData.build() }
     }
 

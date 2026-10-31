@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.budjet.app.data.ThemeMode
+import com.budjet.app.data.ThemePalette
 
 val LocalBudColors = staticCompositionLocalOf { PaperLight }
 val LocalBudType = staticCompositionLocalOf { budTypography }
@@ -37,6 +38,7 @@ private val BudShapes = Shapes(
 @Composable
 fun BudJetTheme(
     themeMode: ThemeMode = ThemeMode.LIGHT,
+    paletteStyle: ThemePalette = ThemePalette.BUSINESS,
     content: @Composable () -> Unit,
 ) {
     val dark = when (themeMode) {
@@ -44,7 +46,11 @@ fun BudJetTheme(
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
-    val palette = if (dark) PaperDark else PaperLight
+    val palette = when (paletteStyle) {
+        ThemePalette.BUSINESS -> if (dark) PaperDark else PaperLight
+        ThemePalette.NAVY -> if (dark) NavyDark else NavyLight
+        ThemePalette.BOSS -> if (dark) BossDark else BossLight
+    }
     val view = LocalView.current
 
     val scheme = if (dark) {

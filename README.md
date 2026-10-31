@@ -1,8 +1,8 @@
 # Bud Jet
 
-Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos y objetivos de ahorro. Diseño sobrio, cálido y editorial: papel, tinta y verde pino.
+Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos y objetivos de ahorro. Diseño sobrio, cálido y editorial, con tres gamas de color.
 
-> Estado: **boceto funcional v0.3.0**. Datos locales, copia de seguridad y desbloqueo biométrico.
+> Estado: **boceto funcional v0.4.0**. Datos locales, copia de seguridad, desbloqueo biométrico y saldo inicial editable.
 
 | Resumen | Objetivos | Movimientos |
 |---|---|---|
@@ -14,11 +14,26 @@ Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos
 
 | Añadir movimiento | Movimientos recurrentes | Ajustes |
 |---|---|---|
-| ![Nuevo movimiento](docs/screenshots/08-nuevo-movimiento.png) | ![Recurrentes](docs/screenshots/10-recurrentes.png) | ![Ajustes](docs/screenshots/09-ajustes.png) |
+| ![Nuevo movimiento](docs/screenshots/08-nuevo-movimiento.png) | ![Recurrentes](docs/screenshots/14-recurrentes.png) | ![Ajustes](docs/screenshots/09-ajustes.png) |
 
-| Datos y copia de seguridad | Modo oscuro | Bloqueo biométrico |
+| Datos y copia | Modo oscuro | Empezar de cero |
 |---|---|---|
-| ![Datos](docs/screenshots/09b-ajustes-datos.png) | ![Resumen en modo oscuro](docs/screenshots/12-resumen-oscuro.png) | ![Bloqueo](docs/screenshots/13-bloqueo.png) |
+| ![Datos](docs/screenshots/09b-ajustes-datos.png) | ![Resumen en modo oscuro](docs/screenshots/16-resumen-oscuro.png) | ![Resumen vacío](docs/screenshots/18-resumen-vacio.png) |
+
+| Bloqueo biométrico |
+|---|
+| ![Bloqueo](docs/screenshots/17-bloqueo.png) |
+
+## Gamas de color
+
+Se eligen en **Ajustes → Apariencia**, debajo de Claro/Oscuro/Sistema. Cada gama tiene variante clara y oscura:
+
+| Business | Navy | Boss |
+|---|---|---|
+| ![Business](docs/screenshots/01-resumen.png) | ![Navy](docs/screenshots/11-resumen-navy.png) | ![Boss](docs/screenshots/13-resumen-boss.png) |
+| Papel, verde pino y terracota. | Beige, azul marino y marrón. | Gris/negro y rojo vino. |
+
+Las categorías conservan sus colores en las tres gamas para no perder identidad; el verde sigue significando ingreso y el rojo/tierra gasto.
 
 ## Qué incluye
 
@@ -26,13 +41,14 @@ Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos
 - **Movimientos** — historial agrupado por día, filtros, búsqueda, edición y borrado con deshacer.
 - **Presupuestos** — límite mensual general y por categoría, con ritmo de gasto diario.
 - **Análisis** — desglose por categorías, comparativa de 6 meses, estadísticas e ideas automáticas.
-- **Detalle de categoría** — toca un segmento del donut o su leyenda para ver la evolución, las métricas y los movimientos de esa categoría; desde ahí puedes editar cada gasto.
-- **Objetivos de ahorro** — crea metas, aporta o retira dinero y consulta el progreso y la sugerencia mensual. Es una “hucha virtual”: organiza tu ahorro sin mover el saldo.
-- **Movimientos recurrentes** — nómina, alquiler o suscripciones mensuales; se apuntan solos al abrir la app el día que toca, se pueden pausar y editar.
-- **Copia de seguridad** — exporta todo a un JSON versionado y restáuralo desde el selector de archivos de Android. La importación sustituye los datos actuales tras una confirmación con el resumen de la copia.
-- **Bloqueo biométrico** — pide huella o PIN al abrir la app y al volver tras más de 30 segundos en segundo plano. Incluye “Probar desbloqueo” en Ajustes.
-- **Ajustes** — nombre, moneda (EUR/USD/GBP/MXN), tema claro/oscuro/sistema, categorías, cuentas y exportación CSV.
-- **Añadir movimiento** — teclado numérico propio, importes rápidos, categorías, cuenta, fecha y nota.
+- **Detalle de categoría** — toca un segmento del donut o su leyenda para ver la evolución, las métricas y los movimientos de esa categoría.
+- **Objetivos de ahorro** — metas, aportaciones/retiradas, progreso y sugerencia mensual. Es una “hucha virtual”.
+- **Movimientos recurrentes** — nómina, alquiler o suscripciones mensuales; se apuntan solos al abrir la app, se pueden pausar y editar.
+- **Copia de seguridad** — exporta todo a un JSON versionado y restáuralo desde el selector de Android, con validación y resumen antes de sustituir.
+- **Saldo inicial** — visible y editable en Ajustes → Datos. Ya no hay una cifra oculta de demo.
+- **Empezar de cero** — borra movimientos, presupuestos, objetivos y recurrentes; deja el saldo inicial a 0 y conserva categorías, cuentas y apariencia.
+- **Bloqueo biométrico** — huella o PIN al abrir y tras 30 segundos en segundo plano, con “Probar desbloqueo”.
+- **Ajustes** — nombre, moneda (EUR/USD/GBP/MXN), tema, gama de color, categorías, cuentas y exportación CSV.
 
 Todo se guarda en el dispositivo (`files/budjet.json`); no hay cuentas ni nube.
 
@@ -57,10 +73,12 @@ Requiere JDK 17+ y Android SDK 37.
 
 ## Probar el boceto
 
-1. Instala `BudJet-0.3.0-boceto.apk` en un Android 8.0 o superior (o compila con Gradle).
-2. La app arranca con datos de ejemplo de los últimos 6 meses para que puedas moverte por todas las pantallas.
-3. En **Ajustes → Datos** puedes exportar una copia JSON, restaurarla, cargar el ejemplo o borrar los movimientos.
-4. El bloqueo biométrico se activa desde **Ajustes → Seguridad**. Usa **Probar desbloqueo** y la checklist de [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
+1. Instala `BudJet-0.4.0-boceto.apk` en un Android 8.0 o superior.
+2. La app arranca con datos de ejemplo de los últimos 6 meses.
+3. Para empezar con todo a cero: **Ajustes → Datos → Empezar de cero**. El saldo total, ingresos, gastos, presupuestos, objetivos y recurrentes quedarán a 0. Si quieres registrar el dinero que ya tenías, cambia **Saldo inicial** en la misma pantalla.
+4. Prueba las gamas **Business / Navy / Boss** en **Ajustes → Apariencia**.
+5. Exporta una copia en **Ajustes → Datos → Copia de seguridad** y restáurala.
+6. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
 
 La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirve para probar, no para publicar en Google Play.
 
@@ -71,17 +89,17 @@ La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirv
 ./gradlew :app:lintDebug
 ```
 
-- **30 tests de lógica** — finanzas, recurrencias, objetivos, backup/importación, validación y mapeo de errores biométricos.
-- **2 tests de captura** con Robolectric/Roborazzi que renderizan la app completa y generan 14 pantallas.
+- **36 tests de lógica** — finanzas, recurrencias, objetivos, backup/importación, migración del saldo oculto, reseteo y biometría.
+- **2 tests de captura** con Robolectric/Roborazzi que renderizan 19 pantallas.
 - **Lint: 0 errores**.
 
 ## Estructura
 
 ```
 app/src/main/java/com/budjet/app/
-├── data/         modelos, demo, recurrencias, backup, repositorio y cálculos
+├── data/         modelos, demo, recurrencias, backup, migraciones y cálculos
 ├── ui/           navegación, ViewModel, pantallas y componentes
-├── ui/theme/     paleta, tipografía y tema
+├── ui/theme/     paletas Business/Navy/Boss, tipografía y tema
 └── util/         formatos, CSV y autenticación biométrica
 ```
 
@@ -90,22 +108,22 @@ app/src/main/java/com/budjet/app/
 - Las recurrencias son mensuales y se procesan al abrir la app; si no abres la app durante un mes, ese cargo no se genera.
 - Los objetivos son una asignación virtual: no mueven dinero entre cuentas ni descuentan del saldo.
 - La copia de seguridad **sustituye** todos los datos; todavía no hay fusión ni importación incremental.
-- El archivo de copia es un JSON legible, no cifrado: guárdalo en un lugar seguro. El cifrado está previsto para una versión posterior.
-- El bloqueo biométrico está integrado y probado en JVM/UI; falta la firma en un dispositivo real con huella y PIN.
+- El archivo de copia es un JSON legible, no cifrado: guárdalo en un lugar seguro.
+- El bloqueo biométrico está integrado y probado en JVM/UI; falta la firma en un dispositivo real.
 - Sin copia en la nube ni sincronización entre dispositivos.
 
 ## Próximos pasos
 
 - [ ] Validar la checklist biométrica en tu móvil (BUD-26).
-- [ ] Recurrencias semanales/anuales y avisos de próximos cargos (BUD-10).
-- [ ] Notificaciones de presupuesto y cargos (BUD-2).
+- [ ] Notificaciones de presupuesto y cargos recurrentes (BUD-2).
+- [ ] Recurrencias semanales/anuales (BUD-10).
 - [ ] Aportaciones automáticas a objetivos (BUD-14).
-- [ ] Copia de seguridad cifrada y copia automática.
-- [ ] Widget y notificaciones.
+- [ ] Copia cifrada y copia automática.
+- [ ] Widget.
 
 El backlog está creado en Jira:
 
 - Proyecto: [BUD · Bud Jet](https://jaxsullivan7.atlassian.net/jira/software/projects/BUD/summary)
-- 5 épicas (BUD-1, BUD-3, BUD-4, BUD-5, BUD-6) y 24 historias/tareas (BUD-2, BUD-7…BUD-29).
+- 5 épicas (BUD-1, BUD-3, BUD-4, BUD-5, BUD-6) y 24 historias/tareas.
 - Mapa de claves: [`docs/jira-created.md`](docs/jira-created.md).
 - Snapshot importable: [`docs/jira-import.csv`](docs/jira-import.csv).

@@ -64,6 +64,86 @@ val PaperDark = BudPalette(
     isDark = true,
 )
 
+val NavyLight = BudPalette(
+    background = Color(0xFFF2EEE5),
+    surface = Color(0xFFFBF8F1),
+    surfaceMuted = Color(0xFFE8E2D5),
+    ink = Color(0xFF16233A),
+    inkMuted = Color(0xFF6C7180),
+    line = Color(0xFFDED6C6),
+    primary = Color(0xFF24405F),
+    onPrimary = Color(0xFFF8F2E6),
+    primarySoft = Color(0xFFE3E8EF),
+    income = Color(0xFF2F6B54),
+    expense = Color(0xFF9C623D),
+    warning = Color(0xFFB5894B),
+    heroStart = Color(0xFF24405F),
+    heroEnd = Color(0xFF14243B),
+    heroText = Color(0xFFF8F3E8),
+    heroMuted = Color(0xFFC3CEDD),
+    isDark = false,
+)
+
+val NavyDark = BudPalette(
+    background = Color(0xFF0C131D),
+    surface = Color(0xFF141C28),
+    surfaceMuted = Color(0xFF1E2836),
+    ink = Color(0xFFECE9E0),
+    inkMuted = Color(0xFF98A2B3),
+    line = Color(0xFF2A3546),
+    primary = Color(0xFFA9C0DE),
+    onPrimary = Color(0xFF0B1A2A),
+    primarySoft = Color(0xFF1B2A3D),
+    income = Color(0xFF8FC7AA),
+    expense = Color(0xFFD99A72),
+    warning = Color(0xFFD9B06E),
+    heroStart = Color(0xFF1B2E4A),
+    heroEnd = Color(0xFF0E1A2A),
+    heroText = Color(0xFFF1EDE4),
+    heroMuted = Color(0xFF9FB0C4),
+    isDark = true,
+)
+
+val BossLight = BudPalette(
+    background = Color(0xFFF1F0EE),
+    surface = Color(0xFFFAF9F7),
+    surfaceMuted = Color(0xFFE7E4E2),
+    ink = Color(0xFF171518),
+    inkMuted = Color(0xFF6E686C),
+    line = Color(0xFFDDD8D6),
+    primary = Color(0xFF6E1F2B),
+    onPrimary = Color(0xFFF8F1EC),
+    primarySoft = Color(0xFFF2E4E5),
+    income = Color(0xFF3C6B57),
+    expense = Color(0xFF8E2B3A),
+    warning = Color(0xFFA87B3E),
+    heroStart = Color(0xFF352428),
+    heroEnd = Color(0xFF171214),
+    heroText = Color(0xFFF4EFE9),
+    heroMuted = Color(0xFFBEB1B3),
+    isDark = false,
+)
+
+val BossDark = BudPalette(
+    background = Color(0xFF0B0A0B),
+    surface = Color(0xFF151315),
+    surfaceMuted = Color(0xFF211D20),
+    ink = Color(0xFFEFEAE7),
+    inkMuted = Color(0xFFA39A9E),
+    line = Color(0xFF2D272B),
+    primary = Color(0xFFD3A0A8),
+    onPrimary = Color(0xFF2A0F14),
+    primarySoft = Color(0xFF2A1B1E),
+    income = Color(0xFF93B7A3),
+    expense = Color(0xFFD28A93),
+    warning = Color(0xFFD1A46A),
+    heroStart = Color(0xFF3A2027),
+    heroEnd = Color(0xFF1A1013),
+    heroText = Color(0xFFF3EDE8),
+    heroMuted = Color(0xFFB9A7AB),
+    isDark = true,
+)
+
 /** Sober, earthy palette used for categories. */
 object CategoryPalette {
     val swatches = listOf(

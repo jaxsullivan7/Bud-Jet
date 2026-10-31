@@ -314,6 +314,7 @@ fun BudJetApp(
                     onSetName = viewModel::setName,
                     onSetCurrency = viewModel::setCurrency,
                     onSetTheme = viewModel::setTheme,
+                    onSetPalette = viewModel::setPalette,
                     onAddCategory = viewModel::addCategory,
                     onOpenGoals = { goalsOpen = true },
                     onOpenRecurring = { recurringOpen = true },
@@ -383,6 +384,7 @@ fun BudJetApp(
                     onNotify = { message ->
                         scope.launch { snackbar.showSnackbar(message) }
                     },
+                    onSetOpeningBalance = viewModel::setOpeningBalance,
                     onExport = {
                         val intent = viewModel.buildExport(context, data)
                         if (intent != null) {
@@ -396,9 +398,9 @@ fun BudJetApp(
                         tab = AppTab.HOME
                         scope.launch { snackbar.showSnackbar("Datos de ejemplo restaurados") }
                     },
-                    onClearTransactions = {
-                        viewModel.clearEverything()
-                        scope.launch { snackbar.showSnackbar("Movimientos borrados") }
+                    onStartFresh = {
+                        viewModel.startFresh()
+                        scope.launch { snackbar.showSnackbar("Todo a cero. Empiezas de cero.") }
                     },
                 )
             }

@@ -72,17 +72,25 @@ data class SavingsGoal(
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 @Serializable
+enum class ThemePalette(val label: String) {
+    BUSINESS("Business"),
+    NAVY("Navy"),
+    BOSS("Boss"),
+}
+
+@Serializable
 data class Settings(
     val name: String = "Jax",
     val currencyCode: String = "EUR",
     val themeMode: ThemeMode = ThemeMode.LIGHT,
-    val openingBalanceCents: Long = 385_000,
+    val palette: ThemePalette = ThemePalette.BUSINESS,
+    val openingBalanceCents: Long = 0L,
     val biometricLock: Boolean = false,
 )
 
 @Serializable
 data class AppData(
-    val version: Int = 3,
+    val version: Int = 4,
     val settings: Settings = Settings(),
     val categories: List<Category> = emptyList(),
     val accounts: List<Account> = emptyList(),
@@ -96,3 +104,16 @@ data class AppData(
     fun goal(id: String?): SavingsGoal? = savingsGoals.firstOrNull { it.id == id }
     fun recurring(id: String?): RecurringRule? = recurringRules.firstOrNull { it.id == id }
 }
+
+/**
+ * Leaves the app ready for the user's own data: all money-related content is
+ * removed and the opening balance is reset to zero. Categories, accounts and
+ * visual preferences are kept so the app remains usable.
+ */
+fun AppData.clearedFinancialData(): AppData = copy(
+    transactions = emptyList(),
+    budgets = emptyList(),
+    savingsGoals = emptyList(),
+    recurringRules = emptyList(),
+    settings = settings.copy(openingBalanceCents = 0L),
+)
