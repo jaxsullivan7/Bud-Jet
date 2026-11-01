@@ -2,7 +2,7 @@
 
 Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos y objetivos de ahorro. Diseño sobrio, cálido y editorial, con tres gamas de color.
 
-> Estado: **boceto funcional v0.5.0**. Datos locales, copia de seguridad, desbloqueo biométrico, saldo inicial editable, movimientos programados y análisis con rango histórico.
+> Estado: **boceto funcional v0.5.1**. Datos locales, copia de seguridad, desbloqueo biométrico, saldo inicial editable, movimientos programados y análisis con balance inicial del mes.
 
 | Resumen | Objetivos | Movimientos |
 |---|---|---|
@@ -45,6 +45,7 @@ Las categorías conservan sus colores en las tres gamas para no perder identidad
 - **Movimientos** — historial agrupado por día, filtros, búsqueda, edición y borrado con deshacer. Al buscar, el resumen de ingresos/gastos/balance se recalcula solo con los resultados.
 - **Presupuestos** — límite mensual general y por categoría, con ritmo de gasto diario.
 - **Análisis** — desglose por categorías, comparativa de 6 meses, estadísticas e ideas automáticas. Puedes fijar **desde qué fecha** empieza a contar el histórico.
+- **Balance del mes** — cada mes arranca con el saldo real del cierre anterior (aunque la nómina llegue el último día), suma ingresos, resta gastos y muestra el saldo final.
 - **Detalle de categoría** — toca un segmento del donut o su leyenda para ver la evolución, las métricas y los movimientos de esa categoría.
 - **Objetivos de ahorro** — metas, aportaciones/retiradas, progreso y sugerencia mensual. Es una “hucha virtual”.
 - **Movimientos recurrentes** — nómina, alquiler o suscripciones mensuales; se apuntan solos al abrir la app, se pueden pausar y editar.
@@ -81,7 +82,7 @@ Requiere JDK 17+ y Android SDK 37.
 
 ## Probar el boceto
 
-1. Instala `BudJet-0.5.0-boceto.apk` en un Android 8.0 o superior.
+1. Instala `BudJet-0.5.1-boceto.apk` en un Android 8.0 o superior.
 2. La app arranca con datos de ejemplo de los últimos 6 meses.
 3. Para empezar con todo a cero: **Ajustes → Datos → Empezar de cero**. El saldo total, ingresos, gastos, presupuestos, objetivos y recurrentes quedarán a 0. Si quieres registrar el dinero que ya tenías, cambia **Saldo inicial** en la misma pantalla.
 4. Prueba las gamas **Business / Navy / Boss** en **Ajustes → Apariencia**.
@@ -100,7 +101,7 @@ La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirv
 ./gradlew :app:lintDebug
 ```
 
-- **46 tests de lógica** — finanzas, movimientos futuros, fechas recordadas, recurrencias, objetivos, backup/importación, migraciones, filtros y biometría.
+- **48 tests de lógica** — finanzas, balance inicial/final, movimientos futuros, fechas recordadas, recurrencias, objetivos, backup/importación, migraciones, filtros y biometría.
 - **2 tests de captura** con Robolectric/Roborazzi que renderizan 24 pantallas.
 - **Lint: 0 errores**.
 
@@ -120,7 +121,7 @@ app/src/main/java/com/budjet/app/
 - Los movimientos futuros aparecen en la lista del mes en que caen y se marcan como “Programado”; no cuentan hasta su fecha.
 - Los objetivos son una asignación virtual: no mueven dinero entre cuentas ni descuentan del saldo.
 - **Anulación** conserva el gasto original y crea un ingreso vinculado por el mismo importe; el efecto neto es cero. No borra el gasto de la lista.
-- El rango histórico solo afecta a la pantalla de Análisis y al detalle de categoría abierto desde ella.
+- El rango histórico solo afecta a las gráficas de Análisis y al detalle de categoría; el bloque de balance del mes usa el saldo real completo.
 - La copia de seguridad **sustituye** todos los datos; todavía no hay fusión ni importación incremental.
 - El archivo de copia es un JSON legible, no cifrado: guárdalo en un lugar seguro.
 - El bloqueo biométrico está integrado y probado en JVM/UI; falta la firma en un dispositivo real.

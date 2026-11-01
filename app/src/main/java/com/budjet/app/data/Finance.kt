@@ -79,6 +79,16 @@ object Finance {
         }
     }
 
+    /** Money available at the start of [month], including anything earned the previous month. */
+    fun initialBalance(data: AppData, month: YearMonth): Long =
+        balanceAt(data, month.atDay(1).minusDays(1))
+
+    /** Closing balance for [month]; the current month stops at today so future entries do not count. */
+    fun finalBalance(data: AppData, month: YearMonth, today: LocalDate = LocalDate.now()): Long {
+        val end = month.atEndOfMonth()
+        return balanceAt(data, if (end.isAfter(today)) today else end)
+    }
+
     fun series(
         data: AppData,
         anchor: YearMonth,

@@ -134,6 +134,37 @@ class FinanceTest {
     }
 
     @Test
+    fun `the month starts with what was left at the end of the previous month`() {
+        val november = YearMonth.of(2026, 11)
+        val app = data(
+            listOf(
+                tx("salary", 2_450_00, TxType.INCOME, LocalDate.of(2026, 10, 31)),
+                tx("rent", 850_00, TxType.EXPENSE, LocalDate.of(2026, 11, 2)),
+            ),
+        )
+        // Opening 1.000 € + salary on 31 Oct = 3.450 € carried into November.
+        assertEquals(3_450_00L, Finance.initialBalance(app, november))
+        assertEquals(2_600_00L, Finance.finalBalance(app, november, LocalDate.of(2026, 11, 30)))
+    }
+
+    @Test
+    fun `month balance is initial plus income minus expenses`() {
+        val november = YearMonth.of(2026, 11)
+        val today = LocalDate.of(2026, 11, 30)
+        val app = data(
+            listOf(
+                tx("1", 2_450_00, TxType.INCOME, LocalDate.of(2026, 10, 31)),
+                tx("2", 500_00, TxType.INCOME, LocalDate.of(2026, 11, 10)),
+                tx("3", 300_00, TxType.EXPENSE, LocalDate.of(2026, 11, 12)),
+            ),
+        )
+        val initial = Finance.initialBalance(app, november)
+        val monthTotals = Finance.totals(Finance.postedTransactionsOfMonth(app, november, today))
+        val final = Finance.finalBalance(app, november, today)
+        assertEquals(initial + monthTotals.income - monthTotals.expense, final)
+    }
+
+    @Test
     fun `savings rate is balance over income`() {
         val totals = Finance.totals(
             listOf(

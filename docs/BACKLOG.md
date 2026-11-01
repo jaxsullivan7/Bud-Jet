@@ -7,6 +7,10 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.5.1
+
+- **Balance inicial del mes en Análisis**: el mes arranca con el saldo real del cierre anterior, incluyendo nóminas cobradas el último día del mes previo. Se muestra saldo inicial, ingresos, gastos y saldo final.
+
 ### v0.5
 
 - **Fecha recordada** en nuevos movimientos.

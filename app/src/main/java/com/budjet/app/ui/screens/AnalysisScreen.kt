@@ -98,6 +98,11 @@ fun AnalysisScreen(
     }
     val futureCount = monthTx.size - postedTx.size
     val totals = remember(postedTx) { Finance.totals(postedTx) }
+    val monthTotalsFull = remember(data.transactions, month) {
+        Finance.totals(Finance.postedTransactionsOfMonth(data, month, today))
+    }
+    val initialBalance = remember(data, month) { Finance.initialBalance(data, month) }
+    val finalBalance = remember(data, month, today) { Finance.finalBalance(data, month, today) }
     val spends = remember(scopedData, month) { Finance.spendByCategory(scopedData, month) }
     val series = remember(scopedData, month) { Finance.series(scopedData, month, 6) }
     val average = remember(scopedData, month) { Finance.monthlyAverageExpense(scopedData, month, 3) }
@@ -185,6 +190,17 @@ fun AnalysisScreen(
                     modifier = Modifier.size(13.dp),
                 )
             }
+            Spacer(Modifier.height(14.dp))
+            MonthBalanceCard(
+                initial = initialBalance,
+                income = monthTotalsFull.income,
+                expense = monthTotalsFull.expense,
+                final = finalBalance,
+                month = month,
+                today = today,
+                currency = currency,
+                filterActive = startDate != null,
+            )
             Spacer(Modifier.height(20.dp))
         }
 
@@ -446,6 +462,125 @@ fun AnalysisScreen(
         ) {
             DatePicker(state = state, showModeToggle = false)
         }
+    }
+}
+
+@Composable
+private fun MonthBalanceCard(
+    initial: Long,
+    income: Long,
+    expense: Long,
+    final: Long,
+    month: YearMonth,
+    today: LocalDate,
+    currency: Currency,
+    filterActive: Boolean,
+) {
+    val colors = BudTheme.colors
+    val current = month == YearMonth.from(today)
+    BudCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Overline("BALANCE DEL MES")
+            Pill(
+                text = if (current) "En curso" else "Cerrado",
+                container = colors.surfaceMuted,
+                content = colors.inkMuted,
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = "Saldo inicial",
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.inkMuted,
+        )
+        Text(
+            text = formatMoney(initial, currency),
+            style = BudTheme.type.moneyMedium.copy(fontSize = 24.sp),
+            color = colors.ink,
+            maxLines = 1,
+        )
+        Spacer(Modifier.height(12.dp))
+        BalanceFlowRow(
+            label = "Ingresos del mes",
+            prefix = "+",
+            value = income,
+            color = colors.income,
+            currency = currency,
+        )
+        Spacer(Modifier.height(5.dp))
+        BalanceFlowRow(
+            label = "Gastos del mes",
+            prefix = "−",
+            value = expense,
+            color = colors.expense,
+            currency = currency,
+        )
+        Spacer(Modifier.height(12.dp))
+        androidx.compose.material3.HorizontalDivider(color = colors.line)
+        Spacer(Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            Column {
+                Text(
+                    text = "Saldo final",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.ink,
+                )
+                Text(
+                    text = if (current) "Hasta hoy" else "Cierre del mes",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
+            }
+            Text(
+                text = formatMoney(final, currency),
+                style = BudTheme.type.moneyLarge,
+                color = colors.ink,
+                maxLines = 1,
+            )
+        }
+        if (filterActive) {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = "El saldo se calcula con todo el historial, no con el filtro de fechas.",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.inkMuted,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BalanceFlowRow(
+    label: String,
+    prefix: String,
+    value: Long,
+    color: Color,
+    currency: Currency,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = BudTheme.colors.inkMuted,
+        )
+        Text(
+            text = prefix + formatMoney(value, currency),
+            style = BudTheme.type.moneySmall,
+            color = color,
+            maxLines = 1,
+        )
     }
 }
 
