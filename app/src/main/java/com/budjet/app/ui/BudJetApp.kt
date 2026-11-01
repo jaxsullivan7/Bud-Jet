@@ -44,6 +44,7 @@ import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Transaction
 import com.budjet.app.data.TxType
+import com.budjet.app.data.movementDateOrDefault
 import com.budjet.app.ui.components.AppTab
 import com.budjet.app.ui.components.BudBottomBar
 import com.budjet.app.ui.screens.AnalysisScreen
@@ -166,11 +167,13 @@ fun BudJetApp(
 
     fun newDraft(): EditorDraft {
         val firstExpense = data.categories.firstOrNull { it.type == TxType.EXPENSE && !it.archived }
-        val date = if (month == YearMonth.now()) {
-            LocalDate.now()
-        } else {
-            month.atDay(minOf(LocalDate.now().dayOfMonth, month.lengthOfMonth()))
-        }
+        val date = data.settings.movementDateOrDefault(
+            fallback = if (month == YearMonth.now()) {
+                LocalDate.now()
+            } else {
+                month.atDay(minOf(LocalDate.now().dayOfMonth, month.lengthOfMonth()))
+            },
+        )
         return EditorDraft(
             type = TxType.EXPENSE,
             categoryId = firstExpense?.id ?: "",
@@ -187,6 +190,7 @@ fun BudJetApp(
         accountId = transaction.accountId,
         date = LocalDate.ofEpochDay(transaction.dateEpochDay),
         note = transaction.note,
+        reversalOfId = transaction.reversalOfId,
     )
 
     fun deleteTransaction(id: String) {
@@ -269,6 +273,7 @@ fun BudJetApp(
                         onPreviousMonth = viewModel::previousMonth,
                         onNextMonth = viewModel::nextMonth,
                         onOpenCategory = { openCategory(it) },
+                        onSetStartDate = viewModel::setAnalysisStart,
                     )
                 }
             }

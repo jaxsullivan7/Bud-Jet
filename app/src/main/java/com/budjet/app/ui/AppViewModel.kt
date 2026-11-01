@@ -41,6 +41,7 @@ data class EditorDraft(
     val accountId: String = "main",
     val date: LocalDate = LocalDate.now(),
     val note: String = "",
+    val reversalOfId: String? = null,
 )
 
 data class RecurringDraft(
@@ -106,13 +107,17 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     dateEpochDay = draft.date.toEpochDay(),
                     note = draft.note.trim(),
                     recurringId = previous?.recurringId,
+                    reversalOfId = draft.reversalOfId,
                 )
                 val list = if (draft.id == null) {
                     current.transactions + transaction
                 } else {
                     current.transactions.map { if (it.id == draft.id) transaction else it }
                 }
-                current.copy(transactions = list.sortedByDescending { it.dateEpochDay })
+                current.copy(
+                    transactions = list.sortedByDescending { it.dateEpochDay },
+                    settings = current.settings.copy(lastMovementDateEpochDay = draft.date.toEpochDay()),
+                )
             }
         }
     }
@@ -294,6 +299,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
     fun setPalette(palette: ThemePalette) = updateSettings { it.copy(palette = palette) }
     fun setBiometricLock(enabled: Boolean) = updateSettings { it.copy(biometricLock = enabled) }
     fun setOpeningBalance(cents: Long) = updateSettings { it.copy(openingBalanceCents = cents.coerceAtLeast(0L)) }
+    fun setAnalysisStart(date: LocalDate?) = updateSettings { it.copy(analysisStartEpochDay = date?.toEpochDay()) }
 
     fun addCategory(name: String, icon: String, colorHex: String, type: TxType) {
         val clean = name.trim()

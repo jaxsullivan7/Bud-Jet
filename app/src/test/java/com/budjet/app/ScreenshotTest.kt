@@ -10,6 +10,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.budjet.app.data.Transaction
 import com.budjet.app.data.TxType
@@ -52,13 +54,18 @@ class ScreenshotTest {
 
         compose.onNodeWithContentDescription("Movimientos").performClick()
         capture("04-movimientos")
+        compose.onNodeWithContentDescription("Buscar").performClick()
+        compose.onNodeWithTag("search-field").performTextInput("Restaurantes")
+        capture("04b-movimientos-busqueda")
+        compose.onNodeWithTag("search-field").performTextClearance()
+        compose.onNodeWithContentDescription("Cerrar búsqueda").performClick()
 
         compose.onNodeWithContentDescription("Presupuestos").performClick()
         capture("05-presupuestos")
 
         compose.onNodeWithContentDescription("Análisis").performClick()
         capture("06-analisis")
-        compose.onNodeWithText("Hogar").performClick()
+        compose.onNodeWithText("Restaurantes").performClick()
         capture("07-categoria")
         back()
 
@@ -66,6 +73,13 @@ class ScreenshotTest {
         compose.onNodeWithContentDescription("Añadir movimiento").performClick()
         capture("08-nuevo-movimiento")
 
+        compose.onNodeWithText("Ingreso").performClick()
+        compose.onNodeWithTag("editor-categories").performScrollToNode(hasText("Anulación"))
+        compose.onNodeWithText("Anulación").performClick()
+        compose.onNodeWithText("Buscar pago a anular").performClick()
+        capture("08b-anulacion-picker")
+        compose.onNodeWithText("Casa Rafa").performClick()
+        capture("08c-anulacion")
         compose.onNodeWithContentDescription("Cerrar").performClick()
         compose.onNodeWithContentDescription("Ajustes").performClick()
         capture("09-ajustes")

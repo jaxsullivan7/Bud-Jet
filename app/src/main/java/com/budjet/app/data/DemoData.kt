@@ -19,6 +19,7 @@ object DemoData {
         Category("leisure", "Ocio", "movie", "#7D5A6B", TxType.EXPENSE),
         Category("shopping", "Compras", "bag", "#A94438", TxType.EXPENSE),
         Category("health", "Salud", "health", "#5E7D6E", TxType.EXPENSE),
+        Category("beauty", "Belleza", "spa", "#B0697A", TxType.EXPENSE),
         Category("subs", "Suscripciones", "subscriptions", "#5C6470", TxType.EXPENSE),
         Category("travel", "Viajes", "flight", "#3D6B6B", TxType.EXPENSE),
         Category("education", "Educación", "school", "#6B6A9E", TxType.EXPENSE),
@@ -27,6 +28,8 @@ object DemoData {
         Category("freelance", "Freelance", "work", "#4E7A68", TxType.INCOME),
         Category("invest", "Inversiones", "trending", "#6E7F3D", TxType.INCOME),
         Category("gifts", "Regalos", "gift", "#A8794A", TxType.INCOME),
+        Category("refund", "Devolución", "refund", "#4E7A68", TxType.INCOME),
+        Category("reversal", "Anulación", "reversal", "#5C6470", TxType.INCOME),
     )
 
     val accounts: List<Account> = listOf(
@@ -77,6 +80,8 @@ object DemoData {
             val lastDay = if (back == 0) today.dayOfMonth else month.lengthOfMonth()
             fun day(d: Int) = month.atDay(d.coerceAtMost(lastDay).coerceAtLeast(1))
             fun inMonth(d: Int) = d <= lastDay
+            fun randomDay(minDay: Int): Int =
+                if (lastDay <= minDay) 1 else minDay + rnd.nextInt(lastDay - minDay + 1)
 
             add(day(1), TxType.INCOME, "salary", 245_000, note = "Nómina")
             if (inMonth(2)) add(day(2), TxType.EXPENSE, "home", 85_000, note = "Alquiler")
@@ -106,7 +111,7 @@ object DemoData {
             }
 
             repeat(2 + rnd.nextInt(3)) {
-                val d = 2 + rnd.nextInt(lastDay - 1)
+                val d = randomDay(2)
                 add(
                     day(d), TxType.EXPENSE, "dining", (1_200 + rnd.nextInt(2_600)).toLong(),
                     account = "card",
@@ -116,11 +121,11 @@ object DemoData {
 
             if (inMonth(8)) add(day(8), TxType.EXPENSE, "transport", 4_500, account = "main", note = "Abono transporte")
             repeat(2 + rnd.nextInt(3)) {
-                val d = 2 + rnd.nextInt(lastDay - 1)
+                val d = randomDay(2)
                 add(day(d), TxType.EXPENSE, "transport", (900 + rnd.nextInt(2_000)).toLong(), account = "card", note = "Gasolina")
             }
             repeat(1 + rnd.nextInt(2)) {
-                val d = 2 + rnd.nextInt(lastDay - 1)
+                val d = randomDay(2)
                 add(day(d), TxType.EXPENSE, "transport", (450 + rnd.nextInt(900)).toLong(), account = "cash", note = "Taxi")
             }
 
@@ -210,7 +215,7 @@ object DemoData {
         )
 
         return AppData(
-            version = 4,
+            version = 5,
             settings = Settings(openingBalanceCents = 385_000),
             categories = categories,
             accounts = accounts,

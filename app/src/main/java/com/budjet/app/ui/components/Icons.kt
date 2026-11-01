@@ -19,6 +19,9 @@ import androidx.compose.material.icons.rounded.School
 import androidx.compose.material.icons.rounded.ShoppingBag
 import androidx.compose.material.icons.rounded.ShoppingBasket
 import androidx.compose.material.icons.rounded.Subscriptions
+import androidx.compose.material.icons.rounded.Undo
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Spa
 import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.Work
 import androidx.compose.ui.graphics.Color
@@ -45,6 +48,9 @@ fun categoryIcon(key: String): ImageVector = when (key) {
     "work" -> Icons.Rounded.Work
     "trending" -> Icons.Rounded.TrendingUp
     "gift" -> Icons.Rounded.CardGiftcard
+    "refund" -> Icons.Rounded.Undo
+    "reversal" -> Icons.Rounded.Block
+    "spa" -> Icons.Rounded.Spa
     "bank" -> Icons.Rounded.AccountBalance
     "savings" -> Icons.Rounded.Savings
     "cash" -> Icons.Rounded.Payments
@@ -73,5 +79,8 @@ val iconChoices = listOf(
     "trending" to "Inversión",
     "work" to "Trabajo",
     "gift" to "Regalo",
+    "refund" to "Devolución",
+    "reversal" to "Anulación",
+    "spa" to "Belleza",
     "more" to "Otros",
 )

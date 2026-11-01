@@ -180,7 +180,7 @@ fun BudgetsScreen(
                         Overline("PRESUPUESTO GENERAL")
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = if (overall == null) "Sin definir" else formatMoney(overall.limitCents, currency, decimals = false),
+                            text = if (overall == null) "Sin definir" else formatMoney(overall.limitCents, currency),
                             style = BudTheme.type.moneyLarge,
                             color = colors.ink,
                         )
@@ -189,9 +189,9 @@ fun BudgetsScreen(
                             text = if (overall == null) {
                                 "Pon un límite mensual para controlar el ritmo."
                             } else if (remaining >= 0) {
-                                "${formatMoney(remaining, currency, decimals = false)} disponibles"
+                                "${formatMoney(remaining, currency)} disponibles"
                             } else {
-                                "${formatMoney(abs(remaining), currency, decimals = false)} por encima"
+                                "${formatMoney(abs(remaining), currency)} por encima"
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (remaining < 0) colors.expense else colors.inkMuted,
@@ -214,13 +214,13 @@ fun BudgetsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = "${formatMoney(totals.expense, currency, decimals = false)} gastados",
+                        text = "${formatMoney(totals.expense, currency)} gastados",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
                     Text(
                         text = if (remaining >= 0) {
-                            "≈ ${formatMoney(dailyAllowance, currency, decimals = false)}/día"
+                            "≈ ${formatMoney(dailyAllowance, currency)}/día"
                         } else {
                             "Presupuesto superado"
                         },
@@ -353,7 +353,7 @@ private fun BudgetCategoryCard(
                     color = colors.ink,
                 )
                 Text(
-                    text = "${formatMoney(spent, currency, decimals = false)} de ${formatMoney(limit, currency, decimals = false)}",
+                    text = "${formatMoney(spent, currency)} de ${formatMoney(limit, currency)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -361,9 +361,9 @@ private fun BudgetCategoryCard(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = if (over) {
-                        "+${formatMoney(abs(remaining), currency, decimals = false)}"
+                        "+${formatMoney(abs(remaining), currency)}"
                     } else {
-                        "${formatMoney(remaining, currency, decimals = false)}"
+                        "${formatMoney(remaining, currency)}"
                     },
                     style = BudTheme.type.moneySmall,
                     color = if (over) colors.expense else colors.ink,
@@ -458,7 +458,7 @@ private fun BudgetEditorDialog(
                 val current = if (selected == null && initialLimitCents > 0) initialLimitCents else existingBudgets[selected] ?: 0L
                 Text(
                     text = if (current > 0) {
-                        "Límite actual: ${formatMoney(current, currency, decimals = false)}"
+                        "Límite actual: ${formatMoney(current, currency)}"
                     } else {
                         "Sin límite definido"
                     },

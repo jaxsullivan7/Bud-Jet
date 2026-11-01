@@ -7,6 +7,15 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.5
+
+- **Fecha recordada** en nuevos movimientos.
+- **Categorías nuevas**: Belleza (gasto), Devolución y Anulación (ingreso).
+- **Anulación vinculada**: busca el gasto original y crea un ingreso compensatorio por el mismo importe.
+- **Todos los importes con decimales**, sin redondeo a euros enteros.
+- **Resumen de búsqueda**: la barra de ingresos/gastos/balance refleja solo los resultados de la búsqueda.
+- **Rango histórico en Análisis**: elige desde qué fecha se cuentan los datos.
+
 ### v0.4.1
 
 - **Movimientos programados**: un ingreso o gasto con fecha futura se guarda, se marca como “Programado” y no afecta al saldo, resumen, presupuestos ni análisis hasta su fecha.

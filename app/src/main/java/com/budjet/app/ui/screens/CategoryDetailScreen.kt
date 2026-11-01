@@ -39,6 +39,7 @@ import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
 import com.budjet.app.data.Transaction
 import com.budjet.app.data.TxType
+import com.budjet.app.data.filteredFrom
 import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.CategoryBadge
 import com.budjet.app.ui.components.EmptyState
@@ -60,7 +61,6 @@ import com.budjet.app.util.formatMoney
 import com.budjet.app.util.percentText
 import java.time.YearMonth
 import kotlin.math.abs
-
 @Composable
 fun CategoryDetailScreen(
     data: AppData,
@@ -72,23 +72,27 @@ fun CategoryDetailScreen(
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
     val color = categoryColor(category.colorHex, colors.isDark)
-    val monthTransactions = remember(data.transactions, category.id, month) {
-        Finance.categoryTransactions(data, month, category.id)
+    val startDate = data.settings.analysisStartEpochDay?.let(java.time.LocalDate::ofEpochDay)
+    val scopedData = remember(data, startDate) {
+        data.filteredFrom(startDate)
+    }
+    val monthTransactions = remember(scopedData.transactions, category.id, month) {
+        Finance.categoryTransactions(scopedData, month, category.id)
     }
     val total = monthTransactions.sumOf { it.amountCents }
-    val monthTotals = remember(data.transactions, month) {
-        Finance.totals(Finance.postedTransactionsOfMonth(data, month))
+    val monthTotals = remember(scopedData.transactions, month) {
+        Finance.totals(Finance.postedTransactionsOfMonth(scopedData, month))
     }
     val referenceTotal = if (category.type == TxType.INCOME) monthTotals.income else monthTotals.expense
     val share = if (referenceTotal > 0) total.toFloat() / referenceTotal else 0f
-    val previous = remember(data.transactions, category.id, month) {
-        Finance.spentForCategory(data, month.minusMonths(1), category.id)
+    val previous = remember(scopedData.transactions, category.id, month) {
+        Finance.spentForCategory(scopedData, month.minusMonths(1), category.id)
     }
     val delta = Finance.monthDelta(total, previous)
     val average = if (monthTransactions.isEmpty()) 0L else total / monthTransactions.size
     val biggest = monthTransactions.maxByOrNull { it.amountCents }
-    val series = remember(data.transactions, category.id, month) {
-        Finance.categorySeries(data, month, category.id, 6).map {
+    val series = remember(scopedData.transactions, category.id, month) {
+        Finance.categorySeries(scopedData, month, category.id, 6).map {
             formatMonthShort(it.first) to it.second
         }
     }
@@ -195,12 +199,12 @@ fun CategoryDetailScreen(
                     )
                     DetailStat(
                         label = "MEDIA",
-                        value = formatMoney(average, currency, decimals = false),
+                        value = formatMoney(average, currency),
                         modifier = Modifier.weight(1f),
                     )
                     DetailStat(
                         label = "MAYOR",
-                        value = biggest?.let { formatMoney(it.amountCents, currency, decimals = false) } ?: "—",
+                        value = biggest?.let { formatMoney(it.amountCents, currency) } ?: "—",
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -226,7 +230,7 @@ fun CategoryDetailScreen(
                     )
                     val avg = series.sumOf { it.second } / series.size.coerceAtLeast(1)
                     Text(
-                        text = formatMoney(avg, currency, decimals = false),
+                        text = formatMoney(avg, currency),
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.ink,
                     )

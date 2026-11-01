@@ -19,14 +19,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.PieChartOutline
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +48,7 @@ import com.budjet.app.data.CategorySpend
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
 import com.budjet.app.data.TxType
+import com.budjet.app.data.filteredFrom
 import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.CashflowChart
 import com.budjet.app.ui.components.DonutChart
@@ -57,8 +66,10 @@ import com.budjet.app.util.formatMonth
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.percentText
 import com.budjet.app.util.formatShortDate
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneOffset
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -69,19 +80,27 @@ fun AnalysisScreen(
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onOpenCategory: (com.budjet.app.data.Category) -> Unit,
+    onSetStartDate: (LocalDate?) -> Unit,
 ) {
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
     val today = remember { LocalDate.now() }
-    val monthTx = remember(data.transactions, month) { Finance.transactionsOfMonth(data, month) }
-    val postedTx = remember(data.transactions, month) {
-        Finance.postedTransactionsOfMonth(data, month)
+    val startDate = remember(data.settings.analysisStartEpochDay) {
+        data.settings.analysisStartEpochDay?.let(LocalDate::ofEpochDay)
+    }
+    val scopedData = remember(data, startDate) {
+        data.filteredFrom(startDate)
+    }
+    var showStartPicker by remember { mutableStateOf(false) }
+    val monthTx = remember(scopedData.transactions, month) { Finance.transactionsOfMonth(scopedData, month) }
+    val postedTx = remember(scopedData.transactions, month) {
+        Finance.postedTransactionsOfMonth(scopedData, month)
     }
     val futureCount = monthTx.size - postedTx.size
     val totals = remember(postedTx) { Finance.totals(postedTx) }
-    val spends = remember(data, month) { Finance.spendByCategory(data, month) }
-    val series = remember(data, month) { Finance.series(data, month, 6) }
-    val average = remember(data, month) { Finance.monthlyAverageExpense(data, month, 3) }
+    val spends = remember(scopedData, month) { Finance.spendByCategory(scopedData, month) }
+    val series = remember(scopedData, month) { Finance.series(scopedData, month, 6) }
+    val average = remember(scopedData, month) { Finance.monthlyAverageExpense(scopedData, month, 3) }
     val deltaVsAverage = Finance.monthDelta(totals.expense, average)
 
     val shown = remember(spends) {
@@ -103,7 +122,18 @@ fun AnalysisScreen(
         DonutSegment(it.share, categoryColor(it.category.colorHex, colors.isDark))
     }
 
-    val daysElapsed = if (month == YearMonth.from(today)) today.dayOfMonth else month.lengthOfMonth()
+    val daysElapsed = run {
+        val startDay = if (startDate != null && YearMonth.from(startDate) == month) {
+            startDate.dayOfMonth
+        } else {
+            1
+        }
+        if (month == YearMonth.from(today)) {
+            (today.dayOfMonth - startDay + 1).coerceAtLeast(1)
+        } else {
+            (month.lengthOfMonth() - startDay + 1).coerceAtLeast(1)
+        }
+    }
     val dailyAverage = if (daysElapsed > 0) totals.expense / daysElapsed else 0L
     val biggestExpense = postedTx.filter { it.type == TxType.EXPENSE }.maxByOrNull { it.amountCents }
     val spentDays = postedTx.filter { it.type == TxType.EXPENSE }
@@ -125,6 +155,36 @@ fun AnalysisScreen(
                 onNext = onNextMonth,
                 canGoNext = month.isBefore(YearMonth.now()),
             )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.primarySoft.copy(alpha = 0.55f))
+                    .clickable { showStartPicker = true }
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Rounded.CalendarToday,
+                    contentDescription = null,
+                    tint = colors.primary,
+                    modifier = Modifier.size(14.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = startDate?.let { "Histórico desde ${formatShortDate(it)}" } ?: "Todo el historial",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.primary,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    Icons.Rounded.ChevronRight,
+                    contentDescription = null,
+                    tint = colors.primary,
+                    modifier = Modifier.size(13.dp),
+                )
+            }
             Spacer(Modifier.height(20.dp))
         }
 
@@ -166,7 +226,7 @@ fun AnalysisScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(132.dp)
+                                .size(124.dp)
                                 .pointerInput(shown) {
                                     detectTapGestures { offset ->
                                         val cx = size.width / 2f
@@ -201,7 +261,7 @@ fun AnalysisScreen(
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
-                                        text = formatMoney(totals.expense, currency, decimals = false),
+                                        text = formatMoney(totals.expense, currency),
                                         style = BudTheme.type.moneyMedium.copy(fontSize = 16.sp),
                                         color = colors.ink,
                                         maxLines = 1,
@@ -214,7 +274,7 @@ fun AnalysisScreen(
                                 }
                             }
                         }
-                        Spacer(Modifier.width(18.dp))
+                        Spacer(Modifier.width(16.dp))
                         Column(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -248,7 +308,7 @@ fun AnalysisScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StatCard(
                     label = "GASTO MEDIO",
-                    value = formatMoney(dailyAverage, currency, decimals = false),
+                    value = formatMoney(dailyAverage, currency),
                     hint = "al día",
                     modifier = Modifier.weight(1f),
                 )
@@ -263,14 +323,14 @@ fun AnalysisScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StatCard(
                     label = "MAYOR GASTO",
-                    value = biggestExpense?.let { formatMoney(it.amountCents, currency, decimals = false) } ?: "—",
+                    value = biggestExpense?.let { formatMoney(it.amountCents, currency) } ?: "—",
                     hint = biggestExpense?.note?.ifBlank { "Sin datos" } ?: "Sin datos",
                     modifier = Modifier.weight(1f),
                 )
                 StatCard(
                     label = "AHORRO",
                     value = if (totals.income > 0) percentText(totals.savingsRate) else "—",
-                    hint = if (totals.income > 0) formatMoney(max(0L, totals.balance), currency, decimals = false) else "sin ingresos",
+                    hint = if (totals.income > 0) formatMoney(max(0L, totals.balance), currency) else "sin ingresos",
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -291,7 +351,7 @@ fun AnalysisScreen(
                 Spacer(Modifier.height(12.dp))
                 Text(
                     text = if (average > 0) {
-                        "Tu media de gasto de los últimos 3 meses es ${formatMoney(average, currency, decimals = false)}."
+                        "Tu media de gasto de los últimos 3 meses es ${formatMoney(average, currency)}."
                     } else {
                         "Necesitas más historial para comparar meses."
                     },
@@ -347,6 +407,46 @@ fun AnalysisScreen(
             }
         }
     }
+
+    if (showStartPicker) {
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = (startDate ?: today)
+                .atStartOfDay(ZoneOffset.UTC)
+                .toInstant()
+                .toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { showStartPicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        state.selectedDateMillis?.let { millis ->
+                            val chosen = Instant.ofEpochMilli(millis)
+                                .atZone(ZoneOffset.UTC)
+                                .toLocalDate()
+                            onSetStartDate(if (chosen.isAfter(today)) today else chosen)
+                        }
+                        showStartPicker = false
+                    },
+                ) { Text("Aplicar", color = colors.primary) }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(
+                        onClick = {
+                            onSetStartDate(null)
+                            showStartPicker = false
+                        },
+                    ) { Text("Todo", color = colors.inkMuted) }
+                    TextButton(onClick = { showStartPicker = false }) {
+                        Text("Cancelar", color = colors.inkMuted)
+                    }
+                }
+            },
+        ) {
+            DatePicker(state = state, showModeToggle = false)
+        }
+    }
 }
 
 @Composable
@@ -379,25 +479,28 @@ private fun LegendRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        if (onClick != null) {
+            Spacer(Modifier.width(6.dp))
+        }
         Text(
-            text = formatMoney(item.spent, currency, decimals = false),
-            style = MaterialTheme.typography.labelMedium,
+            text = formatMoney(item.spent, currency),
+            style = MaterialTheme.typography.labelMedium.copy(fontSize = 10.5.sp),
             color = colors.ink,
             maxLines = 1,
         )
-        Spacer(Modifier.width(6.dp))
+        Spacer(Modifier.width(5.dp))
         Text(
             text = percentText(item.share),
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.5.sp),
             color = colors.inkMuted,
-            modifier = Modifier.width(30.dp),
+            modifier = Modifier.width(25.dp),
         )
         if (onClick != null) {
             Icon(
                 Icons.Rounded.ChevronRight,
                 contentDescription = null,
                 tint = colors.inkMuted.copy(alpha = 0.55f),
-                modifier = Modifier.size(13.dp),
+                modifier = Modifier.size(12.dp),
             )
         }
     }

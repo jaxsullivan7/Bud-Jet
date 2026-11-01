@@ -1,6 +1,7 @@
 package com.budjet.app.data
 
 import kotlinx.serialization.Serializable
+import java.time.LocalDate
 
 @Serializable
 enum class TxType { EXPENSE, INCOME }
@@ -15,6 +16,8 @@ data class Transaction(
     val dateEpochDay: Long,
     val note: String = "",
     val recurringId: String? = null,
+    /** If this is an annulment, the original expense it compensates. */
+    val reversalOfId: String? = null,
 )
 
 @Serializable
@@ -86,11 +89,13 @@ data class Settings(
     val palette: ThemePalette = ThemePalette.BUSINESS,
     val openingBalanceCents: Long = 0L,
     val biometricLock: Boolean = false,
+    val lastMovementDateEpochDay: Long? = null,
+    val analysisStartEpochDay: Long? = null,
 )
 
 @Serializable
 data class AppData(
-    val version: Int = 4,
+    val version: Int = 5,
     val settings: Settings = Settings(),
     val categories: List<Category> = emptyList(),
     val accounts: List<Account> = emptyList(),
@@ -115,5 +120,19 @@ fun AppData.clearedFinancialData(): AppData = copy(
     budgets = emptyList(),
     savingsGoals = emptyList(),
     recurringRules = emptyList(),
-    settings = settings.copy(openingBalanceCents = 0L),
+    settings = settings.copy(
+        openingBalanceCents = 0L,
+        lastMovementDateEpochDay = null,
+        analysisStartEpochDay = null,
+    ),
 )
+
+/** Keeps only transactions on or after [start], for historical analysis ranges. */
+fun AppData.filteredFrom(start: LocalDate?): AppData =
+    if (start == null) this else copy(
+        transactions = transactions.filter { it.dateEpochDay >= start.toEpochDay() },
+    )
+
+/** Date to prefill in a new movement: the last one used, or [fallback]. */
+fun Settings.movementDateOrDefault(fallback: LocalDate): LocalDate =
+    lastMovementDateEpochDay?.let(LocalDate::ofEpochDay) ?: fallback

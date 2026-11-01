@@ -20,7 +20,7 @@ object Backup {
 
     const val APP_NAME = "Bud Jet"
     const val FORMAT = 1
-    const val CURRENT_VERSION = 4
+    const val CURRENT_VERSION = 5
     const val MAX_BYTES = 10 * 1024 * 1024
 
     private val json = Json {
@@ -59,15 +59,16 @@ object Backup {
             // Accept a raw AppData file as a fallback for hand-made backups.
             json.decodeFromString(AppData.serializer(), text)
         }
-        validate(data)
-        data.copy(
+        val migrated = data.migratedToCurrent()
+        validate(migrated)
+        migrated.copy(
             version = CURRENT_VERSION,
-            settings = data.settings.copy(
-                name = data.settings.name.ifBlank { "Tú" },
+            settings = migrated.settings.copy(
+                name = migrated.settings.name.ifBlank { "Tú" },
                 // Never enable a biometric lock just by importing a file.
                 biometricLock = false,
             ),
-            transactions = data.transactions.sortedByDescending { it.dateEpochDay },
+            transactions = migrated.transactions.sortedByDescending { it.dateEpochDay },
         )
     }
 

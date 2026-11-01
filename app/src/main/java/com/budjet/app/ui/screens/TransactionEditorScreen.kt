@@ -10,10 +10,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -29,6 +32,8 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.KeyboardBackspace
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
@@ -36,6 +41,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -51,21 +57,26 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
+import com.budjet.app.data.Transaction
 import com.budjet.app.data.TxType
 import com.budjet.app.ui.EditorDraft
 import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.CategoryBadge
 import com.budjet.app.ui.components.Overline
 import com.budjet.app.ui.components.SoftIconButton
+import com.budjet.app.ui.components.ThinDivider
+import com.budjet.app.ui.components.TransactionRow
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
 import com.budjet.app.ui.theme.BudTheme
@@ -94,16 +105,32 @@ fun TransactionEditorScreen(
     var accountId by remember { mutableStateOf(initial.accountId) }
     var date by remember { mutableStateOf(initial.date) }
     var note by remember { mutableStateOf(initial.note) }
+    var reversalId by remember { mutableStateOf(initial.reversalOfId) }
 
     var showAccounts by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showNote by remember { mutableStateOf(false) }
+    var showReversalPicker by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
-    val categories = data.categories.filter { it.type == type && !it.archived }
+    val categories = data.categories
+        .filter { it.type == type && !it.archived }
+        .sortedBy { category ->
+            val order = when (type) {
+                TxType.INCOME -> listOf("salary", "refund", "reversal", "freelance", "invest", "gifts")
+                TxType.EXPENSE -> listOf(
+                    "food", "dining", "transport", "home", "bills", "leisure",
+                    "shopping", "health", "beauty", "subs", "travel", "education", "other",
+                )
+            }
+            order.indexOf(category.id).let { if (it < 0) 100 else it }
+        }
     val selectedCategory = data.category(categoryId)
         ?: categories.firstOrNull()
     val selectedAccount = data.account(accountId) ?: data.accounts.firstOrNull()
+    val reversalPayment = data.transactions.firstOrNull { it.id == reversalId }
+    val isReversal = selectedCategory?.id == "reversal"
+    val canSave = amountCents > 0 && (!isReversal || reversalId != null)
     val isEditing = initial.id != null
 
     fun pressDigit(digit: Int) {
@@ -114,6 +141,7 @@ fun TransactionEditorScreen(
     fun switchType(next: TxType) {
         if (type == next) return
         type = next
+        reversalId = null
         val nextCategories = data.categories.filter { it.type == next && !it.archived }
         if (nextCategories.none { it.id == categoryId }) {
             nextCategories.firstOrNull()?.let { categoryId = it.id }
@@ -152,8 +180,8 @@ fun TransactionEditorScreen(
                 modifier = Modifier
                     .height(38.dp)
                     .clip(CircleShape)
-                    .background(if (amountCents > 0) colors.primary else colors.surfaceMuted)
-                    .clickable(enabled = amountCents > 0) {
+                    .background(if (canSave) colors.primary else colors.surfaceMuted)
+                    .clickable(enabled = canSave) {
                         onSave(
                             EditorDraft(
                                 id = initial.id,
@@ -163,6 +191,7 @@ fun TransactionEditorScreen(
                                 accountId = selectedAccount?.id ?: accountId,
                                 date = date,
                                 note = note,
+                                reversalOfId = reversalId.takeIf { isReversal },
                             )
                         )
                     }
@@ -172,7 +201,7 @@ fun TransactionEditorScreen(
                 Text(
                     text = "Guardar",
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (amountCents > 0) colors.onPrimary else colors.inkMuted,
+                    color = if (canSave) colors.onPrimary else colors.inkMuted,
                 )
             }
         }
@@ -227,13 +256,19 @@ fun TransactionEditorScreen(
             Spacer(Modifier.height(22.dp))
             Overline("Categoría")
             Spacer(Modifier.height(10.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.testTag("editor-categories"),
+            ) {
                 items(categories, key = { it.id }) { category ->
                     CategoryOption(
                         category = category,
                         selected = selectedCategory?.id == category.id,
                         onClick = {
                             categoryId = category.id
+                            if (category.id != "reversal") {
+                                reversalId = null
+                            }
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         },
                     )
@@ -242,6 +277,25 @@ fun TransactionEditorScreen(
 
             Spacer(Modifier.height(22.dp))
             BudCard(padding = 0.dp) {
+                if (isReversal) {
+                    DetailRow(
+                        icon = Icons.Rounded.Block,
+                        label = "Pago",
+                        value = reversalPayment?.let { payment ->
+                            val paymentCategory = data.category(payment.categoryId)?.name ?: "Gasto"
+                            "${payment.note.ifBlank { paymentCategory }} · ${formatMoney(payment.amountCents, currency)}"
+                        } ?: "Buscar pago a anular",
+                        muted = reversalPayment == null,
+                        onClick = { showReversalPicker = true },
+                    )
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 54.dp)
+                            .height(1.dp)
+                            .background(colors.line.copy(alpha = 0.7f)),
+                    )
+                }
                 DetailRow(
                     icon = if (type == TxType.INCOME) Icons.Rounded.AccountBalance else Icons.Rounded.AccountBalance,
                     label = "Cuenta",
@@ -274,6 +328,15 @@ fun TransactionEditorScreen(
                     value = note.ifBlank { "Añadir una nota" },
                     muted = note.isBlank(),
                     onClick = { showNote = true },
+                )
+            }
+
+            if (isReversal && reversalPayment == null) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = "Elige el pago que quieres anular para poder guardar.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.warning,
                 )
             }
 
@@ -430,6 +493,27 @@ fun TransactionEditorScreen(
         )
     }
 
+    if (showReversalPicker) {
+        ReversalPickerDialog(
+            data = data,
+            currency = currency,
+            excludeTransactionId = initial.id,
+            onDismiss = { showReversalPicker = false },
+            onSelect = { payment ->
+                type = TxType.INCOME
+                categoryId = "reversal"
+                reversalId = payment.id
+                amountCents = payment.amountCents
+                accountId = payment.accountId
+                if (note.isBlank() || note.startsWith("Anulación ·")) {
+                    note = "Anulación · " +
+                        payment.note.ifBlank { data.category(payment.categoryId)?.name ?: "Pago" }
+                }
+                showReversalPicker = false
+            },
+        )
+    }
+
     if (confirmDelete && initial.id != null) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
@@ -455,6 +539,123 @@ fun TransactionEditorScreen(
                 TextButton(onClick = { confirmDelete = false }) { Text("Cancelar", color = colors.inkMuted) }
             },
         )
+    }
+}
+
+@Composable
+private fun ReversalPickerDialog(
+    data: AppData,
+    currency: Currency,
+    excludeTransactionId: String?,
+    onDismiss: () -> Unit,
+    onSelect: (Transaction) -> Unit,
+) {
+    val colors = BudTheme.colors
+    var query by remember { mutableStateOf("") }
+    val today = remember { LocalDate.now() }
+    val alreadyReversed = remember(data.transactions, excludeTransactionId) {
+        data.transactions
+            .filter { it.reversalOfId != null && it.id != excludeTransactionId }
+            .mapNotNull { it.reversalOfId }
+            .toSet()
+    }
+    val candidates = remember(data.transactions, alreadyReversed, query, today) {
+        data.transactions
+            .filter {
+                it.type == TxType.EXPENSE &&
+                    it.dateEpochDay <= today.toEpochDay() &&
+                    it.id !in alreadyReversed
+            }
+            .filter { tx ->
+                val category = data.category(tx.categoryId)?.name.orEmpty()
+                val account = data.account(tx.accountId)?.name.orEmpty()
+                query.isBlank() ||
+                    tx.note.contains(query, ignoreCase = true) ||
+                    category.contains(query, ignoreCase = true) ||
+                    account.contains(query, ignoreCase = true) ||
+                    formatMoney(tx.amountCents, currency).contains(query, ignoreCase = true)
+            }
+            .sortedByDescending { it.dateEpochDay }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .fillMaxHeight(0.82f),
+            shape = RoundedCornerShape(26.dp),
+            color = colors.surface,
+        ) {
+            Column(Modifier.padding(20.dp)) {
+                Overline("ANULACIÓN")
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Busca el pago a anular",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.ink,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Elige el gasto. Se creará un ingreso por el mismo importe, vinculado a ese pago.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Buscar por nota, categoría o importe") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Rounded.Search,
+                            contentDescription = null,
+                            tint = colors.inkMuted,
+                            modifier = Modifier.size(17.dp),
+                        )
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                )
+                Spacer(Modifier.height(8.dp))
+                if (candidates.isEmpty()) {
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "No hay pagos que coincidan.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.inkMuted,
+                        )
+                    }
+                } else {
+                    LazyColumn(Modifier.weight(1f)) {
+                        items(candidates, key = { it.id }) { payment ->
+                            TransactionRow(
+                                transaction = payment,
+                                category = data.category(payment.categoryId),
+                                account = data.account(payment.accountId),
+                                currency = currency,
+                                onClick = { onSelect(payment) },
+                                showDate = true,
+                            )
+                            if (payment.id != candidates.last().id) {
+                                ThinDivider(Modifier.padding(horizontal = 4.dp))
+                            }
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancelar", color = colors.inkMuted)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -657,7 +858,7 @@ private fun Keypad(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = formatMoney(value, currency, decimals = false),
+                        text = formatMoney(value, currency),
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.inkMuted,
                     )

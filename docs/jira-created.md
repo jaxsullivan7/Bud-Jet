@@ -4,7 +4,7 @@
 - **URL:** https://jaxsullivan7.atlassian.net/jira/software/projects/BUD/summary
 - **Fecha:** 30 de octubre de 2026
 - **Resultado:** 5 épicas y 24 historias/tareas, todas con etiqueta `bud-jet` y épica padre.
-- **Estado local (v0.4.1):** BUD-20 implementado; BUD-26 endurecido y pendiente de validación en dispositivo real. Ver [`BIOMETRIC_TEST.md`](BIOMETRIC_TEST.md). Las gamas de color, el saldo inicial y los movimientos programados forman parte de v0.4.1.
+- **Estado local (v0.5.0):** BUD-20 implementado; BUD-26 endurecido y pendiente de validación en dispositivo real. Ver [`BIOMETRIC_TEST.md`](BIOMETRIC_TEST.md). Las gamas de color, el saldo inicial, los movimientos programados, las categorías nuevas y el rango histórico forman parte de v0.5.0.
 
 ## Épicas
 

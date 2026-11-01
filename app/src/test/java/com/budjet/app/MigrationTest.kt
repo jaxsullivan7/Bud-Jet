@@ -6,6 +6,7 @@ import com.budjet.app.data.DemoData
 import com.budjet.app.data.Settings
 import com.budjet.app.data.migratedToCurrent
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
@@ -42,6 +43,19 @@ class MigrationTest {
         )
         val migrated = current.migratedToCurrent()
         assertEquals(385_000L, migrated.settings.openingBalanceCents)
+    }
+
+    @Test
+    fun `v4 data receives the new built-in categories`() {
+        val old = demo.copy(
+            version = 4,
+            categories = demo.categories.filterNot { it.id in setOf("beauty", "refund", "reversal") },
+        )
+        val migrated = old.migratedToCurrent()
+        assertEquals(Backup.CURRENT_VERSION, migrated.version)
+        assertTrue(migrated.categories.any { it.id == "beauty" })
+        assertTrue(migrated.categories.any { it.id == "refund" })
+        assertTrue(migrated.categories.any { it.id == "reversal" })
     }
 
     @Test

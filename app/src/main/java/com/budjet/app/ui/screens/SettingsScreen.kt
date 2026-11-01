@@ -307,7 +307,7 @@ fun SettingsScreen(
                     subtitle = if (data.savingsGoals.isEmpty()) {
                         "Crea tu primer objetivo"
                     } else {
-                        "${data.savingsGoals.size} objetivos · ${formatMoney(data.savingsGoals.sumOf { it.savedCents }, currency, decimals = false)} apartados"
+                        "${data.savingsGoals.size} objetivos · ${formatMoney(data.savingsGoals.sumOf { it.savedCents }, currency)} apartados"
                     },
                     onClick = onOpenGoals,
                 )
@@ -503,7 +503,7 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Un lugar tranquilo para tu dinero. Versión 0.4.1 · boceto.",
+                            text = "Un lugar tranquilo para tu dinero. Versión 0.5.0 · boceto.",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )

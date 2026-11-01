@@ -196,7 +196,7 @@ fun GoalsScreen(
                     }
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "${formatMoney(totalSaved, currency, decimals = false)} de ${formatMoney(totalTarget, currency, decimals = false)}",
+                        text = "${formatMoney(totalSaved, currency)} de ${formatMoney(totalTarget, currency)}",
                         style = BudTheme.type.moneyMedium,
                         color = colors.ink,
                     )
@@ -353,7 +353,7 @@ private fun GoalCard(
                         append(deadline?.let { "Para ${formatShortDate(it)}" } ?: "Sin fecha límite")
                         if (!complete && suggestion > 0) {
                             append(" · ≈ ")
-                            append(formatMoney(suggestion, currency, decimals = false))
+                            append(formatMoney(suggestion, currency))
                             append("/mes")
                         }
                     },
@@ -373,13 +373,13 @@ private fun GoalCard(
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                text = formatMoney(goal.savedCents, currency, decimals = false),
+                text = formatMoney(goal.savedCents, currency),
                 style = BudTheme.type.moneyLarge.copy(fontSize = 26.sp),
                 color = colors.ink,
             )
             Spacer(Modifier.width(6.dp))
             Text(
-                text = "de ${formatMoney(goal.targetCents, currency, decimals = false)}",
+                text = "de ${formatMoney(goal.targetCents, currency)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
                 modifier = Modifier.padding(bottom = 4.dp),
@@ -396,7 +396,7 @@ private fun GoalCard(
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = if (complete) "Objetivo conseguido. ¡Bien hecho!" else "Faltan ${formatMoney(remaining, currency, decimals = false)}",
+                text = if (complete) "Objetivo conseguido. ¡Bien hecho!" else "Faltan ${formatMoney(remaining, currency)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
                 modifier = Modifier.weight(1f),
@@ -698,7 +698,7 @@ private fun GoalAmountDialog(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = formatMoney(value, currency, decimals = false),
+                                text = formatMoney(value, currency),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = colors.inkMuted,
                             )

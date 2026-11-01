@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -87,13 +88,13 @@ fun TransactionsScreen(
     var filter by rememberSaveable { mutableStateOf(TxFilter.ALL) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
+    val today = remember { LocalDate.now() }
 
     val allMonthTx = remember(data.transactions, month) { Finance.transactionsOfMonth(data, month) }
     val postedMonthTx = remember(data.transactions, month) {
         Finance.postedTransactionsOfMonth(data, month)
     }
     val futureCount = allMonthTx.size - postedMonthTx.size
-    val totals = remember(postedMonthTx) { Finance.totals(postedMonthTx) }
     val filtered = remember(allMonthTx, filter, query) {
         allMonthTx.filter { tx ->
             val matchesType = when (filter) {
@@ -114,6 +115,14 @@ fun TransactionsScreen(
         filtered.groupBy { LocalDate.ofEpochDay(it.dateEpochDay) }
             .toSortedMap(compareByDescending { it })
     }
+    val summarySource = remember(filtered, query, postedMonthTx, today) {
+        if (query.isNotBlank()) {
+            filtered.filter { it.dateEpochDay <= today.toEpochDay() }
+        } else {
+            postedMonthTx
+        }
+    }
+    val totals = remember(summarySource) { Finance.totals(summarySource) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -204,6 +213,17 @@ fun TransactionsScreen(
                         modifier = Modifier.weight(1f),
                     )
                 }
+            }
+        }
+
+        if (query.isNotBlank()) {
+            item {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Cifras de los resultados de búsqueda · ${summarySource.size} ${if (summarySource.size == 1) "movimiento" else "movimientos"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.primary,
+                )
             }
         }
 
@@ -300,7 +320,7 @@ private fun DayGroup(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = (if (net >= 0) "+" else "−") + formatMoney(kotlin.math.abs(net), currency, decimals = false),
+                text = (if (net >= 0) "+" else "−") + formatMoney(kotlin.math.abs(net), currency),
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.inkMuted,
                 maxLines = 1,
@@ -343,9 +363,9 @@ private fun SummaryCell(
         Spacer(Modifier.height(5.dp))
         Text(
             text = if (signed) {
-                (if (value >= 0) "+" else "−") + formatMoney(kotlin.math.abs(value), currency, decimals = false)
+                (if (value >= 0) "+" else "−") + formatMoney(kotlin.math.abs(value), currency)
             } else {
-                formatMoney(value, currency, decimals = false)
+                formatMoney(value, currency)
             },
             style = BudTheme.type.moneySmall.copy(fontSize = 12.5.sp),
             color = color,
@@ -405,7 +425,8 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
             onValueChange = onQueryChange,
             modifier = Modifier
                 .weight(1f)
-                .focusRequester(focus),
+                .focusRequester(focus)
+                .testTag("search-field"),
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.ink),
             cursorBrush = SolidColor(colors.primary),
             singleLine = true,

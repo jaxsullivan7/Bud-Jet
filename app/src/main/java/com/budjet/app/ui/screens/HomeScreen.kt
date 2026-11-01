@@ -229,7 +229,7 @@ fun HomeScreen(
                         }
                         val positive = totals.balance >= 0
                         Pill(
-                            text = (if (positive) "+" else "−") + formatMoney(abs(totals.balance), currency, decimals = false),
+                            text = (if (positive) "+" else "−") + formatMoney(abs(totals.balance), currency),
                             container = if (positive) colors.primarySoft else colors.expense.copy(alpha = 0.12f),
                             content = if (positive) colors.primary else colors.expense,
                             icon = if (positive) Icons.Rounded.TrendingUp else Icons.Rounded.TrendingDown,
@@ -290,17 +290,17 @@ fun HomeScreen(
                             Spacer(Modifier.height(3.dp))
                             Text(
                                 text = if (budgetRemaining >= 0) {
-                                    "${formatMoney(budgetRemaining, currency, decimals = false)} disponibles"
+                                    "${formatMoney(budgetRemaining, currency)} disponibles"
                                 } else {
-                                    "${formatMoney(abs(budgetRemaining), currency, decimals = false)} de más"
+                                    "${formatMoney(abs(budgetRemaining), currency)} de más"
                                 },
                                 style = MaterialTheme.typography.titleLarge,
                                 color = if (budgetRemaining < 0) colors.expense else colors.ink,
                             )
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                text = "de ${formatMoney(budget.limitCents, currency, decimals = false)} · " +
-                                    "${formatMoney(budgetSpent, currency, decimals = false)} gastados",
+                                text = "de ${formatMoney(budget.limitCents, currency)} · " +
+                                    "${formatMoney(budgetSpent, currency)} gastados",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.inkMuted,
                             )
@@ -321,7 +321,7 @@ fun HomeScreen(
                     Spacer(Modifier.height(9.dp))
                     Text(
                         text = if (budgetRemaining >= 0 && dailyAllowance > 0) {
-                            "Puedes gastar unos ${formatMoney(dailyAllowance, currency, decimals = false)} al día hasta fin de mes."
+                            "Puedes gastar unos ${formatMoney(dailyAllowance, currency)} al día hasta fin de mes."
                         } else if (budgetRemaining < 0) {
                             "Has superado tu presupuesto. Buen momento para frenar un poco."
                         } else {
@@ -524,13 +524,13 @@ private fun HomeGoalCard(
         }
         Spacer(Modifier.height(12.dp))
         Text(
-            text = formatMoney(goal.savedCents, currency, decimals = false),
+            text = formatMoney(goal.savedCents, currency),
             style = BudTheme.type.moneyMedium,
             color = colors.ink,
             maxLines = 1,
         )
         Text(
-            text = "de ${formatMoney(goal.targetCents, currency, decimals = false)}",
+            text = "de ${formatMoney(goal.targetCents, currency)}",
             style = MaterialTheme.typography.bodySmall,
             color = colors.inkMuted,
             maxLines = 1,
@@ -539,7 +539,7 @@ private fun HomeGoalCard(
         LinearProgressBar(progress = progress, color = color, height = 5.dp)
         Spacer(Modifier.height(6.dp))
         Text(
-            text = if (remaining == 0L) "Conseguido" else "${percentText(progress)} · faltan ${formatMoney(remaining, currency, decimals = false)}",
+            text = if (remaining == 0L) "Conseguido" else "${percentText(progress)} · faltan ${formatMoney(remaining, currency)}",
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
             color = colors.inkMuted,
             maxLines = 1,
@@ -731,7 +731,7 @@ private fun SummaryColumn(
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            text = formatMoney(value, currency, decimals = false),
+            text = formatMoney(value, currency),
             style = BudTheme.type.moneyMedium,
             color = colors.ink,
             maxLines = 1,

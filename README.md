@@ -2,7 +2,7 @@
 
 Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos y objetivos de ahorro. Diseño sobrio, cálido y editorial, con tres gamas de color.
 
-> Estado: **boceto funcional v0.4.1**. Datos locales, copia de seguridad, desbloqueo biométrico, saldo inicial editable y movimientos programados.
+> Estado: **boceto funcional v0.5.0**. Datos locales, copia de seguridad, desbloqueo biométrico, saldo inicial editable, movimientos programados y análisis con rango histórico.
 
 | Resumen | Objetivos | Movimientos |
 |---|---|---|
@@ -19,6 +19,10 @@ Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos
 | Datos y copia | Modo oscuro | Empezar de cero |
 |---|---|---|
 | ![Datos](docs/screenshots/09b-ajustes-datos.png) | ![Resumen en modo oscuro](docs/screenshots/16-resumen-oscuro.png) | ![Resumen vacío](docs/screenshots/18-resumen-vacio.png) |
+
+| Búsqueda con cifras | Anulación de un pago |
+|---|---|
+| ![Búsqueda](docs/screenshots/04b-movimientos-busqueda.png) | ![Anulación](docs/screenshots/08c-anulacion.png) |
 
 | Bloqueo biométrico |
 |---|
@@ -38,13 +42,16 @@ Las categorías conservan sus colores en las tres gamas para no perder identidad
 ## Qué incluye
 
 - **Inicio** — saldo total, evolución de 6 meses, ingresos/gastos del mes, presupuesto, objetivos y últimos movimientos.
-- **Movimientos** — historial agrupado por día, filtros, búsqueda, edición y borrado con deshacer.
+- **Movimientos** — historial agrupado por día, filtros, búsqueda, edición y borrado con deshacer. Al buscar, el resumen de ingresos/gastos/balance se recalcula solo con los resultados.
 - **Presupuestos** — límite mensual general y por categoría, con ritmo de gasto diario.
-- **Análisis** — desglose por categorías, comparativa de 6 meses, estadísticas e ideas automáticas.
+- **Análisis** — desglose por categorías, comparativa de 6 meses, estadísticas e ideas automáticas. Puedes fijar **desde qué fecha** empieza a contar el histórico.
 - **Detalle de categoría** — toca un segmento del donut o su leyenda para ver la evolución, las métricas y los movimientos de esa categoría.
 - **Objetivos de ahorro** — metas, aportaciones/retiradas, progreso y sugerencia mensual. Es una “hucha virtual”.
 - **Movimientos recurrentes** — nómina, alquiler o suscripciones mensuales; se apuntan solos al abrir la app, se pueden pausar y editar.
 - **Movimientos programados** — puedes fechar un ingreso o gasto en el futuro: se guarda y se muestra en la lista con la marca “Programado”, pero no afecta al saldo, resumen, presupuestos ni análisis hasta ese día.
+- **Categorías nuevas** — **Belleza** (gasto), **Devolución** y **Anulación** (ingreso). Anulación busca el gasto original y crea un ingreso vinculado por el mismo importe, dejando el efecto neto a cero.
+- **Fecha recordada** — al añadir un movimiento, la app propone la última fecha que usaste.
+- **Importes con decimales** — todos los importes muestran céntimos; no se redondean a euros enteros.
 - **Copia de seguridad** — exporta todo a un JSON versionado y restáuralo desde el selector de Android, con validación y resumen antes de sustituir.
 - **Saldo inicial** — visible y editable en Ajustes → Datos. Ya no hay una cifra oculta de demo.
 - **Empezar de cero** — borra movimientos, presupuestos, objetivos y recurrentes; deja el saldo inicial a 0 y conserva categorías, cuentas y apariencia.
@@ -74,12 +81,15 @@ Requiere JDK 17+ y Android SDK 37.
 
 ## Probar el boceto
 
-1. Instala `BudJet-0.4.1-boceto.apk` en un Android 8.0 o superior.
+1. Instala `BudJet-0.5.0-boceto.apk` en un Android 8.0 o superior.
 2. La app arranca con datos de ejemplo de los últimos 6 meses.
 3. Para empezar con todo a cero: **Ajustes → Datos → Empezar de cero**. El saldo total, ingresos, gastos, presupuestos, objetivos y recurrentes quedarán a 0. Si quieres registrar el dinero que ya tenías, cambia **Saldo inicial** en la misma pantalla.
 4. Prueba las gamas **Business / Navy / Boss** en **Ajustes → Apariencia**.
-5. Exporta una copia en **Ajustes → Datos → Copia de seguridad** y restáurala.
-6. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
+5. Al añadir un movimiento, cambia la fecha y guarda; el siguiente moverá la fecha por defecto a esa misma fecha.
+6. Registra un ingreso con **Devolución** o **Anulación**; Anulación abre el buscador de pagos. También está **Belleza** en gastos.
+7. En **Análisis**, toca “Todo el historial” para fijar la fecha de inicio de los datos.
+8. Exporta una copia en **Ajustes → Datos → Copia de seguridad** y restáurala.
+9. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
 
 La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirve para probar, no para publicar en Google Play.
 
@@ -90,8 +100,8 @@ La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirv
 ./gradlew :app:lintDebug
 ```
 
-- **39 tests de lógica** — finanzas, movimientos futuros, recurrencias, objetivos, backup/importación, migración del saldo oculto, reseteo y biometría.
-- **2 tests de captura** con Robolectric/Roborazzi que renderizan 21 pantallas.
+- **46 tests de lógica** — finanzas, movimientos futuros, fechas recordadas, recurrencias, objetivos, backup/importación, migraciones, filtros y biometría.
+- **2 tests de captura** con Robolectric/Roborazzi que renderizan 24 pantallas.
 - **Lint: 0 errores**.
 
 ## Estructura
@@ -109,6 +119,8 @@ app/src/main/java/com/budjet/app/
 - Las recurrencias son mensuales y se procesan al abrir la app; si no abres la app durante un mes, ese cargo no se genera.
 - Los movimientos futuros aparecen en la lista del mes en que caen y se marcan como “Programado”; no cuentan hasta su fecha.
 - Los objetivos son una asignación virtual: no mueven dinero entre cuentas ni descuentan del saldo.
+- **Anulación** conserva el gasto original y crea un ingreso vinculado por el mismo importe; el efecto neto es cero. No borra el gasto de la lista.
+- El rango histórico solo afecta a la pantalla de Análisis y al detalle de categoría abierto desde ella.
 - La copia de seguridad **sustituye** todos los datos; todavía no hay fusión ni importación incremental.
 - El archivo de copia es un JSON legible, no cifrado: guárdalo en un lugar seguro.
 - El bloqueo biométrico está integrado y probado en JVM/UI; falta la firma en un dispositivo real.

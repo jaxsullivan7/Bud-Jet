@@ -307,7 +307,7 @@ private fun RecurringCard(
             Spacer(Modifier.width(8.dp))
             Text(
                 text = (if (rule.type == TxType.INCOME) "+" else "−") +
-                    formatMoney(rule.amountCents, currency, decimals = rule.amountCents % 100L != 0L),
+                    formatMoney(rule.amountCents, currency),
                 style = BudTheme.type.moneySmall,
                 color = if (rule.type == TxType.INCOME) colors.income else colors.ink,
                 maxLines = 1,
