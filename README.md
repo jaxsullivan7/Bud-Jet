@@ -67,6 +67,8 @@ Las categorías conservan sus colores en las tres gamas para no perder identidad
 
 Todo se guarda en el dispositivo (`files/budjet.json`); no hay cuentas ni nube.
 
+El histórico de sprint, la composición del equipo simulado y los impedimentos están en [`docs/SPRINTS.md`](docs/SPRINTS.md).
+
 ## Stack
 
 - Kotlin + Jetpack Compose (Material 3)

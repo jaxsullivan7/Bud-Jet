@@ -7,6 +7,10 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### Registro de ejecución
+
+El trabajo se organizó en Jira como un equipo de 2 Frontend, 2 Backend y 1 QA, con sprints de dos semanas, capacidad de 8 h/día, ausencias y retrasos documentados. El detalle de sprints, horas, impedimentos y filtros está en [`SPRINTS.md`](SPRINTS.md).
+
 ### v0.6
 
 - **Cartera de inversión** en Análisis, separada del saldo disponible: productos (fondo indexado, acciones, ETF, cripto, depósito, plan de pensiones, inmueble y otros), aportaciones, retiradas, rendimientos y ajustes de valor.
