@@ -12,6 +12,10 @@ import com.budjet.app.data.BudRepository
 import com.budjet.app.data.Budget
 import com.budjet.app.data.Category
 import com.budjet.app.data.DemoData
+import com.budjet.app.data.Investment
+import com.budjet.app.data.InvestmentEntry
+import com.budjet.app.data.InvestmentEntryKind
+import com.budjet.app.data.InvestmentKind
 import com.budjet.app.data.Recurring
 import com.budjet.app.data.RecurringRule
 import com.budjet.app.data.SavingsGoal
@@ -62,6 +66,14 @@ data class GoalDraft(
     val deadline: LocalDate? = null,
     val icon: String = "savings",
     val colorHex: String = "#2F6B54",
+)
+
+data class InvestmentEntryDraft(
+    val investmentId: String,
+    val kind: InvestmentEntryKind,
+    val amountCents: Long,
+    val date: LocalDate = LocalDate.now(),
+    val note: String = "",
 )
 
 class AppViewModel(private val repository: BudRepository) : ViewModel() {
@@ -268,6 +280,76 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     savingsGoals = current.savingsGoals.map {
                         if (it.id == id) it.copy(savedCents = (it.savedCents + deltaCents).coerceAtLeast(0L)) else it
                     },
+                )
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------- cartera
+
+    fun addInvestment(name: String, kind: InvestmentKind) {
+        val clean = name.trim()
+        if (clean.isEmpty()) return
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(
+                    investments = current.investments + Investment(
+                        id = "inv_" + UUID.randomUUID().toString().take(8),
+                        name = clean,
+                        kind = kind,
+                        createdAtEpochDay = LocalDate.now().toEpochDay(),
+                    ),
+                )
+            }
+        }
+    }
+
+    fun updateInvestment(id: String, name: String, kind: InvestmentKind) {
+        val clean = name.trim()
+        if (clean.isEmpty()) return
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(
+                    investments = current.investments.map {
+                        if (it.id == id) it.copy(name = clean, kind = kind) else it
+                    },
+                )
+            }
+        }
+    }
+
+    fun deleteInvestment(id: String) {
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(
+                    investments = current.investments.filterNot { it.id == id },
+                    investmentEntries = current.investmentEntries.filterNot { it.investmentId == id },
+                )
+            }
+        }
+    }
+
+    fun addInvestmentEntry(draft: InvestmentEntryDraft) {
+        val signed = when (draft.kind) {
+            InvestmentEntryKind.CONTRIBUTION,
+            InvestmentEntryKind.WITHDRAWAL,
+            -> draft.amountCents.coerceAtLeast(0L)
+            InvestmentEntryKind.RETURN,
+            InvestmentEntryKind.VALUATION,
+            -> draft.amountCents
+        }
+        if (signed == 0L) return
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(
+                    investmentEntries = current.investmentEntries + InvestmentEntry(
+                        id = "ie_" + UUID.randomUUID().toString().take(8),
+                        investmentId = draft.investmentId,
+                        kind = draft.kind,
+                        amountCents = signed,
+                        dateEpochDay = draft.date.toEpochDay(),
+                        note = draft.note.trim(),
+                    ),
                 )
             }
         }

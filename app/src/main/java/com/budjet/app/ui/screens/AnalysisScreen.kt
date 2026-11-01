@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Lightbulb
@@ -47,6 +48,8 @@ import com.budjet.app.data.AppData
 import com.budjet.app.data.CategorySpend
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
+import com.budjet.app.data.InvestmentMath
+import com.budjet.app.data.PortfolioSummary
 import com.budjet.app.data.TxType
 import com.budjet.app.data.filteredFrom
 import com.budjet.app.ui.components.BudCard
@@ -81,6 +84,7 @@ fun AnalysisScreen(
     onNextMonth: () -> Unit,
     onOpenCategory: (com.budjet.app.data.Category) -> Unit,
     onSetStartDate: (LocalDate?) -> Unit,
+    onOpenPortfolio: () -> Unit,
 ) {
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
@@ -103,6 +107,9 @@ fun AnalysisScreen(
     }
     val initialBalance = remember(data, month) { Finance.initialBalance(data, month) }
     val finalBalance = remember(data, month, today) { Finance.finalBalance(data, month, today) }
+    val portfolio = remember(data.investments, data.investmentEntries) {
+        InvestmentMath.portfolio(data.investments, data.investmentEntries, today)
+    }
     val spends = remember(scopedData, month) { Finance.spendByCategory(scopedData, month) }
     val series = remember(scopedData, month) { Finance.series(scopedData, month, 6) }
     val average = remember(scopedData, month) { Finance.monthlyAverageExpense(scopedData, month, 3) }
@@ -200,6 +207,15 @@ fun AnalysisScreen(
                 today = today,
                 currency = currency,
                 filterActive = startDate != null,
+            )
+            Spacer(Modifier.height(20.dp))
+        }
+
+        item {
+            PortfolioSummaryCard(
+                summary = portfolio,
+                currency = currency,
+                onClick = onOpenPortfolio,
             )
             Spacer(Modifier.height(20.dp))
         }
@@ -461,6 +477,89 @@ fun AnalysisScreen(
             },
         ) {
             DatePicker(state = state, showModeToggle = false)
+        }
+    }
+}
+
+@Composable
+private fun PortfolioSummaryCard(
+    summary: PortfolioSummary,
+    currency: Currency,
+    onClick: () -> Unit,
+) {
+    val colors = BudTheme.colors
+    val percent = summary.returnPercent
+    BudCard(onClick = onClick) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Overline("CARTERA DE INVERSIÓN")
+            if (percent != null) {
+                val positive = percent >= 0f
+                Pill(
+                    text = (if (positive) "+" else "−") + percentText(abs(percent), decimals = 1),
+                    container = if (positive) colors.primarySoft else colors.expense.copy(alpha = 0.12f),
+                    content = if (positive) colors.primary else colors.expense,
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        if (summary.products.isEmpty()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Añade tu primer producto",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.ink,
+                )
+                Spacer(Modifier.weight(1f))
+                Icon(
+                    Icons.Rounded.Add,
+                    contentDescription = null,
+                    tint = colors.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Una cartera independiente de tu saldo disponible.",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.inkMuted,
+            )
+        } else {
+            Text(
+                text = formatMoney(summary.valueCents, currency),
+                style = BudTheme.type.moneyLarge,
+                color = colors.ink,
+                maxLines = 1,
+            )
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                Column {
+                    Text("Aportado", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                    Text(
+                        text = formatMoney(summary.contributedCents, currency),
+                        style = BudTheme.type.moneySmall,
+                        color = colors.ink,
+                    )
+                }
+                Column {
+                    Text("Rentabilidad", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                    Text(
+                        text = (if (summary.returnsCents >= 0) "+" else "−") +
+                            formatMoney(abs(summary.returnsCents), currency),
+                        style = BudTheme.type.moneySmall,
+                        color = if (summary.returnsCents >= 0) colors.income else colors.expense,
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Seguimiento separado del saldo disponible · Toca para abrir",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.inkMuted,
+            )
         }
     }
 }

@@ -93,6 +93,12 @@ object Backup {
         require(data.recurringRules.map { it.id }.distinct().size == data.recurringRules.size) {
             "Hay reglas recurrentes duplicadas en la copia."
         }
+        require(data.investments.map { it.id }.distinct().size == data.investments.size) {
+            "Hay productos de inversión duplicados en la copia."
+        }
+        require(data.investmentEntries.map { it.id }.distinct().size == data.investmentEntries.size) {
+            "Hay movimientos de inversión duplicados en la copia."
+        }
 
         val categoryIds = data.categories.map { it.id }.toSet()
         val accountIds = data.accounts.map { it.id }.toSet()
@@ -122,6 +128,23 @@ object Backup {
                 it.accountId in accountIds
         }) {
             "Hay reglas recurrentes con datos no válidos."
+        }
+        val investmentIds = data.investments.map { it.id }.toSet()
+        require(data.investments.all { it.name.isNotBlank() }) {
+            "Hay productos de inversión sin nombre."
+        }
+        require(data.investmentEntries.all {
+            it.investmentId in investmentIds &&
+                when (it.kind) {
+                    InvestmentEntryKind.CONTRIBUTION,
+                    InvestmentEntryKind.WITHDRAWAL,
+                    -> it.amountCents > 0L
+                    InvestmentEntryKind.RETURN,
+                    InvestmentEntryKind.VALUATION,
+                    -> it.amountCents != 0L
+                }
+        }) {
+            "Hay movimientos de inversión con datos no válidos."
         }
         require(data.settings.currencyCode in Currency.entries.map { it.code }) {
             "La moneda de la copia no es compatible."

@@ -2,6 +2,7 @@ package com.budjet.app
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -67,6 +68,21 @@ class ScreenshotTest {
         capture("06-analisis")
         compose.onNodeWithText("Restaurantes").performClick()
         capture("07-categoria")
+        back()
+
+        compose.onNodeWithText("CARTERA DE INVERSIÓN").performClick()
+        capture("07b-cartera")
+        compose.onNodeWithTag("product-i_index").performClick()
+        capture("07c-producto")
+        back()
+        compose.onNodeWithTag("portfolio-list").performScrollToNode(hasTestTag("calculator-card"))
+        compose.onNodeWithTag("calculator-card").performClick()
+        capture("07d-calculadora")
+        compose.onNodeWithTag("volatility-field").performTextInput("15")
+        compose.onNodeWithText("Calcular").performClick()
+        compose.onNodeWithTag("calculator-list").performScrollToNode(hasTestTag("result-card"))
+        capture("07e-calculadora-volatilidad")
+        back()
         back()
 
         compose.onNodeWithContentDescription("Inicio").performClick()

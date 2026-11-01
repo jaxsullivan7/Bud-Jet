@@ -21,6 +21,11 @@ import androidx.compose.material.icons.rounded.ShoppingBasket
 import androidx.compose.material.icons.rounded.Subscriptions
 import androidx.compose.material.icons.rounded.Undo
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.CurrencyExchange
+import androidx.compose.material.icons.rounded.PieChart
+import androidx.compose.material.icons.rounded.Public
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.ShowChart
 import androidx.compose.material.icons.rounded.Spa
 import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.Work
@@ -51,6 +56,13 @@ fun categoryIcon(key: String): ImageVector = when (key) {
     "refund" -> Icons.Rounded.Undo
     "reversal" -> Icons.Rounded.Block
     "spa" -> Icons.Rounded.Spa
+    "fund" -> Icons.Rounded.PieChart
+    "stock" -> Icons.Rounded.ShowChart
+    "etf" -> Icons.Rounded.Public
+    "crypto" -> Icons.Rounded.CurrencyExchange
+    "deposit" -> Icons.Rounded.Savings
+    "pension" -> Icons.Rounded.Shield
+    "real_estate" -> Icons.Rounded.Home
     "bank" -> Icons.Rounded.AccountBalance
     "savings" -> Icons.Rounded.Savings
     "cash" -> Icons.Rounded.Payments

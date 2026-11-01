@@ -7,6 +7,14 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.6
+
+- **Cartera de inversión** en Análisis, separada del saldo disponible: productos (fondo indexado, acciones, ETF, cripto, depósito, plan de pensiones, inmueble y otros), aportaciones, retiradas, rendimientos y ajustes de valor.
+- **Rentabilidad anualizada (XIRR)**, rentabilidad total, distribución de la cartera y evolución de 12 meses por producto.
+- **Calculadora de interés compuesto** con capital inicial, aportación mensual, rentabilidad anual, años y capitalización mensual o anual.
+- **Volatilidad anual opcional**: 0 % calcula de forma determinista; con un valor simula 1.200 escenarios y muestra P10, P50 y P90.
+- La cartera y sus movimientos entran en la copia de seguridad, la validación y «Empezar de cero».
+
 ### v0.5.1
 
 - **Balance inicial del mes en Análisis**: el mes arranca con el saldo real del cierre anterior, incluyendo nóminas cobradas el último día del mes previo. Se muestra saldo inicial, ingresos, gastos y saldo final.

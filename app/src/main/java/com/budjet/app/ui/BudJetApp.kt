@@ -53,6 +53,7 @@ import com.budjet.app.ui.screens.CategoryDetailScreen
 import com.budjet.app.ui.screens.GoalsScreen
 import com.budjet.app.ui.screens.HomeScreen
 import com.budjet.app.ui.screens.LockScreen
+import com.budjet.app.ui.screens.PortfolioScreen
 import com.budjet.app.ui.screens.RecurringScreen
 import com.budjet.app.ui.screens.SettingsScreen
 import com.budjet.app.ui.screens.TransactionEditorScreen
@@ -75,6 +76,7 @@ fun BudJetApp(
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
     var goalsOpen by rememberSaveable { mutableStateOf(false) }
     var recurringOpen by rememberSaveable { mutableStateOf(false) }
+    var portfolioOpen by rememberSaveable { mutableStateOf(false) }
     var editorDraft by remember { mutableStateOf<EditorDraft?>(null) }
     var editorVisible by remember { mutableStateOf(false) }
     var categoryDetail by remember { mutableStateOf<Category?>(null) }
@@ -210,17 +212,18 @@ fun BudJetApp(
     }
 
     BackHandler(enabled = locked) { }
-    BackHandler(enabled = editorVisible || goalsOpen || recurringOpen || categoryVisible || settingsOpen) {
+    BackHandler(enabled = editorVisible || goalsOpen || recurringOpen || portfolioOpen || categoryVisible || settingsOpen) {
         when {
             editorVisible -> editorVisible = false
             categoryVisible -> categoryVisible = false
             goalsOpen -> goalsOpen = false
             recurringOpen -> recurringOpen = false
+            portfolioOpen -> portfolioOpen = false
             settingsOpen -> settingsOpen = false
         }
     }
     BackHandler(
-        enabled = !locked && !editorVisible && !goalsOpen && !recurringOpen &&
+        enabled = !locked && !editorVisible && !goalsOpen && !recurringOpen && !portfolioOpen &&
             !categoryVisible && !settingsOpen && tab != AppTab.HOME,
     ) {
         tab = AppTab.HOME
@@ -274,6 +277,7 @@ fun BudJetApp(
                         onNextMonth = viewModel::nextMonth,
                         onOpenCategory = { openCategory(it) },
                         onSetStartDate = viewModel::setAnalysisStart,
+                        onOpenPortfolio = { portfolioOpen = true },
                     )
                 }
             }
@@ -480,6 +484,28 @@ fun BudJetApp(
                     onSave = viewModel::saveRecurring,
                     onDelete = viewModel::deleteRecurring,
                     onToggle = viewModel::setRecurringActive,
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = portfolioOpen,
+            enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
+            exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(colors.background)
+                    .statusBarsPadding(),
+            ) {
+                PortfolioScreen(
+                    data = data,
+                    onClose = { portfolioOpen = false },
+                    onAddInvestment = viewModel::addInvestment,
+                    onUpdateInvestment = viewModel::updateInvestment,
+                    onDeleteInvestment = viewModel::deleteInvestment,
+                    onAddEntry = viewModel::addInvestmentEntry,
                 )
             }
         }

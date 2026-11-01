@@ -214,6 +214,49 @@ object DemoData {
             ),
         )
 
+        fun monthsAgo(months: Long, day: Int = 10): Long =
+            YearMonth.from(today).minusMonths(months).atDay(day).toEpochDay()
+
+        val investments = listOf(
+            Investment(
+                id = "i_index",
+                name = "Fondo indexado global",
+                kind = InvestmentKind.INDEX_FUND,
+                createdAtEpochDay = monthsAgo(18),
+            ),
+            Investment(
+                id = "i_btc",
+                name = "Bitcoin",
+                kind = InvestmentKind.CRYPTO,
+                createdAtEpochDay = monthsAgo(11),
+            ),
+            Investment(
+                id = "i_pension",
+                name = "Plan de pensiones",
+                kind = InvestmentKind.PENSION,
+                createdAtEpochDay = monthsAgo(24),
+            ),
+            Investment(
+                id = "i_tech",
+                name = "Acciones tecnológicas",
+                kind = InvestmentKind.STOCK,
+                createdAtEpochDay = monthsAgo(13),
+            ),
+        )
+
+        val investmentEntries = listOf(
+            InvestmentEntry("ie1", "i_index", InvestmentEntryKind.CONTRIBUTION, 300_000, monthsAgo(18), "Aportación inicial"),
+            InvestmentEntry("ie2", "i_index", InvestmentEntryKind.CONTRIBUTION, 200_000, monthsAgo(9), "Aportación periódica"),
+            InvestmentEntry("ie3", "i_index", InvestmentEntryKind.VALUATION, 42_000, monthsAgo(5), "Actualización de valor"),
+            InvestmentEntry("ie4", "i_index", InvestmentEntryKind.VALUATION, 18_000, monthsAgo(1), "Actualización de valor"),
+            InvestmentEntry("ie5", "i_btc", InvestmentEntryKind.CONTRIBUTION, 100_000, monthsAgo(11), "Compra"),
+            InvestmentEntry("ie6", "i_btc", InvestmentEntryKind.VALUATION, 38_000, monthsAgo(3), "Actualización de valor"),
+            InvestmentEntry("ie7", "i_pension", InvestmentEntryKind.CONTRIBUTION, 240_000, monthsAgo(24), "Aportación inicial"),
+            InvestmentEntry("ie8", "i_pension", InvestmentEntryKind.RETURN, 8_000, monthsAgo(4), "Rentabilidad"),
+            InvestmentEntry("ie9", "i_tech", InvestmentEntryKind.CONTRIBUTION, 120_000, monthsAgo(13), "Compra"),
+            InvestmentEntry("ie10", "i_tech", InvestmentEntryKind.VALUATION, -18_000, monthsAgo(2), "Corrección de mercado"),
+        )
+
         return AppData(
             version = 5,
             settings = Settings(openingBalanceCents = 385_000),
@@ -223,6 +266,8 @@ object DemoData {
             budgets = budgets,
             recurringRules = recurringRules,
             savingsGoals = goals,
+            investments = investments,
+            investmentEntries = investmentEntries,
         )
     }
 }

@@ -2,7 +2,7 @@
 
 Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos y objetivos de ahorro. Diseño sobrio, cálido y editorial, con tres gamas de color.
 
-> Estado: **boceto funcional v0.5.1**. Datos locales, copia de seguridad, desbloqueo biométrico, saldo inicial editable, movimientos programados y análisis con balance inicial del mes.
+> Estado: **boceto funcional v0.6.0**. Datos locales, copia de seguridad, desbloqueo biométrico, saldo inicial editable, movimientos programados, análisis con balance del mes y cartera de inversión con calculadora de interés compuesto.
 
 | Resumen | Objetivos | Movimientos |
 |---|---|---|
@@ -11,6 +11,10 @@ Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos
 | Presupuestos | Análisis | Detalle de categoría |
 |---|---|---|
 | ![Presupuestos](docs/screenshots/05-presupuestos.png) | ![Análisis](docs/screenshots/06-analisis.png) | ![Detalle de categoría](docs/screenshots/07-categoria.png) |
+
+| Cartera de inversión | Producto | Calculadora |
+|---|---|---|
+| ![Cartera](docs/screenshots/07b-cartera.png) | ![Producto](docs/screenshots/07c-producto.png) | ![Calculadora](docs/screenshots/07e-calculadora-volatilidad.png) |
 
 | Añadir movimiento | Movimientos recurrentes | Ajustes |
 |---|---|---|
@@ -46,6 +50,8 @@ Las categorías conservan sus colores en las tres gamas para no perder identidad
 - **Presupuestos** — límite mensual general y por categoría, con ritmo de gasto diario.
 - **Análisis** — desglose por categorías, comparativa de 6 meses, estadísticas e ideas automáticas. Puedes fijar **desde qué fecha** empieza a contar el histórico.
 - **Balance del mes** — cada mes arranca con el saldo real del cierre anterior (aunque la nómina llegue el último día), suma ingresos, resta gastos y muestra el saldo final.
+- **Cartera de inversión** — seguimiento separado del saldo disponible. Productos de fondos, acciones, ETF, cripto, depósitos, planes de pensiones, inmuebles u otros; aportaciones, retiradas, rendimientos y ajustes de valor. Calcula valor actual, rentabilidad total, **rentabilidad anualizada (XIRR)**, distribución y evolución de 12 meses.
+- **Calculadora de interés compuesto** — capital inicial, aportación mensual, rentabilidad anual, años y capitalización mensual o anual. La **volatilidad anual** es opcional: con 0 % hace un cálculo fijo; con un valor simula 1.200 escenarios y muestra P10, P50 y P90.
 - **Detalle de categoría** — toca un segmento del donut o su leyenda para ver la evolución, las métricas y los movimientos de esa categoría.
 - **Objetivos de ahorro** — metas, aportaciones/retiradas, progreso y sugerencia mensual. Es una “hucha virtual”.
 - **Movimientos recurrentes** — nómina, alquiler o suscripciones mensuales; se apuntan solos al abrir la app, se pueden pausar y editar.
@@ -55,7 +61,7 @@ Las categorías conservan sus colores en las tres gamas para no perder identidad
 - **Importes con decimales** — todos los importes muestran céntimos; no se redondean a euros enteros.
 - **Copia de seguridad** — exporta todo a un JSON versionado y restáuralo desde el selector de Android, con validación y resumen antes de sustituir.
 - **Saldo inicial** — visible y editable en Ajustes → Datos. Ya no hay una cifra oculta de demo.
-- **Empezar de cero** — borra movimientos, presupuestos, objetivos y recurrentes; deja el saldo inicial a 0 y conserva categorías, cuentas y apariencia.
+- **Empezar de cero** — borra movimientos, presupuestos, objetivos, recurrentes y cartera; deja el saldo inicial a 0 y conserva categorías, cuentas y apariencia.
 - **Bloqueo biométrico** — huella o PIN al abrir y tras 30 segundos en segundo plano, con “Probar desbloqueo”.
 - **Ajustes** — nombre, moneda (EUR/USD/GBP/MXN), tema, gama de color, categorías, cuentas y exportación CSV.
 
@@ -82,15 +88,16 @@ Requiere JDK 17+ y Android SDK 37.
 
 ## Probar el boceto
 
-1. Instala `BudJet-0.5.1-boceto.apk` en un Android 8.0 o superior.
+1. Instala `BudJet-0.6.0-boceto.apk` en un Android 8.0 o superior.
 2. La app arranca con datos de ejemplo de los últimos 6 meses.
-3. Para empezar con todo a cero: **Ajustes → Datos → Empezar de cero**. El saldo total, ingresos, gastos, presupuestos, objetivos y recurrentes quedarán a 0. Si quieres registrar el dinero que ya tenías, cambia **Saldo inicial** en la misma pantalla.
+3. Para empezar con todo a cero: **Ajustes → Datos → Empezar de cero**. El saldo total, ingresos, gastos, presupuestos, objetivos, recurrentes y cartera quedarán a 0. Si quieres registrar el dinero que ya tenías, cambia **Saldo inicial** en la misma pantalla.
 4. Prueba las gamas **Business / Navy / Boss** en **Ajustes → Apariencia**.
 5. Al añadir un movimiento, cambia la fecha y guarda; el siguiente moverá la fecha por defecto a esa misma fecha.
 6. Registra un ingreso con **Devolución** o **Anulación**; Anulación abre el buscador de pagos. También está **Belleza** en gastos.
 7. En **Análisis**, toca “Todo el historial” para fijar la fecha de inicio de los datos.
 8. Exporta una copia en **Ajustes → Datos → Copia de seguridad** y restáurala.
-9. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
+9. En **Análisis**, abre **Cartera de inversión**: añade un producto, registra una aportación y prueba «Actualizar valor» y «Rendimiento». Después abre la calculadora y simula con volatilidad.
+10. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
 
 La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirve para probar, no para publicar en Google Play.
 
@@ -101,8 +108,8 @@ La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirv
 ./gradlew :app:lintDebug
 ```
 
-- **48 tests de lógica** — finanzas, balance inicial/final, movimientos futuros, fechas recordadas, recurrencias, objetivos, backup/importación, migraciones, filtros y biometría.
-- **2 tests de captura** con Robolectric/Roborazzi que renderizan 24 pantallas.
+- **54 tests de lógica** — finanzas, balance inicial/final, movimientos futuros, fechas recordadas, recurrencias, objetivos, cartera y XIRR, calculadora determinista y Monte Carlo, backup/importación, migraciones, filtros y biometría.
+- **2 tests de captura** con Robolectric/Roborazzi que renderizan 28 pantallas.
 - **Lint: 0 errores**.
 
 ## Estructura
@@ -120,6 +127,9 @@ app/src/main/java/com/budjet/app/
 - Las recurrencias son mensuales y se procesan al abrir la app; si no abres la app durante un mes, ese cargo no se genera.
 - Los movimientos futuros aparecen en la lista del mes en que caen y se marcan como “Programado”; no cuentan hasta su fecha.
 - Los objetivos son una asignación virtual: no mueven dinero entre cuentas ni descuentan del saldo.
+- La cartera de inversión también es un seguimiento separado: las aportaciones y retiradas **no modifican el saldo disponible** en esta versión. Los valores se actualizan a mano; todavía no hay cotizaciones automáticas ni transferencias entre efectivo y cartera.
+- La rentabilidad anualizada usa XIRR (dinero ponderado en el tiempo) y necesita al menos una entrada y una salida de dinero; si no puede calcularse, se muestra «—».
+- La calculadora es una estimación: no incluye impuestos, comisiones ni inflación. Con volatilidad, los percentiles P10/P50/P90 salen de una simulación y no garantizan resultados futuros.
 - **Anulación** conserva el gasto original y crea un ingreso vinculado por el mismo importe; el efecto neto es cero. No borra el gasto de la lista.
 - El rango histórico solo afecta a las gráficas de Análisis y al detalle de categoría; el bloque de balance del mes usa el saldo real completo.
 - La copia de seguridad **sustituye** todos los datos; todavía no hay fusión ni importación incremental.
@@ -130,6 +140,7 @@ app/src/main/java/com/budjet/app/
 ## Próximos pasos
 
 - [ ] Validar la checklist biométrica en tu móvil (BUD-26).
+- [ ] Transferencias entre saldo y cartera, y patrimonio total (BUD-11/BUD-12).
 - [ ] Notificaciones de presupuesto y cargos recurrentes (BUD-2).
 - [ ] Recurrencias semanales/anuales (BUD-10).
 - [ ] Aportaciones automáticas a objetivos (BUD-14).
