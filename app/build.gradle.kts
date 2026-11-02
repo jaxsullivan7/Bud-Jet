@@ -14,8 +14,8 @@ android {
         applicationId = "com.budjet.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 9
-        versionName = "0.6.0"
+        versionCode = 10
+        versionName = "0.7.0"
     }
 
     buildTypes {
@@ -76,6 +76,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)

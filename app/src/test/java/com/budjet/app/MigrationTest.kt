@@ -28,7 +28,10 @@ class MigrationTest {
 
     @Test
     fun `old data with movements keeps its balance but updates version`() {
-        val old = demo.copy(version = 3)
+        val old = demo.copy(
+            version = 3,
+            settings = Settings(openingBalanceCents = 385_000L),
+        )
         val migrated = old.migratedToCurrent()
         assertEquals(385_000L, migrated.settings.openingBalanceCents)
         assertEquals(Backup.CURRENT_VERSION, migrated.version)

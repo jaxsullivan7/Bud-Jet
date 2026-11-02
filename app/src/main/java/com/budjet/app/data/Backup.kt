@@ -20,7 +20,7 @@ object Backup {
 
     const val APP_NAME = "Bud Jet"
     const val FORMAT = 1
-    const val CURRENT_VERSION = 5
+    const val CURRENT_VERSION = 6
     const val MAX_BYTES = 10 * 1024 * 1024
 
     private val json = Json {
@@ -99,6 +99,15 @@ object Backup {
         require(data.investmentEntries.map { it.id }.distinct().size == data.investmentEntries.size) {
             "Hay movimientos de inversión duplicados en la copia."
         }
+        require(data.transfers.map { it.id }.distinct().size == data.transfers.size) {
+            "Hay transferencias duplicadas en la copia."
+        }
+        require(data.liabilities.map { it.id }.distinct().size == data.liabilities.size) {
+            "Hay deudas duplicadas en la copia."
+        }
+        require(data.categoryRules.map { it.id }.distinct().size == data.categoryRules.size) {
+            "Hay reglas de categorización duplicadas en la copia."
+        }
 
         val categoryIds = data.categories.map { it.id }.toSet()
         val accountIds = data.accounts.map { it.id }.toSet()
@@ -145,6 +154,31 @@ object Backup {
                 }
         }) {
             "Hay movimientos de inversión con datos no válidos."
+        }
+        val transferIds = data.transfers.map { it.id }.toSet()
+        require(data.transfers.all { transfer ->
+            val sourceCount = listOf(transfer.fromAccountId != null, transfer.fromInvestmentId != null).count { it }
+            val targetCount = listOf(transfer.toAccountId != null, transfer.toInvestmentId != null).count { it }
+            transfer.amountCents > 0L &&
+                sourceCount == 1 &&
+                targetCount == 1 &&
+                (transfer.fromAccountId == null || transfer.fromAccountId in accountIds) &&
+                (transfer.fromInvestmentId == null || transfer.fromInvestmentId in investmentIds) &&
+                (transfer.toAccountId == null || transfer.toAccountId in accountIds) &&
+                (transfer.toInvestmentId == null || transfer.toInvestmentId in investmentIds) &&
+                transfer.fromAccountId != transfer.toAccountId &&
+                !(transfer.fromInvestmentId != null && transfer.fromInvestmentId == transfer.toInvestmentId)
+        }) {
+            "Hay transferencias con datos no válidos."
+        }
+        require(data.investmentEntries.all { it.transferId == null || it.transferId in transferIds }) {
+            "Hay aportaciones vinculadas a transferencias que no existen."
+        }
+        require(data.liabilities.all { it.name.isNotBlank() && it.balanceCents >= 0L }) {
+            "Hay deudas con datos no válidos."
+        }
+        require(data.categoryRules.all { it.pattern.isNotBlank() && it.categoryId in categoryIds }) {
+            "Hay reglas de categorización con datos no válidos."
         }
         require(data.settings.currencyCode in Currency.entries.map { it.code }) {
             "La moneda de la copia no es compatible."

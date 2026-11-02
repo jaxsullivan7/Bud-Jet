@@ -18,10 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
@@ -32,10 +34,15 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Euro
 import androidx.compose.material.icons.rounded.EventRepeat
+import androidx.compose.material.icons.rounded.FileOpen
 import androidx.compose.material.icons.rounded.Fingerprint
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.NotificationImportant
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restore
+import androidx.compose.material.icons.rounded.Rule
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Savings
 import androidx.compose.material.icons.rounded.SettingsBrightness
@@ -66,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
+import com.budjet.app.data.AutoBackupInfo
 import com.budjet.app.data.Backup
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
@@ -89,6 +97,7 @@ import com.budjet.app.ui.theme.NavyLight
 import com.budjet.app.ui.theme.PaperLight
 import com.budjet.app.util.centsToInput
 import com.budjet.app.util.formatMoney
+import com.budjet.app.util.formatShortDate
 import com.budjet.app.util.parseMoneyInput
 import java.time.LocalDate
 
@@ -109,6 +118,20 @@ fun SettingsScreen(
     onBuildBackup: () -> String,
     onValidateBackup: (String) -> Result<AppData>,
     onRestoreBackup: (AppData) -> Unit,
+    onOpenImport: () -> Unit,
+    onBuildEncryptedBackup: (String) -> ByteArray,
+    onValidateEncryptedBackup: (ByteArray, String) -> Result<AppData>,
+    onListAutoBackups: () -> List<AutoBackupInfo>,
+    onRestoreAutoBackup: (String) -> Result<AppData>,
+    onCreateAutoBackup: () -> Unit,
+    onSetNotificationsEnabled: (Boolean) -> Unit,
+    onSetBudgetAlerts: (Boolean) -> Unit,
+    onSetRecurringAlerts: (Boolean) -> Unit,
+    onSetMonthlyReviewAlerts: (Boolean) -> Unit,
+    onSetValuationAlerts: (Boolean) -> Unit,
+    onSetAutoBackupEnabled: (Boolean) -> Unit,
+    onAddCategoryRule: (String, String) -> Unit,
+    onDeleteCategoryRule: (String) -> Unit,
     onNotify: (String) -> Unit,
     onSetOpeningBalance: (Long) -> Unit,
     onExport: () -> Unit,
@@ -125,6 +148,12 @@ fun SettingsScreen(
     var openingDialog by remember { mutableStateOf(false) }
     var pendingRestore by remember { mutableStateOf<AppData?>(null) }
     var importError by remember { mutableStateOf<String?>(null) }
+    var encryptedExportDialog by remember { mutableStateOf(false) }
+    var encryptedImportDialog by remember { mutableStateOf(false) }
+    var encryptedPassword by remember { mutableStateOf("") }
+    var pendingEncryptedBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var autoBackupsDialog by remember { mutableStateOf(false) }
+    var rulesDialog by remember { mutableStateOf(false) }
     val currency = Currency.from(data.settings.currencyCode)
 
     val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
@@ -162,6 +191,41 @@ fun SettingsScreen(
                 onValidateBackup(text)
                     .onSuccess { pendingRestore = it }
                     .onFailure { importError = it.message ?: "El archivo no es una copia válida." }
+            }
+        }
+    }
+
+    val encryptedExportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri ->
+        if (uri != null && encryptedPassword.isNotBlank()) {
+            runCatching {
+                val bytes = onBuildEncryptedBackup(encryptedPassword)
+                context.contentResolver.openOutputStream(uri)?.use { it.write(bytes) }
+                    ?: error("No se pudo abrir el archivo.")
+            }.onSuccess {
+                onNotify("Copia cifrada guardada")
+            }.onFailure {
+                onNotify("No se pudo guardar la copia cifrada")
+            }
+            encryptedPassword = ""
+        }
+    }
+
+    val encryptedImportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            val bytes = runCatching {
+                context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: error("No se pudo leer el archivo.")
+            }.getOrElse {
+                importError = it.message ?: "No se pudo leer el archivo."
+                null
+            }
+            if (bytes != null) {
+                pendingEncryptedBytes = bytes
+                encryptedImportDialog = true
             }
         }
     }
@@ -293,6 +357,55 @@ fun SettingsScreen(
                     subtitle = "Archivo CSV para hoja de cálculo",
                     onClick = onExport,
                 )
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
+            SectionHeader(title = "Avisos")
+            Spacer(Modifier.height(10.dp))
+            BudCard(padding = 0.dp) {
+                SwitchRow(
+                    icon = Icons.Rounded.NotificationImportant,
+                    title = "Recordatorios",
+                    subtitle = "Presupuestos, cargos y revisión mensual",
+                    checked = data.settings.notificationsEnabled,
+                    onCheckedChange = onSetNotificationsEnabled,
+                )
+                if (data.settings.notificationsEnabled) {
+                    SettingsDivider()
+                    SwitchRow(
+                        icon = Icons.Rounded.NotificationImportant,
+                        title = "Presupuestos",
+                        subtitle = "Aviso al 80 % y al 100 %",
+                        checked = data.settings.budgetAlerts,
+                        onCheckedChange = onSetBudgetAlerts,
+                    )
+                    SettingsDivider()
+                    SwitchRow(
+                        icon = Icons.Rounded.EventRepeat,
+                        title = "Cargos recurrentes",
+                        subtitle = "Aviso el día anterior",
+                        checked = data.settings.recurringAlerts,
+                        onCheckedChange = onSetRecurringAlerts,
+                    )
+                    SettingsDivider()
+                    SwitchRow(
+                        icon = Icons.Rounded.History,
+                        title = "Revisión mensual",
+                        subtitle = "Un repaso el primer día del mes",
+                        checked = data.settings.monthlyReviewAlerts,
+                        onCheckedChange = onSetMonthlyReviewAlerts,
+                    )
+                    SettingsDivider()
+                    SwitchRow(
+                        icon = Icons.AutoMirrored.Rounded.TrendingUp,
+                        title = "Actualizar cartera",
+                        subtitle = "Cada 3 meses sin valoraciones",
+                        checked = data.settings.valuationAlerts,
+                        onCheckedChange = onSetValuationAlerts,
+                    )
+                }
             }
         }
 
@@ -436,6 +549,41 @@ fun SettingsScreen(
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 SettingsRow(
+                    icon = Icons.Rounded.FileOpen,
+                    title = "Importar extracto",
+                    subtitle = "CSV u OFX del banco, con vista previa",
+                    onClick = onOpenImport,
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.Lock,
+                    title = "Copia cifrada",
+                    subtitle = "Archivo .bjet protegido con contraseña",
+                    onClick = { encryptedExportDialog = true },
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.Restore,
+                    title = "Restaurar cifrada",
+                    subtitle = "Abre un archivo .bjet y pide la contraseña",
+                    onClick = { encryptedImportLauncher.launch(arrayOf("application/octet-stream", "application/*")) },
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.History,
+                    title = "Copias automáticas",
+                    subtitle = if (data.settings.autoBackupEnabled) "Una al día, últimas 14" else "Desactivadas",
+                    onClick = { autoBackupsDialog = true },
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.Rule,
+                    title = "Reglas de importación",
+                    subtitle = "${data.categoryRules.size} reglas por comercio o texto",
+                    onClick = { rulesDialog = true },
+                )
+                SettingsDivider()
+                SettingsRow(
                     icon = Icons.Rounded.AccountBalance,
                     title = "Saldo inicial",
                     subtitle = "Punto de partida de tu economía",
@@ -445,14 +593,14 @@ fun SettingsScreen(
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Save,
-                    title = "Copia de seguridad",
-                    subtitle = "Guarda todos tus datos en un archivo JSON",
+                    title = "Copia JSON (sin cifrar)",
+                    subtitle = "Guarda todos tus datos en un archivo legible",
                     onClick = { exportLauncher.launch("budjet-copia-${LocalDate.now()}.json") },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Restore,
-                    title = "Restaurar copia",
+                    title = "Restaurar JSON",
                     subtitle = "Importa un archivo .json de Bud Jet",
                     onClick = {
                         importLauncher.launch(
@@ -503,7 +651,7 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Un lugar tranquilo para tu dinero. Versión 0.6.0 · boceto.",
+                            text = "Un lugar tranquilo para tu dinero. Versión 0.7.0 · boceto.",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )
@@ -691,6 +839,133 @@ fun SettingsScreen(
         )
     }
 
+    if (encryptedExportDialog) {
+        PasswordDialog(
+            title = "Proteger la copia",
+            message = "Elige una contraseña. La copia se cifrará con AES-256 y no se podrá abrir sin ella.",
+            confirmLabel = "Guardar copia",
+            onDismiss = { encryptedExportDialog = false },
+            onConfirm = { password ->
+                encryptedPassword = password
+                encryptedExportDialog = false
+                encryptedExportLauncher.launch("budjet-cifrada-${LocalDate.now()}.bjet")
+            },
+        )
+    }
+
+    if (encryptedImportDialog && pendingEncryptedBytes != null) {
+        PasswordDialog(
+            title = "Abrir copia cifrada",
+            message = "Introduce la contraseña con la que protegiste el archivo.",
+            confirmLabel = "Abrir",
+            onDismiss = {
+                encryptedImportDialog = false
+                pendingEncryptedBytes = null
+            },
+            onConfirm = { password ->
+                val bytes = pendingEncryptedBytes
+                if (bytes != null) {
+                    onValidateEncryptedBackup(bytes, password)
+                        .onSuccess {
+                            pendingRestore = it
+                            encryptedImportDialog = false
+                            pendingEncryptedBytes = null
+                        }
+                        .onFailure {
+                            importError = it.message ?: "No se pudo abrir la copia cifrada."
+                            encryptedImportDialog = false
+                            pendingEncryptedBytes = null
+                        }
+                }
+            },
+        )
+    }
+
+    if (autoBackupsDialog) {
+        val backups = remember(autoBackupsDialog, data.settings.autoBackupEnabled) { onListAutoBackups() }
+        AlertDialog(
+            onDismissRequest = { autoBackupsDialog = false },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(26.dp),
+            title = { Text("Copias automáticas", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+            text = {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Copia diaria cifrada", style = MaterialTheme.typography.bodyLarge, color = colors.ink)
+                            Text("Se guarda en el almacenamiento privado de la app", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                        }
+                        Switch(
+                            checked = data.settings.autoBackupEnabled,
+                            onCheckedChange = onSetAutoBackupEnabled,
+                            colors = SwitchDefaults.colors(checkedTrackColor = colors.primary),
+                        )
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    if (backups.isEmpty()) {
+                        Text(
+                            text = "Todavía no hay copias. Se creará una al abrir la app si la copia automática está activa.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.inkMuted,
+                        )
+                    } else {
+                        backups.take(6).forEach { backup ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onRestoreAutoBackup(backup.name)
+                                            .onSuccess {
+                                                pendingRestore = it
+                                                autoBackupsDialog = false
+                                            }
+                                            .onFailure { importError = it.message ?: "No se pudo abrir la copia." }
+                                    }
+                                    .padding(vertical = 9.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(Icons.Rounded.History, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = formatShortDate(backup.date),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colors.ink,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text(
+                                    text = "${backup.sizeBytes / 1024} KB",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.inkMuted,
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onCreateAutoBackup()
+                        onNotify("Copia automática creada")
+                        autoBackupsDialog = false
+                    },
+                    enabled = data.settings.autoBackupEnabled,
+                ) { Text("Crear ahora", color = colors.primary) }
+            },
+            dismissButton = { TextButton(onClick = { autoBackupsDialog = false }) { Text("Cerrar", color = colors.inkMuted) } },
+        )
+    }
+
+    if (rulesDialog) {
+        RuleListDialog(
+            rules = data.categoryRules,
+            categories = data.categories,
+            onDismiss = { rulesDialog = false },
+            onDelete = onDeleteCategoryRule,
+            onAdd = onAddCategoryRule,
+        )
+    }
+
     pendingRestore?.let { backup ->
         AlertDialog(
             onDismissRequest = { pendingRestore = null },
@@ -762,6 +1037,215 @@ fun SettingsScreen(
             },
         )
     }
+}
+
+@Composable
+private fun SwitchRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    val colors = BudTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(colors.surfaceMuted),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(16.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = colors.ink)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+        }
+        BudSwitch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun PasswordDialog(
+    title: String,
+    message: String,
+    confirmLabel: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    val colors = BudTheme.colors
+    var password by remember { mutableStateOf("") }
+    val transformation = remember { androidx.compose.ui.text.input.PasswordVisualTransformation() }
+    val valid = password.length >= 6
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.34f))
+            .clickable(onClick = onDismiss),
+        contentAlignment = Alignment.Center,
+    ) {
+        BudCard(
+            modifier = Modifier
+                .padding(24.dp)
+                .clickable(onClick = {}),
+            padding = 22.dp,
+        ) {
+            Text(title, style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+            Spacer(Modifier.height(8.dp))
+            Text(message, style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it.take(64) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Contraseña") },
+                singleLine = true,
+                visualTransformation = transformation,
+                shape = RoundedCornerShape(14.dp),
+            )
+            if (password.isNotBlank() && password.length < 6) {
+                Spacer(Modifier.height(4.dp))
+                Text("Usa al menos 6 caracteres.", style = MaterialTheme.typography.bodySmall, color = colors.expense)
+            }
+            Spacer(Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { onConfirm(password) }, enabled = valid) {
+                    Text(confirmLabel, color = colors.primary)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RuleListDialog(
+    rules: List<com.budjet.app.data.CategoryRule>,
+    categories: List<Category>,
+    onDismiss: () -> Unit,
+    onDelete: (String) -> Unit,
+    onAdd: (String, String) -> Unit,
+) {
+    val colors = BudTheme.colors
+    var adding by remember { mutableStateOf(false) }
+    var pattern by remember { mutableStateOf("") }
+    var categoryId by remember { mutableStateOf(categories.firstOrNull { it.type == TxType.EXPENSE }?.id.orEmpty()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        shape = RoundedCornerShape(26.dp),
+        title = {
+            Column {
+                Overline("IMPORTACIÓN")
+                Spacer(Modifier.height(4.dp))
+                Text("Reglas de categorización", style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+            }
+        },
+        text = {
+            Column {
+                if (!adding) {
+                    Text(
+                        text = "Si el concepto contiene el texto, se asigna la categoría automáticamente al importar.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LazyColumn(modifier = Modifier.height(280.dp)) {
+                        items(rules) { rule ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text("«${rule.pattern}»", style = MaterialTheme.typography.bodyMedium, color = colors.ink)
+                                    Text(
+                                        categories.firstOrNull { it.id == rule.categoryId }?.name ?: rule.categoryId,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.inkMuted,
+                                    )
+                                }
+                                SoftIconButton(
+                                    icon = Icons.Rounded.DeleteOutline,
+                                    contentDescription = "Eliminar regla",
+                                    onClick = { onDelete(rule.id) },
+                                    size = 28.dp,
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    OutlinedTextField(
+                        value = pattern,
+                        onValueChange = { pattern = it.take(32) },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Texto del concepto") },
+                        placeholder = { Text("Ej. mercadona") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text("Categoría", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                    Spacer(Modifier.height(6.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        categories.filter { it.type == TxType.EXPENSE }.forEach { category ->
+                            Row(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(if (categoryId == category.id) colors.primarySoft else Color.Transparent)
+                                    .border(1.dp, if (categoryId == category.id) colors.primary else colors.line, CircleShape)
+                                    .clickable { categoryId = category.id }
+                                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                            ) {
+                                Text(
+                                    category.name,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (categoryId == category.id) colors.primary else colors.inkMuted,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (adding) {
+                        onAdd(pattern, categoryId)
+                        pattern = ""
+                        adding = false
+                    } else {
+                        adding = true
+                    }
+                },
+                enabled = !adding || (pattern.isNotBlank() && categoryId.isNotBlank()),
+            ) { Text(if (adding) "Guardar regla" else "Añadir regla", color = colors.primary) }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    if (adding) adding = false else onDismiss()
+                },
+            ) { Text(if (adding) "Volver" else "Cerrar", color = colors.inkMuted) }
+        },
+    )
 }
 
 @Composable

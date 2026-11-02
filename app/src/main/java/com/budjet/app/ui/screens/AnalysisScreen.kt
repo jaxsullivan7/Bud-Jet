@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -41,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,6 +51,7 @@ import com.budjet.app.data.CategorySpend
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
 import com.budjet.app.data.InvestmentMath
+import com.budjet.app.data.NetWorth
 import com.budjet.app.data.PortfolioSummary
 import com.budjet.app.data.TxType
 import com.budjet.app.data.filteredFrom
@@ -85,6 +88,7 @@ fun AnalysisScreen(
     onOpenCategory: (com.budjet.app.data.Category) -> Unit,
     onSetStartDate: (LocalDate?) -> Unit,
     onOpenPortfolio: () -> Unit,
+    onOpenPatrimonio: () -> Unit,
 ) {
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
@@ -110,6 +114,7 @@ fun AnalysisScreen(
     val portfolio = remember(data.investments, data.investmentEntries) {
         InvestmentMath.portfolio(data.investments, data.investmentEntries, today)
     }
+    val netWorth = remember(data, today) { Finance.netWorth(data, today) }
     val spends = remember(scopedData, month) { Finance.spendByCategory(scopedData, month) }
     val series = remember(scopedData, month) { Finance.series(scopedData, month, 6) }
     val average = remember(scopedData, month) { Finance.monthlyAverageExpense(scopedData, month, 3) }
@@ -155,7 +160,9 @@ fun AnalysisScreen(
     val noSpendDays = (daysElapsed - spentDays).coerceAtLeast(0)
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("analysis-list"),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 150.dp),
     ) {
         item {
@@ -209,6 +216,15 @@ fun AnalysisScreen(
                 filterActive = startDate != null,
             )
             Spacer(Modifier.height(20.dp))
+        }
+
+        item {
+            PatrimonioSummaryCard(
+                netWorth = netWorth,
+                currency = currency,
+                onClick = onOpenPatrimonio,
+            )
+            Spacer(Modifier.height(12.dp))
         }
 
         item {
@@ -482,6 +498,61 @@ fun AnalysisScreen(
 }
 
 @Composable
+private fun PatrimonioSummaryCard(
+    netWorth: NetWorth,
+    currency: Currency,
+    onClick: () -> Unit,
+) {
+    val colors = BudTheme.colors
+    BudCard(
+        modifier = Modifier.testTag("patrimonio-card"),
+        onClick = onClick,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Overline("PATRIMONIO NETO")
+            Icon(
+                Icons.Rounded.AccountBalanceWallet,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = formatMoney(netWorth.totalCents, currency),
+            style = BudTheme.type.moneyLarge,
+            color = colors.ink,
+            maxLines = 1,
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+            Column {
+                Text("Efectivo", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                Text(formatMoney(netWorth.cashCents, currency), style = BudTheme.type.moneySmall, color = colors.ink)
+            }
+            Column {
+                Text("Inversiones", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                Text(formatMoney(netWorth.investmentsCents, currency), style = BudTheme.type.moneySmall, color = colors.ink)
+            }
+            Column {
+                Text("Deudas", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                Text(formatMoney(netWorth.liabilitiesCents, currency), style = BudTheme.type.moneySmall, color = colors.expense)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Efectivo + cartera − deudas · Toca para abrir",
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.inkMuted,
+        )
+    }
+}
+
+@Composable
 private fun PortfolioSummaryCard(
     summary: PortfolioSummary,
     currency: Currency,
@@ -556,7 +627,7 @@ private fun PortfolioSummaryCard(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Seguimiento separado del saldo disponible · Toca para abrir",
+                text = "Puedes enlazarla con tus cuentas o seguirla por separado · Toca para abrir",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )

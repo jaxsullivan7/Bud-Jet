@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Currency
+import com.budjet.app.data.Finance
 import com.budjet.app.data.Investment
 import com.budjet.app.data.InvestmentEntry
 import com.budjet.app.data.InvestmentEntryKind
@@ -278,7 +279,7 @@ fun PortfolioScreen(
                 }
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    text = "La cartera es un seguimiento separado: las aportaciones no modifican tu saldo disponible en esta versión.",
+                    text = "Las aportaciones desde una cuenta mueven tu saldo. Las externas solo actualizan la cartera.",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -311,10 +312,11 @@ fun PortfolioScreen(
         InvestmentEntryDialog(
             product = action.product,
             action = action.kind,
+            data = data,
             summary = summary.products.firstOrNull { it.investment.id == action.product.id }?.summary,
             currency = currency,
             onDismiss = { entryAction = null },
-            onSave = { amount, date, note ->
+            onSave = { amount, date, note, accountId ->
                 onAddEntry(
                     InvestmentEntryDraft(
                         investmentId = action.product.id,
@@ -322,6 +324,7 @@ fun PortfolioScreen(
                         amountCents = amount,
                         date = date,
                         note = note,
+                        accountId = accountId,
                     ),
                 )
                 entryAction = null
@@ -957,10 +960,11 @@ private fun ProductEditorDialog(
 private fun InvestmentEntryDialog(
     product: Investment,
     action: InvestmentEntryKind,
+    data: AppData,
     summary: InvestmentSummary?,
     currency: Currency,
     onDismiss: () -> Unit,
-    onSave: (amountCents: Long, date: LocalDate, note: String) -> Unit,
+    onSave: (amountCents: Long, date: LocalDate, note: String, accountId: String?) -> Unit,
 ) {
     val colors = BudTheme.colors
     val currentValue = summary?.valueCents ?: 0L
@@ -969,6 +973,10 @@ private fun InvestmentEntryDialog(
     var note by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(LocalDate.now()) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var accountId by remember { mutableStateOf(data.accounts.firstOrNull()?.id) }
+    var useAccount by remember {
+        mutableStateOf(action == InvestmentEntryKind.CONTRIBUTION || action == InvestmentEntryKind.WITHDRAWAL)
+    }
 
     val parsed = parseMoneyInput(amount)
     val signedAmount = when (action) {
@@ -978,9 +986,15 @@ private fun InvestmentEntryDialog(
         InvestmentEntryKind.RETURN -> if (isLoss) -parsed else parsed
         InvestmentEntryKind.VALUATION -> parsed - currentValue
     }
+    val accountAvailable = if (useAccount && accountId != null) {
+        Finance.accountBalanceAt(data, accountId!!, date)
+    } else {
+        Long.MAX_VALUE
+    }
     val valid = when (action) {
-        InvestmentEntryKind.CONTRIBUTION -> parsed > 0
-        InvestmentEntryKind.WITHDRAWAL -> parsed > 0 && parsed <= currentValue
+        InvestmentEntryKind.CONTRIBUTION -> parsed > 0 && (!useAccount || parsed <= accountAvailable)
+        InvestmentEntryKind.WITHDRAWAL -> parsed > 0 && parsed <= currentValue &&
+            (!useAccount || parsed <= accountAvailable)
         InvestmentEntryKind.RETURN -> parsed > 0
         InvestmentEntryKind.VALUATION -> parsed >= 0 && signedAmount != 0L
     }
@@ -1064,6 +1078,53 @@ private fun InvestmentEntryDialog(
                         color = colors.expense,
                     )
                 }
+                if (action == InvestmentEntryKind.CONTRIBUTION || action == InvestmentEntryKind.WITHDRAWAL) {
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = if (action == InvestmentEntryKind.CONTRIBUTION) {
+                            "Sale de la cuenta"
+                        } else {
+                            "Entra en la cuenta"
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.inkMuted,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        item {
+                            AccountChip(
+                                label = "Sin cuenta",
+                                selected = !useAccount,
+                                onClick = { useAccount = false },
+                            )
+                        }
+                        items(data.accounts, key = { it.id }) { account ->
+                            AccountChip(
+                                label = account.name,
+                                selected = useAccount && accountId == account.id,
+                                onClick = {
+                                    useAccount = true
+                                    accountId = account.id
+                                },
+                            )
+                        }
+                    }
+                    if (useAccount && accountId != null) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Disponible en la cuenta: ${formatMoney(accountAvailable, currency)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (parsed > accountAvailable) colors.expense else colors.inkMuted,
+                        )
+                    }
+                    if (useAccount && parsed > accountAvailable) {
+                        Text(
+                            text = "El importe supera el saldo de la cuenta.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.expense,
+                        )
+                    }
+                }
                 Spacer(Modifier.height(10.dp))
                 Row(
                     modifier = Modifier
@@ -1101,7 +1162,7 @@ private fun InvestmentEntryDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(signedAmount, date, note) },
+                onClick = { onSave(signedAmount, date, note, if (useAccount) accountId else null) },
                 enabled = valid,
             ) { Text("Guardar", color = colors.primary) }
         },
@@ -1132,6 +1193,27 @@ private fun InvestmentEntryDialog(
         ) {
             DatePicker(state = state, showModeToggle = false)
         }
+    }
+}
+
+@Composable
+private fun AccountChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = BudTheme.colors
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (selected) colors.primarySoft else Color.Transparent)
+            .border(1.dp, if (selected) colors.primary else colors.line, CircleShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) colors.primary else colors.inkMuted,
+            maxLines = 1,
+        )
     }
 }
 

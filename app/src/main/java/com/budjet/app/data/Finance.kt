@@ -35,6 +35,23 @@ data class CategorySpend(
     val share: Float,
 )
 
+data class NetWorth(
+    val cashCents: Long,
+    val investmentsCents: Long,
+    val liabilitiesCents: Long,
+) {
+    val totalCents: Long get() = cashCents + investmentsCents - liabilitiesCents
+}
+
+data class NetWorthPoint(
+    val month: YearMonth,
+    val cashCents: Long,
+    val investmentsCents: Long,
+    val liabilitiesCents: Long,
+) {
+    val totalCents: Long get() = cashCents + investmentsCents - liabilitiesCents
+}
+
 object Finance {
 
     fun transactionsOfMonth(data: AppData, month: YearMonth): List<Transaction> {
@@ -67,15 +84,76 @@ object Finance {
 
     fun totalBalance(data: AppData, today: LocalDate = LocalDate.now()): Long {
         val limit = today.toEpochDay()
-        return data.settings.openingBalanceCents + data.transactions.filter { it.dateEpochDay <= limit }.sumOf {
-            if (it.type == TxType.INCOME) it.amountCents else -it.amountCents
-        }
+        return data.settings.openingBalanceCents +
+            data.transactions.filter { it.dateEpochDay <= limit }.sumOf {
+                if (it.type == TxType.INCOME) it.amountCents else -it.amountCents
+            } +
+            data.transfers.filter { it.dateEpochDay <= limit }.sumOf(::cashDelta)
     }
 
     fun balanceAt(data: AppData, date: LocalDate): Long {
         val end = date.toEpochDay()
-        return data.settings.openingBalanceCents + data.transactions.filter { it.dateEpochDay <= end }.sumOf {
-            if (it.type == TxType.INCOME) it.amountCents else -it.amountCents
+        return data.settings.openingBalanceCents +
+            data.transactions.filter { it.dateEpochDay <= end }.sumOf {
+                if (it.type == TxType.INCOME) it.amountCents else -it.amountCents
+            } +
+            data.transfers.filter { it.dateEpochDay <= end }.sumOf(::cashDelta)
+    }
+
+    /** Cash impact of a transfer: only account legs move the available balance. */
+    fun cashDelta(transfer: Transfer): Long =
+        (if (transfer.toAccountId != null) transfer.amountCents else 0L) -
+            (if (transfer.fromAccountId != null) transfer.amountCents else 0L)
+
+    fun accountBalance(data: AppData, accountId: String, today: LocalDate = LocalDate.now()): Long =
+        accountBalanceAt(data, accountId, today)
+
+    fun accountBalanceAt(data: AppData, accountId: String, date: LocalDate): Long {
+        val limit = date.toEpochDay()
+        val opening = if (data.accounts.firstOrNull()?.id == accountId) data.settings.openingBalanceCents else 0L
+        val fromTransactions = data.transactions
+            .filter { it.accountId == accountId && it.dateEpochDay <= limit }
+            .sumOf { if (it.type == TxType.INCOME) it.amountCents else -it.amountCents }
+        val fromTransfers = data.transfers
+            .filter { it.dateEpochDay <= limit }
+            .sumOf { transfer ->
+                when {
+                    transfer.fromAccountId == accountId -> -transfer.amountCents
+                    transfer.toAccountId == accountId -> transfer.amountCents
+                    else -> 0L
+                }
+            }
+        return opening + fromTransactions + fromTransfers
+    }
+
+    fun liabilitiesTotal(data: AppData): Long =
+        data.liabilities.sumOf { it.balanceCents.coerceAtLeast(0L) }
+
+    fun netWorth(data: AppData, today: LocalDate = LocalDate.now()): NetWorth {
+        val investments = InvestmentMath.portfolio(data.investments, data.investmentEntries, today).valueCents
+        return NetWorth(
+            cashCents = totalBalance(data, today),
+            investmentsCents = investments,
+            liabilitiesCents = liabilitiesTotal(data),
+        )
+    }
+
+    fun netWorthSeries(
+        data: AppData,
+        months: Int = 6,
+        today: LocalDate = LocalDate.now(),
+    ): List<NetWorthPoint> {
+        val investments = InvestmentMath.valueSeries(data.investmentEntries, months, today)
+        val liabilities = liabilitiesTotal(data)
+        return (months - 1 downTo 0).map { back ->
+            val month = YearMonth.from(today).minusMonths(back.toLong())
+            val end = minOf(month.atEndOfMonth(), today)
+            NetWorthPoint(
+                month = month,
+                cashCents = balanceAt(data, end),
+                investmentsCents = investments.firstOrNull { it.first == month }?.second ?: 0L,
+                liabilitiesCents = liabilities,
+            )
         }
     }
 

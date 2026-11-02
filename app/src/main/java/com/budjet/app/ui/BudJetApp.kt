@@ -1,7 +1,11 @@
 package com.budjet.app.ui
 
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -37,8 +41,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.budjet.app.MainActivity
+import com.budjet.app.QuickCaptureRequest
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
@@ -52,7 +59,9 @@ import com.budjet.app.ui.screens.BudgetsScreen
 import com.budjet.app.ui.screens.CategoryDetailScreen
 import com.budjet.app.ui.screens.GoalsScreen
 import com.budjet.app.ui.screens.HomeScreen
+import com.budjet.app.ui.screens.ImportScreen
 import com.budjet.app.ui.screens.LockScreen
+import com.budjet.app.ui.screens.PatrimonioScreen
 import com.budjet.app.ui.screens.PortfolioScreen
 import com.budjet.app.ui.screens.RecurringScreen
 import com.budjet.app.ui.screens.SettingsScreen
@@ -61,6 +70,7 @@ import com.budjet.app.ui.screens.TransactionsScreen
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.BiometricAuth
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -77,6 +87,8 @@ fun BudJetApp(
     var goalsOpen by rememberSaveable { mutableStateOf(false) }
     var recurringOpen by rememberSaveable { mutableStateOf(false) }
     var portfolioOpen by rememberSaveable { mutableStateOf(false) }
+    var patrimonioOpen by rememberSaveable { mutableStateOf(false) }
+    var importOpen by rememberSaveable { mutableStateOf(false) }
     var editorDraft by remember { mutableStateOf<EditorDraft?>(null) }
     var editorVisible by remember { mutableStateOf(false) }
     var categoryDetail by remember { mutableStateOf<Category?>(null) }
@@ -91,6 +103,30 @@ fun BudJetApp(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val activity = context as? FragmentActivity
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        scope.launch {
+            snackbar.showSnackbar(
+                if (granted) "Avisos activados" else "Puedes activar los avisos desde los ajustes de Android",
+            )
+        }
+    }
+
+    LaunchedEffect(data.settings.notificationsEnabled, data.settings.notificationPermissionAsked) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            data.settings.notificationsEnabled &&
+            !data.settings.notificationPermissionAsked
+        ) {
+            viewModel.markNotificationPermissionAsked()
+            val granted = ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     LaunchedEffect(editorVisible) {
         if (!editorVisible) {
@@ -195,6 +231,20 @@ fun BudJetApp(
         reversalOfId = transaction.reversalOfId,
     )
 
+    val hostActivity = context as? MainActivity
+    LaunchedEffect(hostActivity) {
+        hostActivity?.quickCapture?.collect { request ->
+            if (request != null) {
+                val draft = newDraft().copy(
+                    amountCents = request.amountCents ?: 0L,
+                    note = request.note,
+                )
+                openEditor(draft)
+                hostActivity.clearQuickCapture()
+            }
+        }
+    }
+
     fun deleteTransaction(id: String) {
         val transaction = data.transactions.firstOrNull { it.id == id } ?: return
         viewModel.deleteTransaction(transaction)
@@ -212,19 +262,21 @@ fun BudJetApp(
     }
 
     BackHandler(enabled = locked) { }
-    BackHandler(enabled = editorVisible || goalsOpen || recurringOpen || portfolioOpen || categoryVisible || settingsOpen) {
+    BackHandler(enabled = editorVisible || goalsOpen || recurringOpen || portfolioOpen || patrimonioOpen || importOpen || categoryVisible || settingsOpen) {
         when {
             editorVisible -> editorVisible = false
             categoryVisible -> categoryVisible = false
             goalsOpen -> goalsOpen = false
             recurringOpen -> recurringOpen = false
             portfolioOpen -> portfolioOpen = false
+            patrimonioOpen -> patrimonioOpen = false
+            importOpen -> importOpen = false
             settingsOpen -> settingsOpen = false
         }
     }
     BackHandler(
-        enabled = !locked && !editorVisible && !goalsOpen && !recurringOpen && !portfolioOpen &&
-            !categoryVisible && !settingsOpen && tab != AppTab.HOME,
+        enabled = !locked && !editorVisible && !goalsOpen && !recurringOpen && !portfolioOpen && !patrimonioOpen &&
+            !importOpen && !categoryVisible && !settingsOpen && tab != AppTab.HOME,
     ) {
         tab = AppTab.HOME
     }
@@ -278,6 +330,7 @@ fun BudJetApp(
                         onOpenCategory = { openCategory(it) },
                         onSetStartDate = viewModel::setAnalysisStart,
                         onOpenPortfolio = { portfolioOpen = true },
+                        onOpenPatrimonio = { patrimonioOpen = true },
                     )
                 }
             }
@@ -390,6 +443,30 @@ fun BudJetApp(
                     onBuildBackup = viewModel::buildBackup,
                     onValidateBackup = viewModel::parseBackup,
                     onRestoreBackup = viewModel::restoreBackup,
+                    onOpenImport = {
+                        settingsOpen = false
+                        importOpen = true
+                    },
+                    onBuildEncryptedBackup = viewModel::buildEncryptedBackup,
+                    onValidateEncryptedBackup = viewModel::parseEncryptedBackup,
+                    onListAutoBackups = { viewModel.autoBackups(context) },
+                    onRestoreAutoBackup = { name -> viewModel.restoreAutoBackup(context, name) },
+                    onCreateAutoBackup = {
+                        val result = viewModel.createAutoBackupNow(context)
+                        scope.launch {
+                            snackbar.showSnackbar(
+                                if (result.isSuccess) "Copia automática creada" else "No se pudo crear la copia",
+                            )
+                        }
+                    },
+                    onSetNotificationsEnabled = viewModel::setNotificationsEnabled,
+                    onSetBudgetAlerts = viewModel::setBudgetAlerts,
+                    onSetRecurringAlerts = viewModel::setRecurringAlerts,
+                    onSetMonthlyReviewAlerts = viewModel::setMonthlyReviewAlerts,
+                    onSetValuationAlerts = viewModel::setValuationAlerts,
+                    onSetAutoBackupEnabled = viewModel::setAutoBackupEnabled,
+                    onAddCategoryRule = viewModel::addCategoryRule,
+                    onDeleteCategoryRule = viewModel::deleteCategoryRule,
                     onNotify = { message ->
                         scope.launch { snackbar.showSnackbar(message) }
                     },
@@ -506,6 +583,53 @@ fun BudJetApp(
                     onUpdateInvestment = viewModel::updateInvestment,
                     onDeleteInvestment = viewModel::deleteInvestment,
                     onAddEntry = viewModel::addInvestmentEntry,
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = patrimonioOpen,
+            enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
+            exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(colors.background)
+                    .statusBarsPadding(),
+            ) {
+                PatrimonioScreen(
+                    data = data,
+                    onClose = { patrimonioOpen = false },
+                    onAddTransfer = viewModel::addTransfer,
+                    onSaveLiability = viewModel::saveLiability,
+                    onDeleteLiability = viewModel::deleteLiability,
+                    onOpenPortfolio = {
+                        patrimonioOpen = false
+                        portfolioOpen = true
+                    },
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = importOpen,
+            enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
+            exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(colors.background)
+                    .statusBarsPadding(),
+            ) {
+                ImportScreen(
+                    data = data,
+                    onClose = { importOpen = false },
+                    onImport = { rows, accountId ->
+                        viewModel.importTransactions(rows, accountId)
+                        scope.launch { snackbar.showSnackbar("${rows.size} movimientos importados") }
+                    },
                 )
             }
         }

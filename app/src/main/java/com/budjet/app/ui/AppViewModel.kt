@@ -7,15 +7,24 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
+import com.budjet.app.data.AutoBackup
+import com.budjet.app.data.AutoBackupInfo
 import com.budjet.app.data.Backup
 import com.budjet.app.data.BudRepository
 import com.budjet.app.data.Budget
 import com.budjet.app.data.Category
+import com.budjet.app.data.CategoryRule
+import com.budjet.app.data.CryptoBackup
 import com.budjet.app.data.DemoData
+import com.budjet.app.data.Finance
+import com.budjet.app.data.ImportRow
 import com.budjet.app.data.Investment
 import com.budjet.app.data.InvestmentEntry
 import com.budjet.app.data.InvestmentEntryKind
 import com.budjet.app.data.InvestmentKind
+import com.budjet.app.data.InvestmentMath
+import com.budjet.app.data.Liability
+import com.budjet.app.data.LiabilityKind
 import com.budjet.app.data.Recurring
 import com.budjet.app.data.RecurringRule
 import com.budjet.app.data.SavingsGoal
@@ -23,6 +32,7 @@ import com.budjet.app.data.Settings
 import com.budjet.app.data.ThemeMode
 import com.budjet.app.data.ThemePalette
 import com.budjet.app.data.Transaction
+import com.budjet.app.data.Transfer
 import com.budjet.app.data.TxType
 import com.budjet.app.data.clearedFinancialData
 import com.budjet.app.util.formatShortDate
@@ -74,6 +84,25 @@ data class InvestmentEntryDraft(
     val amountCents: Long,
     val date: LocalDate = LocalDate.now(),
     val note: String = "",
+    /** Optional cash account linked to the contribution/withdrawal. */
+    val accountId: String? = null,
+)
+
+data class TransferDraft(
+    val fromAccountId: String? = null,
+    val fromInvestmentId: String? = null,
+    val toAccountId: String? = null,
+    val toInvestmentId: String? = null,
+    val amountCents: Long = 0L,
+    val date: LocalDate = LocalDate.now(),
+    val note: String = "",
+)
+
+data class LiabilityDraft(
+    val id: String? = null,
+    val name: String = "",
+    val kind: LiabilityKind = LiabilityKind.OTHER,
+    val balanceCents: Long = 0L,
 )
 
 class AppViewModel(private val repository: BudRepository) : ViewModel() {
@@ -321,9 +350,14 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
     fun deleteInvestment(id: String) {
         viewModelScope.launch {
             repository.update { current ->
+                val linkedTransfers = current.investmentEntries
+                    .filter { it.investmentId == id }
+                    .mapNotNull { it.transferId }
+                    .toSet()
                 current.copy(
                     investments = current.investments.filterNot { it.id == id },
                     investmentEntries = current.investmentEntries.filterNot { it.investmentId == id },
+                    transfers = current.transfers.filterNot { it.id in linkedTransfers },
                 )
             }
         }
@@ -341,14 +375,200 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
         if (signed == 0L) return
         viewModelScope.launch {
             repository.update { current ->
+                val accountId = draft.accountId
+                if (accountId != null && draft.kind in setOf(
+                        InvestmentEntryKind.CONTRIBUTION,
+                        InvestmentEntryKind.WITHDRAWAL,
+                    )
+                ) {
+                    val available = when (draft.kind) {
+                        InvestmentEntryKind.CONTRIBUTION ->
+                            Finance.accountBalanceAt(current, accountId, draft.date)
+                        else ->
+                            InvestmentMath.summary(
+                                current.entriesFor(draft.investmentId),
+                                draft.date,
+                            ).valueCents
+                    }
+                    if (signed > available) return@update current
+                }
+                val entryId = "ie_" + UUID.randomUUID().toString().take(8)
+                val transfer = if (accountId != null) {
+                    when (draft.kind) {
+                        InvestmentEntryKind.CONTRIBUTION -> Transfer(
+                            id = "tr_" + UUID.randomUUID().toString().take(8),
+                            amountCents = signed,
+                            dateEpochDay = draft.date.toEpochDay(),
+                            fromAccountId = accountId,
+                            toInvestmentId = draft.investmentId,
+                            note = draft.note.trim().ifBlank { "Aportación a ${current.investment(draft.investmentId)?.name ?: "inversión"}" },
+                        )
+                        InvestmentEntryKind.WITHDRAWAL -> Transfer(
+                            id = "tr_" + UUID.randomUUID().toString().take(8),
+                            amountCents = signed,
+                            dateEpochDay = draft.date.toEpochDay(),
+                            fromInvestmentId = draft.investmentId,
+                            toAccountId = accountId,
+                            note = draft.note.trim().ifBlank { "Retirada de ${current.investment(draft.investmentId)?.name ?: "inversión"}" },
+                        )
+                        else -> null
+                    }
+                } else null
                 current.copy(
                     investmentEntries = current.investmentEntries + InvestmentEntry(
-                        id = "ie_" + UUID.randomUUID().toString().take(8),
+                        id = entryId,
                         investmentId = draft.investmentId,
                         kind = draft.kind,
                         amountCents = signed,
                         dateEpochDay = draft.date.toEpochDay(),
                         note = draft.note.trim(),
+                        transferId = transfer?.id,
+                    ),
+                    transfers = if (transfer == null) current.transfers else current.transfers + transfer,
+                )
+            }
+        }
+    }
+
+    fun addTransfer(draft: TransferDraft) {
+        val amount = draft.amountCents
+        if (amount <= 0L) return
+        viewModelScope.launch {
+            repository.update { current ->
+                val hasSource = (draft.fromAccountId != null) != (draft.fromInvestmentId != null)
+                val hasTarget = (draft.toAccountId != null) != (draft.toInvestmentId != null)
+                if (!hasSource || !hasTarget) return@update current
+                if (draft.fromInvestmentId != null && draft.toInvestmentId != null) return@update current
+                if (draft.fromAccountId != null) {
+                    if (Finance.accountBalanceAt(current, draft.fromAccountId, draft.date) < amount) return@update current
+                }
+                if (draft.fromInvestmentId != null) {
+                    val value = InvestmentMath.summary(
+                        current.entriesFor(draft.fromInvestmentId),
+                        draft.date,
+                    ).valueCents
+                    if (value < amount) return@update current
+                }
+                val transferId = "tr_" + UUID.randomUUID().toString().take(8)
+                val transfer = Transfer(
+                    id = transferId,
+                    amountCents = amount,
+                    dateEpochDay = draft.date.toEpochDay(),
+                    fromAccountId = draft.fromAccountId,
+                    fromInvestmentId = draft.fromInvestmentId,
+                    toAccountId = draft.toAccountId,
+                    toInvestmentId = draft.toInvestmentId,
+                    note = draft.note.trim(),
+                )
+                val linkedEntry = when {
+                    draft.toInvestmentId != null && draft.fromAccountId != null -> InvestmentEntry(
+                        id = "ie_" + UUID.randomUUID().toString().take(8),
+                        investmentId = draft.toInvestmentId,
+                        kind = InvestmentEntryKind.CONTRIBUTION,
+                        amountCents = amount,
+                        dateEpochDay = draft.date.toEpochDay(),
+                        note = draft.note.trim().ifBlank { "Transferencia desde efectivo" },
+                        transferId = transferId,
+                    )
+                    draft.fromInvestmentId != null && draft.toAccountId != null -> InvestmentEntry(
+                        id = "ie_" + UUID.randomUUID().toString().take(8),
+                        investmentId = draft.fromInvestmentId,
+                        kind = InvestmentEntryKind.WITHDRAWAL,
+                        amountCents = amount,
+                        dateEpochDay = draft.date.toEpochDay(),
+                        note = draft.note.trim().ifBlank { "Transferencia a efectivo" },
+                        transferId = transferId,
+                    )
+                    else -> null
+                }
+                current.copy(
+                    transfers = current.transfers + transfer,
+                    investmentEntries = if (linkedEntry == null) {
+                        current.investmentEntries
+                    } else {
+                        current.investmentEntries + linkedEntry
+                    },
+                )
+            }
+        }
+    }
+
+    fun saveLiability(draft: LiabilityDraft) {
+        if (draft.name.isBlank() || draft.balanceCents < 0L) return
+        viewModelScope.launch {
+            repository.update { current ->
+                val existing = current.liability(draft.id)
+                val liability = Liability(
+                    id = existing?.id ?: "l_" + UUID.randomUUID().toString().take(8),
+                    name = draft.name.trim(),
+                    kind = draft.kind,
+                    balanceCents = draft.balanceCents,
+                    createdAtEpochDay = existing?.createdAtEpochDay ?: LocalDate.now().toEpochDay(),
+                )
+                current.copy(
+                    liabilities = if (existing == null) {
+                        current.liabilities + liability
+                    } else {
+                        current.liabilities.map { if (it.id == existing.id) liability else it }
+                    },
+                )
+            }
+        }
+    }
+
+    fun deleteLiability(id: String) {
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(liabilities = current.liabilities.filterNot { it.id == id })
+            }
+        }
+    }
+
+    fun addCategoryRule(pattern: String, categoryId: String) {
+        val clean = pattern.trim()
+        if (clean.isEmpty()) return
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(
+                    categoryRules = current.categoryRules + CategoryRule(
+                        id = "cr_" + UUID.randomUUID().toString().take(8),
+                        pattern = clean,
+                        categoryId = categoryId,
+                    ),
+                )
+            }
+        }
+    }
+
+    fun deleteCategoryRule(id: String) {
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(categoryRules = current.categoryRules.filterNot { it.id == id })
+            }
+        }
+    }
+
+    fun importTransactions(rows: List<ImportRow>, accountId: String) {
+        if (rows.isEmpty()) return
+        viewModelScope.launch {
+            repository.update { current ->
+                val existing = current.transactions.mapNotNull { it.importHash }.toSet()
+                val fresh = rows.filter { !it.duplicate && it.hash !in existing }.map { row ->
+                    Transaction(
+                        id = "imp_" + UUID.randomUUID().toString().take(10),
+                        amountCents = row.amountCents,
+                        type = row.type,
+                        categoryId = row.categoryId,
+                        accountId = accountId,
+                        dateEpochDay = row.date.toEpochDay(),
+                        note = row.note,
+                        importHash = row.hash,
+                    )
+                }
+                if (fresh.isEmpty()) current else current.copy(
+                    transactions = (current.transactions + fresh).sortedByDescending { it.dateEpochDay },
+                    settings = current.settings.copy(
+                        lastMovementDateEpochDay = fresh.maxOf { it.dateEpochDay },
                     ),
                 )
             }
@@ -430,6 +650,21 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
 
     fun parseBackup(text: String): Result<AppData> = Backup.decode(text)
 
+    fun buildEncryptedBackup(password: String): ByteArray =
+        CryptoBackup.encrypt(Backup.encode(data.value).toByteArray(Charsets.UTF_8), password.toCharArray())
+
+    fun parseEncryptedBackup(bytes: ByteArray, password: String): Result<AppData> =
+        CryptoBackup.decrypt(bytes, password.toCharArray())
+            .mapCatching { Backup.decode(String(it, Charsets.UTF_8)).getOrThrow() }
+
+    fun autoBackups(context: Context): List<AutoBackupInfo> = AutoBackup.list(context)
+
+    fun restoreAutoBackup(context: Context, name: String): Result<AppData> =
+        AutoBackup.restore(context, name)
+
+    fun createAutoBackupNow(context: Context): Result<java.io.File> =
+        AutoBackup.maybeCreate(context, data.value)
+
     fun restoreBackup(backup: AppData) {
         viewModelScope.launch {
             repository.replaceAll(
@@ -438,6 +673,16 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
             _month.value = YearMonth.now()
         }
     }
+
+    fun setNotificationsEnabled(enabled: Boolean) = updateSettings {
+        it.copy(notificationsEnabled = enabled, notificationPermissionAsked = true)
+    }
+    fun setBudgetAlerts(enabled: Boolean) = updateSettings { it.copy(budgetAlerts = enabled) }
+    fun setRecurringAlerts(enabled: Boolean) = updateSettings { it.copy(recurringAlerts = enabled) }
+    fun setMonthlyReviewAlerts(enabled: Boolean) = updateSettings { it.copy(monthlyReviewAlerts = enabled) }
+    fun setValuationAlerts(enabled: Boolean) = updateSettings { it.copy(valuationAlerts = enabled) }
+    fun setAutoBackupEnabled(enabled: Boolean) = updateSettings { it.copy(autoBackupEnabled = enabled) }
+    fun markNotificationPermissionAsked() = updateSettings { it.copy(notificationPermissionAsked = true) }
 
     fun startFresh() {
         viewModelScope.launch {

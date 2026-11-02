@@ -1,6 +1,7 @@
 package com.budjet.app.data
 
 import android.content.Context
+import com.budjet.app.widget.BudJetWidgetProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,6 +65,7 @@ class BudRepository(context: Context) {
                 file.writeText(temp.readText())
                 temp.delete()
             }
+            runCatching { BudJetWidgetProvider.updateAll(appContext) }
         }
     }
 }

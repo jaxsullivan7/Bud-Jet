@@ -28,5 +28,12 @@ fun AppData.migratedToCurrent(): AppData {
         result = result.copy(version = 5, categories = result.categories + additions)
     }
 
+    if (result.version < 6) {
+        result = result.copy(
+            version = 6,
+            categoryRules = if (result.categoryRules.isEmpty()) DemoData.categoryRules else result.categoryRules,
+        )
+    }
+
     return if (result.version >= Backup.CURRENT_VERSION) result else result.copy(version = Backup.CURRENT_VERSION)
 }

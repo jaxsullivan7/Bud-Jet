@@ -7,6 +7,16 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.7
+
+- **Patrimonio neto**: efectivo + inversiones − deudas, con evolución de 6 meses y saldo por cuenta.
+- **Transferencias internas** entre cuentas y entre efectivo y cartera, sin contabilizarlas como ingreso o gasto.
+- **Deudas** manuales con tipo, saldo y edición; el patrimonio neto las descuenta.
+- **Importación de extractos CSV/OFX** en el dispositivo, con detección/mapeo de columnas, vista previa, duplicados, cambio de tipo/categoría y reglas por comercio.
+- **Avisos locales** de presupuesto, recurrentes, revisión mensual y actualización de cartera con WorkManager.
+- **Copias cifradas** `.bjet` con contraseña, restauración y copias automáticas diarias con Android Keystore.
+- **Widget** de saldo/gasto con acceso rápido y captura desde el botón compartir de Android.
+
 ### Registro de ejecución
 
 El trabajo se organizó en Jira como un equipo de 2 Frontend, 2 Backend y 1 QA, con sprints de dos semanas, capacidad de 8 h/día, ausencias y retrasos documentados. El detalle de sprints, horas, impedimentos y filtros está en [`SPRINTS.md`](SPRINTS.md).

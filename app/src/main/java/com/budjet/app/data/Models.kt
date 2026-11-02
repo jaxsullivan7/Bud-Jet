@@ -18,6 +18,8 @@ data class Transaction(
     val recurringId: String? = null,
     /** If this is an annulment, the original expense it compensates. */
     val reversalOfId: String? = null,
+    /** Stable hash used to skip duplicates when importing a bank statement. */
+    val importHash: String? = null,
 )
 
 @Serializable
@@ -112,6 +114,52 @@ data class InvestmentEntry(
     val amountCents: Long,
     val dateEpochDay: Long,
     val note: String = "",
+    /** Transfer that moved the money from/to a cash account, when linked. */
+    val transferId: String? = null,
+)
+
+@Serializable
+enum class LiabilityKind(
+    val label: String,
+    val icon: String,
+    val colorHex: String,
+) {
+    MORTGAGE("Hipoteca", "home", "#8A6A4F"),
+    LOAN("Préstamo", "bank", "#4E6E81"),
+    CARD("Tarjeta", "card", "#A94438"),
+    OTHER("Otra deuda", "more", "#8C8C84"),
+}
+
+@Serializable
+data class Liability(
+    val id: String,
+    val name: String,
+    val kind: LiabilityKind = LiabilityKind.OTHER,
+    val balanceCents: Long,
+    val createdAtEpochDay: Long = 0,
+)
+
+@Serializable
+data class CategoryRule(
+    val id: String,
+    val pattern: String,
+    val categoryId: String,
+)
+
+/**
+ * Money moved between two buckets: a cash account, an investment product, or both.
+ * Exactly one source and one destination must be set.
+ */
+@Serializable
+data class Transfer(
+    val id: String,
+    val amountCents: Long,
+    val dateEpochDay: Long,
+    val fromAccountId: String? = null,
+    val fromInvestmentId: String? = null,
+    val toAccountId: String? = null,
+    val toInvestmentId: String? = null,
+    val note: String = "",
 )
 
 @Serializable
@@ -134,11 +182,18 @@ data class Settings(
     val biometricLock: Boolean = false,
     val lastMovementDateEpochDay: Long? = null,
     val analysisStartEpochDay: Long? = null,
+    val notificationsEnabled: Boolean = true,
+    val budgetAlerts: Boolean = true,
+    val recurringAlerts: Boolean = true,
+    val monthlyReviewAlerts: Boolean = true,
+    val valuationAlerts: Boolean = true,
+    val autoBackupEnabled: Boolean = true,
+    val notificationPermissionAsked: Boolean = false,
 )
 
 @Serializable
 data class AppData(
-    val version: Int = 5,
+    val version: Int = 6,
     val settings: Settings = Settings(),
     val categories: List<Category> = emptyList(),
     val accounts: List<Account> = emptyList(),
@@ -148,14 +203,20 @@ data class AppData(
     val savingsGoals: List<SavingsGoal> = emptyList(),
     val investments: List<Investment> = emptyList(),
     val investmentEntries: List<InvestmentEntry> = emptyList(),
+    val transfers: List<Transfer> = emptyList(),
+    val liabilities: List<Liability> = emptyList(),
+    val categoryRules: List<CategoryRule> = emptyList(),
 ) {
     fun category(id: String?): Category? = categories.firstOrNull { it.id == id }
     fun account(id: String?): Account? = accounts.firstOrNull { it.id == id }
     fun goal(id: String?): SavingsGoal? = savingsGoals.firstOrNull { it.id == id }
     fun recurring(id: String?): RecurringRule? = recurringRules.firstOrNull { it.id == id }
     fun investment(id: String?): Investment? = investments.firstOrNull { it.id == id }
+    fun liability(id: String?): Liability? = liabilities.firstOrNull { it.id == id }
     fun entriesFor(investmentId: String): List<InvestmentEntry> =
         investmentEntries.filter { it.investmentId == investmentId }
+    fun transfersForAccount(accountId: String): List<Transfer> =
+        transfers.filter { it.fromAccountId == accountId || it.toAccountId == accountId }
 }
 
 /**
@@ -170,6 +231,8 @@ fun AppData.clearedFinancialData(): AppData = copy(
     recurringRules = emptyList(),
     investments = emptyList(),
     investmentEntries = emptyList(),
+    transfers = emptyList(),
+    liabilities = emptyList(),
     settings = settings.copy(
         openingBalanceCents = 0L,
         lastMovementDateEpochDay = null,
@@ -181,6 +244,7 @@ fun AppData.clearedFinancialData(): AppData = copy(
 fun AppData.filteredFrom(start: LocalDate?): AppData =
     if (start == null) this else copy(
         transactions = transactions.filter { it.dateEpochDay >= start.toEpochDay() },
+        transfers = transfers.filter { it.dateEpochDay >= start.toEpochDay() },
     )
 
 /** Date to prefill in a new movement: the last one used, or [fallback]. */

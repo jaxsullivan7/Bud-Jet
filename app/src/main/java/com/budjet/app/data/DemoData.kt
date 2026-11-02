@@ -39,6 +39,25 @@ object DemoData {
         Account("card", "Tarjeta", "card", "#7D5A6B"),
     )
 
+    val categoryRules: List<CategoryRule> = listOf(
+        CategoryRule("cr_food", "mercadona", "food"),
+        CategoryRule("cr_food2", "carrefour", "food"),
+        CategoryRule("cr_food3", "supermercado", "food"),
+        CategoryRule("cr_dining", "restaurante", "dining"),
+        CategoryRule("cr_dining2", "cafetería", "dining"),
+        CategoryRule("cr_dining3", "cafe", "dining"),
+        CategoryRule("cr_transport", "uber", "transport"),
+        CategoryRule("cr_transport2", "renfe", "transport"),
+        CategoryRule("cr_transport3", "gasolina", "transport"),
+        CategoryRule("cr_subs", "spotify", "subs"),
+        CategoryRule("cr_subs2", "netflix", "subs"),
+        CategoryRule("cr_subs3", "icloud", "subs"),
+        CategoryRule("cr_health", "farmacia", "health"),
+        CategoryRule("cr_shopping", "zara", "shopping"),
+        CategoryRule("cr_home", "alquiler", "home"),
+        CategoryRule("cr_bills", "luz", "bills"),
+    )
+
     val budgets: List<Budget> = listOf(
         Budget("b_overall", null, 210_000),
         Budget("b_food", "food", 42_000),
@@ -151,6 +170,7 @@ object DemoData {
 
         // A fresh movement for today so the "Hoy" group is always alive.
         add(today, TxType.EXPENSE, "dining", 850, account = "cash", note = "Café con leche")
+        add(today, TxType.EXPENSE, "dining", 3_200, account = "card", note = "Casa Rafa")
         if (today.dayOfMonth < 29) {
             add(today, TxType.EXPENSE, "food", 2_780, account = "card", note = "Supermercado")
         }
@@ -245,21 +265,36 @@ object DemoData {
         )
 
         val investmentEntries = listOf(
-            InvestmentEntry("ie1", "i_index", InvestmentEntryKind.CONTRIBUTION, 300_000, monthsAgo(18), "Aportación inicial"),
-            InvestmentEntry("ie2", "i_index", InvestmentEntryKind.CONTRIBUTION, 200_000, monthsAgo(9), "Aportación periódica"),
+            InvestmentEntry("ie1", "i_index", InvestmentEntryKind.CONTRIBUTION, 300_000, monthsAgo(18), "Aportación inicial", transferId = "tr1"),
+            InvestmentEntry("ie2", "i_index", InvestmentEntryKind.CONTRIBUTION, 200_000, monthsAgo(9), "Aportación periódica", transferId = "tr2"),
             InvestmentEntry("ie3", "i_index", InvestmentEntryKind.VALUATION, 42_000, monthsAgo(5), "Actualización de valor"),
             InvestmentEntry("ie4", "i_index", InvestmentEntryKind.VALUATION, 18_000, monthsAgo(1), "Actualización de valor"),
-            InvestmentEntry("ie5", "i_btc", InvestmentEntryKind.CONTRIBUTION, 100_000, monthsAgo(11), "Compra"),
+            InvestmentEntry("ie5", "i_btc", InvestmentEntryKind.CONTRIBUTION, 100_000, monthsAgo(11), "Compra", transferId = "tr3"),
             InvestmentEntry("ie6", "i_btc", InvestmentEntryKind.VALUATION, 38_000, monthsAgo(3), "Actualización de valor"),
-            InvestmentEntry("ie7", "i_pension", InvestmentEntryKind.CONTRIBUTION, 240_000, monthsAgo(24), "Aportación inicial"),
+            InvestmentEntry("ie7", "i_pension", InvestmentEntryKind.CONTRIBUTION, 240_000, monthsAgo(24), "Aportación inicial", transferId = "tr4"),
             InvestmentEntry("ie8", "i_pension", InvestmentEntryKind.RETURN, 8_000, monthsAgo(4), "Rentabilidad"),
-            InvestmentEntry("ie9", "i_tech", InvestmentEntryKind.CONTRIBUTION, 120_000, monthsAgo(13), "Compra"),
+            InvestmentEntry("ie9", "i_tech", InvestmentEntryKind.CONTRIBUTION, 120_000, monthsAgo(13), "Compra", transferId = "tr5"),
             InvestmentEntry("ie10", "i_tech", InvestmentEntryKind.VALUATION, -18_000, monthsAgo(2), "Corrección de mercado"),
         )
 
+        val transfers = listOf(
+            Transfer("tr1", 300_000, monthsAgo(18), fromAccountId = "main", toInvestmentId = "i_index", note = "Aportación inicial"),
+            Transfer("tr2", 200_000, monthsAgo(9), fromAccountId = "main", toInvestmentId = "i_index", note = "Aportación periódica"),
+            Transfer("tr3", 100_000, monthsAgo(11), fromAccountId = "main", toInvestmentId = "i_btc", note = "Compra"),
+            Transfer("tr4", 240_000, monthsAgo(24), fromAccountId = "main", toInvestmentId = "i_pension", note = "Aportación inicial"),
+            Transfer("tr5", 120_000, monthsAgo(13), fromAccountId = "main", toInvestmentId = "i_tech", note = "Compra"),
+            Transfer("tr_cash", 40_000, monthsAgo(6), fromAccountId = "main", toAccountId = "cash", note = "Reposición de efectivo"),
+            Transfer("tr_card", 240_000, monthsAgo(6), fromAccountId = "main", toAccountId = "card", note = "Pago de tarjeta"),
+        )
+
+        val liabilities = listOf(
+            Liability("l_car", "Préstamo coche", LiabilityKind.LOAN, 680_000, monthsAgo(20)),
+            Liability("l_card", "Tarjeta", LiabilityKind.CARD, 42_000, monthsAgo(2)),
+        )
+
         return AppData(
-            version = 5,
-            settings = Settings(openingBalanceCents = 385_000),
+            version = 6,
+            settings = Settings(openingBalanceCents = 1_345_000),
             categories = categories,
             accounts = accounts,
             transactions = transactions.sortedByDescending { it.dateEpochDay },
@@ -268,6 +303,9 @@ object DemoData {
             savingsGoals = goals,
             investments = investments,
             investmentEntries = investmentEntries,
+            transfers = transfers,
+            liabilities = liabilities,
+            categoryRules = categoryRules,
         )
     }
 }
