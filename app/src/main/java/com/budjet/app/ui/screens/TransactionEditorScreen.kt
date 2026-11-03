@@ -630,7 +630,7 @@ private fun ReversalPickerDialog(
                         )
                     }
                 } else {
-                    LazyColumn(Modifier.weight(1f)) {
+                    LazyColumn(Modifier.weight(1f).testTag("reversal-list")) {
                         items(candidates, key = { it.id }) { payment ->
                             TransactionRow(
                                 transaction = payment,

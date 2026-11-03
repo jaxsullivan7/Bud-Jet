@@ -27,11 +27,18 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -66,8 +73,10 @@ import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.formatDayLabel
 import com.budjet.app.util.formatDayNumber
 import com.budjet.app.util.formatMoney
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneOffset
 
 private enum class TxFilter(val label: String) {
     ALL("Todo"),
@@ -82,13 +91,23 @@ fun TransactionsScreen(
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onOpenTransaction: (Transaction) -> Unit,
+    onChangeTransactionsDate: (Set<String>, LocalDate) -> Unit,
+    onDeleteTransactions: (Set<String>) -> Unit,
 ) {
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
     var filter by rememberSaveable { mutableStateOf(TxFilter.ALL) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
+    var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var showBulkDate by rememberSaveable { mutableStateOf(false) }
+    var confirmBulkDelete by rememberSaveable { mutableStateOf(false) }
     val today = remember { LocalDate.now() }
+    val selectionMode = selectedIds.isNotEmpty()
+
+    LaunchedEffect(month, filter, query) {
+        selectedIds = emptySet()
+    }
 
     val allMonthTx = remember(data.transactions, month) { Finance.transactionsOfMonth(data, month) }
     val postedMonthTx = remember(data.transactions, month) {
@@ -133,16 +152,26 @@ fun TransactionsScreen(
                 overline = "HISTORIAL",
                 title = "Movimientos",
                 trailing = {
-                    SoftIconButton(
-                        icon = if (showSearch) Icons.Rounded.Close else Icons.Rounded.Search,
-                        contentDescription = if (showSearch) "Cerrar búsqueda" else "Buscar",
-                        onClick = {
-                            showSearch = !showSearch
-                            if (!showSearch) query = ""
-                        },
-                        size = 38.dp,
-                        container = if (showSearch) colors.primarySoft else colors.surface,
-                    )
+                    if (selectionMode) {
+                        SoftIconButton(
+                            icon = Icons.Rounded.Close,
+                            contentDescription = "Cancelar selección",
+                            onClick = { selectedIds = emptySet() },
+                            size = 38.dp,
+                            container = colors.primarySoft,
+                        )
+                    } else {
+                        SoftIconButton(
+                            icon = if (showSearch) Icons.Rounded.Close else Icons.Rounded.Search,
+                            contentDescription = if (showSearch) "Cerrar búsqueda" else "Buscar",
+                            onClick = {
+                                showSearch = !showSearch
+                                if (!showSearch) query = ""
+                            },
+                            size = 38.dp,
+                            container = if (showSearch) colors.primarySoft else colors.surface,
+                        )
+                    }
                 },
             )
         }
@@ -164,6 +193,18 @@ fun TransactionsScreen(
                     text = "${allMonthTx.size} mov.",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
+                )
+            }
+        }
+
+        if (selectionMode) {
+            item {
+                Spacer(Modifier.height(12.dp))
+                BulkSelectionBar(
+                    count = selectedIds.size,
+                    onDate = { showBulkDate = true },
+                    onDelete = { confirmBulkDelete = true },
+                    onCancel = { selectedIds = emptySet() },
                 )
             }
         }
@@ -272,9 +313,126 @@ fun TransactionsScreen(
                         transactions = transactions,
                         data = data,
                         currency = currency,
+                        selectedIds = selectedIds,
+                        selectionMode = selectionMode,
                         onOpenTransaction = onOpenTransaction,
+                        onToggleSelection = { id ->
+                            selectedIds = if (id in selectedIds) selectedIds - id else selectedIds + id
+                        },
                     )
                     Spacer(Modifier.height(12.dp))
+                }
+            }
+        }
+    }
+
+    if (showBulkDate) {
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = today.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { showBulkDate = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        state.selectedDateMillis?.let {
+                            onChangeTransactionsDate(
+                                selectedIds,
+                                Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate(),
+                            )
+                        }
+                        selectedIds = emptySet()
+                        showBulkDate = false
+                    },
+                ) { Text("Cambiar fecha", color = colors.primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBulkDate = false }) { Text("Cerrar calendario", color = colors.inkMuted) }
+            },
+        ) {
+            DatePicker(state = state, showModeToggle = false)
+        }
+    }
+
+    if (confirmBulkDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmBulkDelete = false },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(26.dp),
+            title = { Text("¿Eliminar ${selectedIds.size} movimientos?", color = colors.ink) },
+            text = {
+                Text(
+                    text = "Se borrarán de tu historial. Esta acción no se puede deshacer desde aquí.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.inkMuted,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteTransactions(selectedIds)
+                        selectedIds = emptySet()
+                        confirmBulkDelete = false
+                    },
+                ) { Text("Eliminar", color = colors.expense) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmBulkDelete = false }) { Text("Cancelar", color = colors.inkMuted) }
+            },
+        )
+    }
+}
+
+@Composable
+private fun BulkSelectionBar(
+    count: Int,
+    onDate: () -> Unit,
+    onDelete: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val colors = BudTheme.colors
+    BudCard(padding = 12.dp, color = colors.primarySoft, border = false) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = if (count == 1) "1 seleccionado" else "$count seleccionados",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = colors.ink,
+                )
+                Text(
+                    text = "Mantén pulsado para elegir varios",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(onClick = onDate)
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.Event, contentDescription = null, tint = colors.primary, modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Fecha", style = MaterialTheme.typography.labelMedium, color = colors.primary)
+                }
+                Row(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(onClick = onDelete)
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.DeleteOutline, contentDescription = null, tint = colors.expense, modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Eliminar", style = MaterialTheme.typography.labelMedium, color = colors.expense)
+                }
+                TextButton(onClick = onCancel) {
+                    Text("Cancelar", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 }
             }
         }
@@ -287,7 +445,10 @@ private fun DayGroup(
     transactions: List<Transaction>,
     data: AppData,
     currency: Currency,
+    selectedIds: Set<String>,
+    selectionMode: Boolean,
     onOpenTransaction: (Transaction) -> Unit,
+    onToggleSelection: (String) -> Unit,
 ) {
     val colors = BudTheme.colors
     val net = transactions.sumOf { if (it.type == TxType.INCOME) it.amountCents else -it.amountCents }
@@ -332,7 +493,12 @@ private fun DayGroup(
                 category = data.category(tx.categoryId),
                 account = data.account(tx.accountId),
                 currency = currency,
-                onClick = { onOpenTransaction(tx) },
+                selected = tx.id in selectedIds,
+                selectionMode = selectionMode,
+                onClick = {
+                    if (selectionMode) onToggleSelection(tx.id) else onOpenTransaction(tx)
+                },
+                onLongClick = { onToggleSelection(tx.id) },
             )
             if (index != transactions.lastIndex) {
                 ThinDivider(Modifier.padding(horizontal = 4.dp))

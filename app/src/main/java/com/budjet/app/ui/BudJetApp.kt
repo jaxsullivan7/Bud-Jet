@@ -312,6 +312,8 @@ fun BudJetApp(
                         onPreviousMonth = viewModel::previousMonth,
                         onNextMonth = viewModel::nextMonth,
                         onOpenTransaction = { openEditor(draftFor(it)) },
+                        onChangeTransactionsDate = viewModel::updateTransactionsDate,
+                        onDeleteTransactions = viewModel::deleteTransactions,
                     )
 
                     AppTab.BUDGETS -> BudgetsScreen(
@@ -604,6 +606,7 @@ fun BudJetApp(
                     onAddTransfer = viewModel::addTransfer,
                     onSaveLiability = viewModel::saveLiability,
                     onDeleteLiability = viewModel::deleteLiability,
+                    onPayLiability = viewModel::payLiability,
                     onOpenPortfolio = {
                         patrimonioOpen = false
                         portfolioOpen = true

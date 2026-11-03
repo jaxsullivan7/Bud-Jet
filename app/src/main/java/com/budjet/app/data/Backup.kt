@@ -20,7 +20,7 @@ object Backup {
 
     const val APP_NAME = "Bud Jet"
     const val FORMAT = 1
-    const val CURRENT_VERSION = 6
+    const val CURRENT_VERSION = 7
     const val MAX_BYTES = 10 * 1024 * 1024
 
     private val json = Json {
@@ -105,6 +105,9 @@ object Backup {
         require(data.liabilities.map { it.id }.distinct().size == data.liabilities.size) {
             "Hay deudas duplicadas en la copia."
         }
+        require(data.liabilityPayments.map { it.id }.distinct().size == data.liabilityPayments.size) {
+            "Hay pagos de deuda duplicados en la copia."
+        }
         require(data.categoryRules.map { it.id }.distinct().size == data.categoryRules.size) {
             "Hay reglas de categorización duplicadas en la copia."
         }
@@ -176,6 +179,12 @@ object Backup {
         }
         require(data.liabilities.all { it.name.isNotBlank() && it.balanceCents >= 0L }) {
             "Hay deudas con datos no válidos."
+        }
+        val liabilityIds = data.liabilities.map { it.id }.toSet()
+        require(data.liabilityPayments.all {
+            it.amountCents > 0L && it.liabilityId in liabilityIds && it.accountId in accountIds
+        }) {
+            "Hay pagos de deuda con datos no válidos."
         }
         require(data.categoryRules.all { it.pattern.isNotBlank() && it.categoryId in categoryIds }) {
             "Hay reglas de categorización con datos no válidos."

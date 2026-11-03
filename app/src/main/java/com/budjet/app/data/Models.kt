@@ -140,6 +140,16 @@ data class Liability(
 )
 
 @Serializable
+data class LiabilityPayment(
+    val id: String,
+    val liabilityId: String,
+    val accountId: String,
+    val amountCents: Long,
+    val dateEpochDay: Long,
+    val note: String = "",
+)
+
+@Serializable
 data class CategoryRule(
     val id: String,
     val pattern: String,
@@ -193,7 +203,7 @@ data class Settings(
 
 @Serializable
 data class AppData(
-    val version: Int = 6,
+    val version: Int = 7,
     val settings: Settings = Settings(),
     val categories: List<Category> = emptyList(),
     val accounts: List<Account> = emptyList(),
@@ -205,6 +215,7 @@ data class AppData(
     val investmentEntries: List<InvestmentEntry> = emptyList(),
     val transfers: List<Transfer> = emptyList(),
     val liabilities: List<Liability> = emptyList(),
+    val liabilityPayments: List<LiabilityPayment> = emptyList(),
     val categoryRules: List<CategoryRule> = emptyList(),
 ) {
     fun category(id: String?): Category? = categories.firstOrNull { it.id == id }
@@ -213,6 +224,8 @@ data class AppData(
     fun recurring(id: String?): RecurringRule? = recurringRules.firstOrNull { it.id == id }
     fun investment(id: String?): Investment? = investments.firstOrNull { it.id == id }
     fun liability(id: String?): Liability? = liabilities.firstOrNull { it.id == id }
+    fun paymentsFor(liabilityId: String): List<LiabilityPayment> =
+        liabilityPayments.filter { it.liabilityId == liabilityId }
     fun entriesFor(investmentId: String): List<InvestmentEntry> =
         investmentEntries.filter { it.investmentId == investmentId }
     fun transfersForAccount(accountId: String): List<Transfer> =
@@ -233,6 +246,7 @@ fun AppData.clearedFinancialData(): AppData = copy(
     investmentEntries = emptyList(),
     transfers = emptyList(),
     liabilities = emptyList(),
+    liabilityPayments = emptyList(),
     settings = settings.copy(
         openingBalanceCents = 0L,
         lastMovementDateEpochDay = null,

@@ -1,9 +1,13 @@
 package com.budjet.app
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -11,8 +15,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.budjet.app.data.Transaction
 import com.budjet.app.data.TxType
@@ -55,6 +62,12 @@ class ScreenshotTest {
 
         compose.onNodeWithContentDescription("Movimientos").performClick()
         capture("04-movimientos")
+        compose.onNodeWithTag("tx-Casa Rafa").performSemanticsAction(SemanticsActions.OnLongClick)
+        capture("04c-movimientos-seleccion")
+        compose.onNodeWithText("Fecha").performClick()
+        capture("04d-fecha-multiple")
+        compose.onNodeWithText("Cerrar calendario").performClick()
+        compose.onNodeWithText("Cancelar").performClick()
         compose.onNodeWithContentDescription("Buscar").performClick()
         compose.onNodeWithTag("search-field").performTextInput("Restaurantes")
         capture("04b-movimientos-busqueda")
@@ -70,6 +83,11 @@ class ScreenshotTest {
             .performScrollToNode(hasTestTag("patrimonio-card"))
         compose.onNodeWithTag("patrimonio-card").performClick()
         capture("06b-patrimonio")
+        compose.onNodeWithTag("patrimonio-list").performScrollToNode(hasText("Préstamo coche"))
+        compose.onAllNodesWithText("Pagar").onFirst().performClick()
+        capture("06d-pago-deuda")
+        back()
+        compose.onNodeWithTag("patrimonio-list").performScrollToNode(hasText("Transferir"))
         compose.onNodeWithText("Transferir").performClick()
         capture("06c-transferencia")
         back()
@@ -107,6 +125,7 @@ class ScreenshotTest {
         compose.onNodeWithText("Anulación").performClick()
         compose.onNodeWithText("Buscar pago a anular").performClick()
         capture("08b-anulacion-picker")
+        compose.onNodeWithTag("reversal-list").performScrollToNode(hasText("Casa Rafa"))
         compose.onNodeWithText("Casa Rafa").performClick()
         capture("08c-anulacion")
         compose.onNodeWithContentDescription("Cerrar").performClick()

@@ -25,6 +25,7 @@ import com.budjet.app.data.InvestmentKind
 import com.budjet.app.data.InvestmentMath
 import com.budjet.app.data.Liability
 import com.budjet.app.data.LiabilityKind
+import com.budjet.app.data.LiabilityPayment
 import com.budjet.app.data.Recurring
 import com.budjet.app.data.RecurringRule
 import com.budjet.app.data.SavingsGoal
@@ -105,6 +106,14 @@ data class LiabilityDraft(
     val balanceCents: Long = 0L,
 )
 
+data class LiabilityPaymentDraft(
+    val liabilityId: String,
+    val accountId: String,
+    val amountCents: Long,
+    val date: LocalDate = LocalDate.now(),
+    val note: String = "",
+)
+
 class AppViewModel(private val repository: BudRepository) : ViewModel() {
 
     /** True once the user has unlocked the current app session. Not persisted. */
@@ -133,10 +142,10 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
         if (!next.isAfter(YearMonth.now())) _month.value = next
     }
 
-    fun saveTransaction(draft: EditorDraft) {
+    fun saveTransaction(draft: EditorDraft): kotlinx.coroutines.Job? {
         val cents = draft.amountCents
-        if (cents <= 0L) return
-        viewModelScope.launch {
+        if (cents <= 0L) return null
+        return viewModelScope.launch {
             repository.update { current ->
                 val previous = current.transactions.firstOrNull { it.id == draft.id }
                 val transaction = Transaction(
@@ -519,7 +528,63 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
     fun deleteLiability(id: String) {
         viewModelScope.launch {
             repository.update { current ->
-                current.copy(liabilities = current.liabilities.filterNot { it.id == id })
+                current.copy(
+                    liabilities = current.liabilities.filterNot { it.id == id },
+                    liabilityPayments = current.liabilityPayments.filterNot { it.liabilityId == id },
+                )
+            }
+        }
+    }
+
+    fun payLiability(draft: LiabilityPaymentDraft) {
+        if (draft.amountCents <= 0L) return
+        viewModelScope.launch {
+            repository.update { current ->
+                val liability = current.liability(draft.liabilityId) ?: return@update current
+                if (draft.amountCents > liability.balanceCents) return@update current
+                if (Finance.accountBalanceAt(current, draft.accountId, draft.date) < draft.amountCents) {
+                    return@update current
+                }
+                current.copy(
+                    liabilities = current.liabilities.map {
+                        if (it.id == liability.id) {
+                            it.copy(balanceCents = (it.balanceCents - draft.amountCents).coerceAtLeast(0L))
+                        } else {
+                            it
+                        }
+                    },
+                    liabilityPayments = current.liabilityPayments + LiabilityPayment(
+                        id = "lp_" + UUID.randomUUID().toString().take(8),
+                        liabilityId = liability.id,
+                        accountId = draft.accountId,
+                        amountCents = draft.amountCents,
+                        dateEpochDay = draft.date.toEpochDay(),
+                        note = draft.note.trim(),
+                    ),
+                )
+            }
+        }
+    }
+
+    fun updateTransactionsDate(ids: Set<String>, date: LocalDate) {
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(
+                    transactions = current.transactions.map {
+                        if (it.id in ids) it.copy(dateEpochDay = date.toEpochDay()) else it
+                    }.sortedByDescending { it.dateEpochDay },
+                    settings = current.settings.copy(lastMovementDateEpochDay = date.toEpochDay()),
+                )
+            }
+        }
+    }
+
+    fun deleteTransactions(ids: Set<String>) {
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(transactions = current.transactions.filterNot { it.id in ids })
             }
         }
     }

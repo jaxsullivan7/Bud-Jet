@@ -88,7 +88,8 @@ object Finance {
             data.transactions.filter { it.dateEpochDay <= limit }.sumOf {
                 if (it.type == TxType.INCOME) it.amountCents else -it.amountCents
             } +
-            data.transfers.filter { it.dateEpochDay <= limit }.sumOf(::cashDelta)
+            data.transfers.filter { it.dateEpochDay <= limit }.sumOf(::cashDelta) -
+            data.liabilityPayments.filter { it.dateEpochDay <= limit }.sumOf { it.amountCents }
     }
 
     fun balanceAt(data: AppData, date: LocalDate): Long {
@@ -97,7 +98,8 @@ object Finance {
             data.transactions.filter { it.dateEpochDay <= end }.sumOf {
                 if (it.type == TxType.INCOME) it.amountCents else -it.amountCents
             } +
-            data.transfers.filter { it.dateEpochDay <= end }.sumOf(::cashDelta)
+            data.transfers.filter { it.dateEpochDay <= end }.sumOf(::cashDelta) -
+            data.liabilityPayments.filter { it.dateEpochDay <= end }.sumOf { it.amountCents }
     }
 
     /** Cash impact of a transfer: only account legs move the available balance. */
@@ -123,7 +125,10 @@ object Finance {
                     else -> 0L
                 }
             }
-        return opening + fromTransactions + fromTransfers
+        val fromLiabilityPayments = data.liabilityPayments
+            .filter { it.accountId == accountId && it.dateEpochDay <= limit }
+            .sumOf { -it.amountCents }
+        return opening + fromTransactions + fromTransfers + fromLiabilityPayments
     }
 
     fun liabilitiesTotal(data: AppData): Long =

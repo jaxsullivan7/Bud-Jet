@@ -283,17 +283,21 @@ object DemoData {
             Transfer("tr3", 100_000, monthsAgo(11), fromAccountId = "main", toInvestmentId = "i_btc", note = "Compra"),
             Transfer("tr4", 240_000, monthsAgo(24), fromAccountId = "main", toInvestmentId = "i_pension", note = "Aportación inicial"),
             Transfer("tr5", 120_000, monthsAgo(13), fromAccountId = "main", toInvestmentId = "i_tech", note = "Compra"),
-            Transfer("tr_cash", 40_000, monthsAgo(6), fromAccountId = "main", toAccountId = "cash", note = "Reposición de efectivo"),
+            Transfer("tr_cash", 40_400, monthsAgo(6), fromAccountId = "main", toAccountId = "cash", note = "Reposición de efectivo"),
             Transfer("tr_card", 240_000, monthsAgo(6), fromAccountId = "main", toAccountId = "card", note = "Pago de tarjeta"),
         )
 
         val liabilities = listOf(
-            Liability("l_car", "Préstamo coche", LiabilityKind.LOAN, 680_000, monthsAgo(20)),
+            Liability("l_car", "Préstamo coche", LiabilityKind.LOAN, 630_000, monthsAgo(20)),
             Liability("l_card", "Tarjeta", LiabilityKind.CARD, 42_000, monthsAgo(2)),
         )
 
+        val liabilityPayments = listOf(
+            LiabilityPayment("lp1", "l_car", "main", 50_000, monthsAgo(1), "Pago parcial"),
+        )
+
         return AppData(
-            version = 6,
+            version = 7,
             settings = Settings(openingBalanceCents = 1_345_000),
             categories = categories,
             accounts = accounts,
@@ -305,6 +309,7 @@ object DemoData {
             investmentEntries = investmentEntries,
             transfers = transfers,
             liabilities = liabilities,
+            liabilityPayments = liabilityPayments,
             categoryRules = categoryRules,
         )
     }

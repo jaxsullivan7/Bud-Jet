@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -67,6 +70,7 @@ import com.budjet.app.data.Liability
 import com.budjet.app.data.LiabilityKind
 import com.budjet.app.data.NetWorth
 import com.budjet.app.ui.LiabilityDraft
+import com.budjet.app.ui.LiabilityPaymentDraft
 import com.budjet.app.ui.TransferDraft
 import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.Overline
@@ -94,6 +98,7 @@ fun PatrimonioScreen(
     onAddTransfer: (TransferDraft) -> Unit,
     onSaveLiability: (LiabilityDraft) -> Unit,
     onDeleteLiability: (String) -> Unit,
+    onPayLiability: (LiabilityPaymentDraft) -> Unit,
     onOpenPortfolio: () -> Unit,
 ) {
     val colors = BudTheme.colors
@@ -104,6 +109,7 @@ fun PatrimonioScreen(
     var transferOpen by remember { mutableStateOf(false) }
     var liabilityDraft by remember { mutableStateOf<LiabilityDraft?>(null) }
     var deleteTarget by remember { mutableStateOf<Liability?>(null) }
+    var paymentTarget by remember { mutableStateOf<Liability?>(null) }
 
     if (transferOpen) {
         TransferFormScreen(
@@ -119,10 +125,27 @@ fun PatrimonioScreen(
         return
     }
 
+    paymentTarget?.let { liability ->
+        LiabilityPaymentScreen(
+            liability = liability,
+            data = data,
+            currency = currency,
+            today = today,
+            onBack = { paymentTarget = null },
+            onSave = {
+                onPayLiability(it)
+                paymentTarget = null
+            },
+        )
+        return
+    }
+
     BackHandler(enabled = true) { onClose() }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("patrimonio-list"),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 44.dp),
     ) {
         item {
@@ -346,9 +369,11 @@ fun PatrimonioScreen(
                     data.liabilities.forEachIndexed { index, liability ->
                         LiabilityRow(
                             liability = liability,
+                            paidCents = data.paymentsFor(liability.id).sumOf { it.amountCents },
                             currency = currency,
                             onEdit = { liabilityDraft = LiabilityDraft(liability.id, liability.name, liability.kind, liability.balanceCents) },
                             onDelete = { deleteTarget = liability },
+                            onPay = { paymentTarget = liability },
                         )
                         if (index != data.liabilities.lastIndex) SettingsLine()
                     }
@@ -480,9 +505,11 @@ private fun AccountBalanceRow(account: Account, balance: Long, currency: Currenc
 @Composable
 private fun LiabilityRow(
     liability: Liability,
+    paidCents: Long,
     currency: Currency,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onPay: () -> Unit,
 ) {
     val colors = BudTheme.colors
     Row(
@@ -509,7 +536,15 @@ private fun LiabilityRow(
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             Text(liability.name, style = MaterialTheme.typography.bodyMedium, color = colors.ink)
-            Text(liability.kind.label, style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+            Text(
+                text = if (paidCents > 0L) {
+                    "${liability.kind.label} · pagado ${formatMoney(paidCents, currency)}"
+                } else {
+                    liability.kind.label
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.inkMuted,
+            )
         }
         Text(
             text = formatMoney(liability.balanceCents, currency),
@@ -517,6 +552,24 @@ private fun LiabilityRow(
             color = colors.expense,
         )
         Spacer(Modifier.width(6.dp))
+        if (liability.balanceCents > 0L) {
+            Row(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(onClick = onPay)
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Rounded.SwapHoriz,
+                    contentDescription = "Pagar deuda",
+                    tint = colors.primary,
+                    modifier = Modifier.size(14.dp),
+                )
+                Spacer(Modifier.width(3.dp))
+                Text("Pagar", style = MaterialTheme.typography.labelSmall, color = colors.primary)
+            }
+        }
         SoftIconButton(
             icon = Icons.Rounded.DeleteOutline,
             contentDescription = "Eliminar deuda",
@@ -904,6 +957,328 @@ private fun TransferFormScreen(
             }
         }
     }
+
+    if (showDate) {
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDate = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        state.selectedDateMillis?.let {
+                            date = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+                        }
+                        showDate = false
+                    },
+                ) { Text("Listo", color = colors.primary) }
+            },
+            dismissButton = { TextButton(onClick = { showDate = false }) { Text("Cancelar", color = colors.inkMuted) } },
+        ) { DatePicker(state = state, showModeToggle = false) }
+    }
+}
+
+@Composable
+private fun LiabilityPaymentScreen(
+    liability: Liability,
+    data: AppData,
+    currency: Currency,
+    today: LocalDate,
+    onBack: () -> Unit,
+    onSave: (LiabilityPaymentDraft) -> Unit,
+) {
+    val colors = BudTheme.colors
+    var amount by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf(today) }
+    var showDate by remember { mutableStateOf(false) }
+    var accountId by remember { mutableStateOf(data.accounts.firstOrNull()?.id.orEmpty()) }
+    val parsed = parseMoneyInput(amount)
+    val available = if (accountId.isNotBlank()) Finance.accountBalanceAt(data, accountId, date) else 0L
+    val valid = parsed > 0L && parsed <= liability.balanceCents && parsed <= available
+
+    BackHandler(enabled = true) { onBack() }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 40.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                SoftIconButton(
+                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = "Volver",
+                    onClick = onBack,
+                    size = 38.dp,
+                )
+                Overline("DEUDAS · PAGO")
+                Spacer(Modifier.size(38.dp))
+            }
+            Spacer(Modifier.height(22.dp))
+            Text("Pagar deuda.", style = MaterialTheme.typography.headlineLarge, color = colors.ink)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Registra un pago parcial de «${liability.name}». El saldo de la deuda y el efectivo bajan a la vez.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.inkMuted,
+            )
+            Spacer(Modifier.height(18.dp))
+        }
+
+        item {
+            BudCard {
+                Text(
+                    text = "Saldo pendiente: ${formatMoney(liability.balanceCents, currency)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) amount = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Importe a pagar") },
+                    placeholder = { Text("0") },
+                    suffix = { Text(currency.symbol, color = colors.inkMuted) },
+                    singleLine = true,
+                    textStyle = TextStyle(color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.Medium),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(14.dp),
+                )
+                Spacer(Modifier.height(10.dp))
+                Text("Desde la cuenta", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Spacer(Modifier.height(6.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(data.accounts, key = { it.id }) { account ->
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(if (accountId == account.id) colors.primarySoft else Color.Transparent)
+                                .border(1.dp, if (accountId == account.id) colors.primary else colors.line, CircleShape)
+                                .clickable { accountId = account.id }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                        ) {
+                            Text(
+                                text = account.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (accountId == account.id) colors.primary else colors.inkMuted,
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Disponible: ${formatMoney(available, currency)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (parsed > available) colors.expense else colors.inkMuted,
+                )
+                if (parsed > liability.balanceCents) {
+                    Text(
+                        text = "No puedes pagar más del saldo pendiente.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.expense,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(colors.surfaceMuted.copy(alpha = 0.5f))
+                        .clickable { showDate = true }
+                        .padding(horizontal = 12.dp, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.CalendarToday, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(15.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (date == today) "Hoy, ${formatShortDate(date)}" else formatShortDate(date),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.ink,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it.take(48) },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Nota (opcional)") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                )
+                Spacer(Modifier.height(14.dp))
+                PrimaryButton(
+                    text = "Registrar pago",
+                    onClick = {
+                        onSave(
+                            LiabilityPaymentDraft(
+                                liabilityId = liability.id,
+                                accountId = accountId,
+                                amountCents = parsed,
+                                date = date,
+                                note = note,
+                            ),
+                        )
+                    },
+                    enabled = valid,
+                    icon = Icons.Rounded.SwapHoriz,
+                )
+            }
+        }
+    }
+
+    if (showDate) {
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDate = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        state.selectedDateMillis?.let {
+                            date = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+                        }
+                        showDate = false
+                    },
+                ) { Text("Listo", color = colors.primary) }
+            },
+            dismissButton = { TextButton(onClick = { showDate = false }) { Text("Cerrar calendario", color = colors.inkMuted) } },
+        ) { DatePicker(state = state, showModeToggle = false) }
+    }
+}
+
+@Composable
+private fun LiabilityPaymentDialog(
+    liability: Liability,
+    data: AppData,
+    currency: Currency,
+    today: LocalDate,
+    onDismiss: () -> Unit,
+    onSave: (LiabilityPaymentDraft) -> Unit,
+) {
+    val colors = BudTheme.colors
+    var amount by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf(today) }
+    var showDate by remember { mutableStateOf(false) }
+    var accountId by remember { mutableStateOf(data.accounts.firstOrNull()?.id.orEmpty()) }
+    val parsed = parseMoneyInput(amount)
+    val available = if (accountId.isNotBlank()) Finance.accountBalanceAt(data, accountId, date) else 0L
+    val valid = parsed > 0L && parsed <= liability.balanceCents && parsed <= available
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        shape = RoundedCornerShape(26.dp),
+        title = {
+            Column {
+                Overline("PAGO DE DEUDA")
+                Spacer(Modifier.height(4.dp))
+                Text("Pagar «${liability.name}»", style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+            }
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Saldo pendiente: ${formatMoney(liability.balanceCents, currency)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) amount = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Importe a pagar") },
+                    placeholder = { Text("0") },
+                    suffix = { Text(currency.symbol, color = colors.inkMuted) },
+                    singleLine = true,
+                    textStyle = TextStyle(color = colors.ink, fontSize = 18.sp, fontWeight = FontWeight.Medium),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(14.dp),
+                )
+                Spacer(Modifier.height(10.dp))
+                Text("Desde la cuenta", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Spacer(Modifier.height(6.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(data.accounts, key = { it.id }) { account ->
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(if (accountId == account.id) colors.primarySoft else Color.Transparent)
+                                .border(1.dp, if (accountId == account.id) colors.primary else colors.line, CircleShape)
+                                .clickable { accountId = account.id }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                        ) {
+                            Text(
+                                text = account.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (accountId == account.id) colors.primary else colors.inkMuted,
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Disponible: ${formatMoney(available, currency)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (parsed > available) colors.expense else colors.inkMuted,
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(colors.surfaceMuted.copy(alpha = 0.5f))
+                        .clickable { showDate = true }
+                        .padding(horizontal = 12.dp, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.CalendarToday, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(15.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (date == today) "Hoy, ${formatShortDate(date)}" else formatShortDate(date),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.ink,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it.take(48) },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Nota (opcional)") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSave(
+                        LiabilityPaymentDraft(
+                            liabilityId = liability.id,
+                            accountId = accountId,
+                            amountCents = parsed,
+                            date = date,
+                            note = note,
+                        ),
+                    )
+                },
+                enabled = valid,
+            ) { Text("Registrar pago", color = colors.primary) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) } },
+    )
 
     if (showDate) {
         val state = rememberDatePickerState(

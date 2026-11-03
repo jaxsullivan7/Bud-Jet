@@ -2,7 +2,7 @@
 
 Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos y objetivos de ahorro. Diseño sobrio, cálido y editorial, con tres gamas de color.
 
-> Estado: **boceto funcional v0.7.0**. Datos locales, patrimonio con transferencias y deudas, cartera de inversión, importación de extractos, avisos, copias cifradas, widget y desbloqueo biométrico.
+> Estado: **boceto funcional v0.7.1**. Datos locales, patrimonio con transferencias y pagos de deuda, cartera, importación de extractos, avisos, copias cifradas, widget adaptado a la paleta y captura rápida.
 
 | Resumen | Objetivos | Movimientos |
 |---|---|---|
@@ -23,6 +23,10 @@ Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos
 | Avisos | Copia cifrada | Copias automáticas |
 |---|---|---|
 | ![Avisos](docs/screenshots/09a-ajustes-avisos.png) | ![Copia cifrada](docs/screenshots/09d-copia-cifrada.png) | ![Copias automáticas](docs/screenshots/09f-copias-automaticas.png) |
+
+| Pago de deuda | Selección múltiple | Captura desde el widget |
+|---|---|---|
+| ![Pago de deuda](docs/screenshots/06d-pago-deuda.png) | ![Selección múltiple](docs/screenshots/04c-movimientos-seleccion.png) | ![Captura rápida](docs/screenshots/21-widget-quickadd.png) |
 
 | Añadir movimiento | Movimientos recurrentes | Ajustes |
 |---|---|---|
@@ -59,13 +63,15 @@ Las categorías conservan sus colores en las tres gamas para no perder identidad
 - **Análisis** — desglose por categorías, comparativa de 6 meses, estadísticas e ideas automáticas. Puedes fijar **desde qué fecha** empieza a contar el histórico.
 - **Balance del mes** — cada mes arranca con el saldo real del cierre anterior (aunque la nómina llegue el último día), suma ingresos, resta gastos y muestra el saldo final.
 - **Patrimonio neto** — efectivo + inversiones − deudas, con evolución de 6 meses, saldo por cuenta y edición de deudas (hipoteca, préstamo, tarjeta u otras). El saldo inicial se asigna a la primera cuenta.
+- **Pagos parciales de deudas** — registra cuánto has pagado, desde qué cuenta y en qué fecha. El saldo de la deuda y el efectivo bajan a la vez, y el patrimonio neto se mantiene coherente.
 - **Transferencias internas** — mueve dinero entre cuentas o entre una cuenta y un producto de inversión sin contarlo como ingreso ni gasto. Una aportación desde una cuenta descuenta el efectivo y suma cartera; una retirada hace lo contrario.
+- **Selección múltiple en Movimientos** — mantén pulsado un movimiento para seleccionar varios, cambiarles la fecha de una vez o eliminarlos en bloque.
 - **Cartera de inversión** — productos de fondos, acciones, ETF, cripto, depósitos, planes de pensiones, inmuebles u otros; aportaciones, retiradas, rendimientos y ajustes de valor. Calcula valor actual, rentabilidad total, **rentabilidad anualizada (XIRR)**, distribución y evolución de 12 meses. Puede ir enlazada a tus cuentas o seguirse por separado.
 - **Calculadora de interés compuesto** — capital inicial, aportación mensual, rentabilidad anual, años y capitalización mensual o anual. La **volatilidad anual** es opcional: con 0 % hace un cálculo fijo; con un valor simula 1.200 escenarios y muestra P10, P50 y P90.
 - **Importar extractos** — CSV u OFX del banco, procesados en el dispositivo. Detección de columnas, mapeo manual si hace falta, vista previa, detección de duplicados, cambio de categoría/tipo por fila y reglas de categorización por comercio o texto.
 - **Avisos locales** — presupuesto al 80 % y 100 %, cargos recurrentes del día siguiente, revisión mensual y recordatorio para actualizar la cartera. Se activan en Ajustes → Avisos y no necesitan servidor.
 - **Copias cifradas** — exportación `.bjet` con contraseña (PBKDF2 + AES-256-GCM), restauración con contraseña y copias automáticas diarias cifradas con Android Keystore (últimas 14).
-- **Widget y captura rápida** — widget con saldo y gasto del mes, botón para añadir un movimiento y opción de compartir texto con Bud Jet para abrir el editor con importe y nota.
+- **Widget y captura rápida** — widget con saldo y gasto del mes que usa la paleta y el modo claro/oscuro elegidos. El botón “+ Añadir” abre una captura compacta con desbloqueo biométrico, sin cargar la app completa. También puedes compartir texto con Bud Jet para abrir el editor con importe y nota.
 - **Detalle de categoría** — toca un segmento del donut o su leyenda para ver la evolución, las métricas y los movimientos de esa categoría.
 - **Objetivos de ahorro** — metas, aportaciones/retiradas, progreso y sugerencia mensual. Es una “hucha virtual”.
 - **Movimientos recurrentes** — nómina, alquiler o suscripciones mensuales; se apuntan solos al abrir la app, se pueden pausar y editar.
@@ -106,18 +112,19 @@ Requiere JDK 17+ y Android SDK 37.
 
 ## Probar el boceto
 
-1. Instala `BudJet-0.7.0-boceto.apk` en un Android 8.0 o superior.
+1. Instala `BudJet-0.7.1-boceto.apk` en un Android 8.0 o superior.
 2. La app arranca con datos de ejemplo de los últimos 6 meses.
 3. Para empezar con todo a cero: **Ajustes → Datos → Empezar de cero**. El saldo total, ingresos, gastos, presupuestos, objetivos, recurrentes, cartera, transferencias y deudas quedarán a 0. Si quieres registrar el dinero que ya tenías, cambia **Saldo inicial** en la misma pantalla.
 4. Prueba las gamas **Business / Navy / Boss** en **Ajustes → Apariencia**.
 5. En **Análisis → Patrimonio** revisa efectivo, inversiones y deudas. Prueba **Transferir** entre cuentas y hacia un producto de la cartera; el saldo de las cuentas debe moverse sin alterar ingresos/gastos.
-6. Añade o edita una deuda y comprueba que el patrimonio neto baja.
-7. En **Ajustes → Datos → Importar extracto**, elige un CSV/OFX de prueba. Revisa columnas, categorías y duplicados antes de importar.
-8. En **Ajustes → Avisos**, activa recordatorios y prueba los permisos de notificación de Android 13+.
-9. En **Ajustes → Datos → Copia cifrada**, exporta un `.bjet` con contraseña y restáuralo. Revisa también **Copias automáticas**.
-10. Añade el widget de Bud Jet a la pantalla de inicio y prueba “+ Añadir”. También puedes compartir un texto con la app para abrir el editor.
-11. En **Análisis → Cartera de inversión**, añade un producto, registra una aportación y prueba «Actualizar valor» y «Rendimiento». Después abre la calculadora y simula con volatilidad.
-12. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
+6. En una deuda, pulsa **Pagar** y registra un pago parcial: la deuda y el efectivo deben bajar a la vez.
+7. En **Movimientos**, mantén pulsado un movimiento para seleccionar varios. Prueba **Fecha** para cambiarla en bloque y **Eliminar** para borrarlos juntos.
+8. En **Ajustes → Datos → Importar extracto**, elige un CSV/OFX de prueba. Revisa columnas, categorías y duplicados antes de importar.
+9. En **Ajustes → Avisos**, activa recordatorios y prueba los permisos de notificación de Android 13+.
+10. En **Ajustes → Datos → Copia cifrada**, exporta un `.bjet` con contraseña y restáuralo. Revisa también **Copias automáticas**.
+11. Añade el widget de Bud Jet: debe usar la gama y el modo claro/oscuro de la app. Prueba “+ Añadir”; si el bloqueo biométrico está activo, pedirá desbloqueo antes de mostrar la captura compacta.
+12. En **Análisis → Cartera de inversión**, añade un producto, registra una aportación y prueba «Actualizar valor» y «Rendimiento». Después abre la calculadora y simula con volatilidad.
+13. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
 
 La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirve para probar, no para publicar en Google Play.
 
@@ -128,8 +135,8 @@ La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirv
 ./gradlew :app:lintDebug
 ```
 
-- **66 tests de lógica** — finanzas, balance inicial/final, transferencias y patrimonio, movimientos futuros, fechas recordadas, recurrencias, objetivos, cartera y XIRR, calculadora determinista y Monte Carlo, importación CSV/OFX, copias cifradas, backup, migraciones, filtros y biometría.
-- **2 tests de captura** con Robolectric/Roborazzi que renderizan 35 pantallas.
+- **68 tests de lógica** — finanzas, balance inicial/final, transferencias y patrimonio, pagos de deuda, movimientos futuros, fechas recordadas, recurrencias, objetivos, cartera y XIRR, calculadora determinista y Monte Carlo, importación CSV/OFX, copias cifradas, backup, migraciones, filtros y biometría.
+- **3 tests de captura** con Robolectric/Roborazzi que renderizan 39 pantallas (incluida la captura rápida del widget).
 - **Lint: 0 errores**.
 
 ## Estructura
@@ -150,11 +157,12 @@ app/src/main/java/com/budjet/app/
 - Los movimientos futuros aparecen en la lista del mes en que caen y se marcan como “Programado”; no cuentan hasta su fecha.
 - Los objetivos son una asignación virtual: no mueven dinero entre cuentas ni descuentan del saldo.
 - La cartera de inversión puede ir enlazada a cuentas o seguirse por separado. Las aportaciones desde una cuenta sí mueven el efectivo; las externas no. Los valores se actualizan a mano: no hay cotizaciones automáticas.
-- Las deudas se registran con su saldo actual; no tienen historial de amortización ni intereses.
+- Las deudas se registran con su saldo actual y permiten pagos parciales; todavía no calculan intereses ni generan un calendario de amortización.
+- La selección múltiple de movimientos no tiene deshacer: el borrado en bloque pide confirmación.
 - La importación CSV/OFX es local y tolerante a formatos comunes, pero cada banco puede tener particularidades. Revisa siempre la vista previa antes de importar.
 - Los avisos son locales y dependen de que Android permita notificaciones y no limite el trabajo en segundo plano.
 - Las copias automáticas viven en el almacenamiento privado de la app y usan una clave de Android Keystore: si desinstalas la app, esa clave se pierde. Para conservarlas fuera del móvil, usa la copia cifrada con contraseña.
-- El widget se actualiza cuando la app guarda datos; no es un servicio en tiempo real.
+- El widget se actualiza cuando la app guarda datos; no es un servicio en tiempo real. El botón “+ Añadir” abre una actividad compacta, porque Android no permite formularios de texto dentro de un widget.
 - La rentabilidad anualizada usa XIRR (dinero ponderado en el tiempo) y necesita al menos una entrada y una salida de dinero; si no puede calcularse, se muestra «—».
 - La calculadora es una estimación: no incluye impuestos, comisiones ni inflación. Con volatilidad, los percentiles P10/P50/P90 salen de una simulación y no garantizan resultados futuros.
 - **Anulación** conserva el gasto original y crea un ingreso vinculado por el mismo importe; el efecto neto es cero. No borra el gasto de la lista.

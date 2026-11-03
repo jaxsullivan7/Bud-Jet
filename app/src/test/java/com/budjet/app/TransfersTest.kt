@@ -106,6 +106,29 @@ class TransfersTest {
     }
 
     @Test
+    fun `liability payments reduce cash and debt without changing net worth`() {
+        val data = base.copy(
+            liabilities = listOf(
+                Liability("l1", "Préstamo", LiabilityKind.LOAN, 200_000),
+            ),
+            liabilityPayments = listOf(
+                com.budjet.app.data.LiabilityPayment(
+                    id = "lp1",
+                    liabilityId = "l1",
+                    accountId = "main",
+                    amountCents = 50_000,
+                    dateEpochDay = today.toEpochDay(),
+                ),
+            ),
+        )
+        val worth = Finance.netWorth(data, today)
+        assertEquals(1_150_000L, worth.cashCents)
+        assertEquals(200_000L, worth.liabilitiesCents)
+        assertEquals(950_000L, worth.totalCents)
+        assertEquals(1_150_000L, Finance.accountBalance(data, "main", today))
+    }
+
+    @Test
     fun `future transfers are ignored until their date`() {
         val data = base.copy(
             transfers = listOf(

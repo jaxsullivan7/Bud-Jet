@@ -1,5 +1,6 @@
 package com.budjet.app.ui.components
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -14,13 +15,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.EventRepeat
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,17 +51,42 @@ fun TransactionRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     showDate: Boolean = false,
+    selected: Boolean = false,
+    selectionMode: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
 ) {
     val colors = BudTheme.colors
     val isFuture = LocalDate.ofEpochDay(transaction.dateEpochDay).isAfter(LocalDate.now())
+    val clickAction = onClick
+    val longAction = onLongClick
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
+            .background(if (selected) colors.primarySoft.copy(alpha = 0.6f) else Color.Transparent)
+            .pointerInput(transaction.id) {
+                detectTapGestures(
+                    onTap = { clickAction() },
+                    onLongPress = { longAction?.invoke() },
+                )
+            }
+            .semantics {
+                this.onClick { clickAction(); true }
+                if (longAction != null) this.onLongClick { longAction(); true }
+            }
+            .testTag("tx-${transaction.note.ifBlank { transaction.id }}")
             .padding(horizontal = 4.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (selectionMode) {
+            Icon(
+                imageVector = if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+                contentDescription = if (selected) "Seleccionado" else "No seleccionado",
+                tint = if (selected) colors.primary else colors.inkMuted,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+        }
         CategoryBadge(category = category, size = 42.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {

@@ -7,6 +7,13 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.7.1
+
+- **Pagos parciales de deudas**: registra importe, cuenta, fecha y nota; bajan la deuda y el efectivo, y el patrimonio neto se mantiene.
+- **Selección múltiple en Movimientos**: pulsación larga para seleccionar, cambio de fecha en bloque y borrado múltiple con confirmación.
+- **Widget con la paleta de la app**: fondo, texto y contraste adaptados a Business/Navy/Boss y al modo claro/oscuro.
+- **Captura rápida desde el widget**: actividad compacta con desbloqueo biométrico, sin abrir la app completa.
+
 ### v0.7
 
 - **Patrimonio neto**: efectivo + inversiones − deudas, con evolución de 6 meses y saldo por cuenta.
