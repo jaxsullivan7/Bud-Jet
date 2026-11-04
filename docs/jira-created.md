@@ -2,9 +2,9 @@
 
 - **Proyecto:** BUD · Bud Jet
 - **URL:** https://jaxsullivan7.atlassian.net/jira/software/projects/BUD/summary
-- **Fecha:** 30 de octubre de 2026 (backlog); ejecución registrada el 1 de noviembre de 2026.
-- **Resultado:** 29 issues originales (5 épicas + 24 historias de backlog), 3 épicas nuevas de ejecución y 97 incidencias de sprint (`BUD-33` a `BUD-129`), todas con etiqueta `bud-jet`.
-- **Estado local (v0.6.0):** BUD-20 implementado; BUD-26 endurecido y pendiente de validación en dispositivo real. Ver [`BIOMETRIC_TEST.md`](BIOMETRIC_TEST.md). Las gamas de color, el saldo inicial, los movimientos programados, las categorías nuevas, el rango histórico, el balance inicial del mes y la cartera de inversión con calculadora forman parte de v0.6.0.
+- **Fecha:** 30 de octubre de 2026 (backlog); ejecución registrada el 4 de noviembre de 2026.
+- **Resultado:** 29 issues originales (5 épicas + 24 historias de backlog), 3 épicas nuevas de ejecución y 127 incidencias de sprint (`BUD-33` a `BUD-159`), todas con etiqueta `bud-jet`.
+- **Estado local (v0.9.0):** BUD-20 implementado; BUD-26 endurecido y pendiente de validación en dispositivo real. Ver [`BIOMETRIC_TEST.md`](BIOMETRIC_TEST.md). Todo el trabajo de v0.7.0, v0.7.1, v0.8.0 y v0.9.0 está registrado en el Sprint 5.
 
 ## Épicas
 
@@ -27,7 +27,8 @@
 | Sprint 1 · Fundaciones y v0.1 | 14–25 sep 2026 | Primera versión usable | Cerrado |
 | Sprint 2 · v0.2 y v0.3 | 28 sep–9 oct 2026 | Recurrentes, objetivos, backup y biometría | Cerrado |
 | Sprint 3 · v0.4 y v0.5 | 12–23 oct 2026 | Saldo inicial, paletas, programados y análisis | Cerrado |
-| Sprint 4 · Cartera y release | 26 oct–6 nov 2026 | Cartera, calculadora y entrega v0.6.0 | Activo |
+| Sprint 4 · Cartera y release | 26 oct–6 nov 2026 | Cartera, calculadora y entrega v0.6.0 | Cerrado |
+| Sprint 5 · v0.7 a v0.9 | 2–13 nov 2026 | Patrimonio, deudas, importación, avisos, copias, widget y orden | Activo |
 
 El detalle de capacidad, worklogs, ausencias y retrasos está en [`SPRINTS.md`](SPRINTS.md).
 

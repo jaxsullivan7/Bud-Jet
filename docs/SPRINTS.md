@@ -22,10 +22,11 @@ Jira solo dispone de una cuenta real. Para que el histórico sea trazable, cada 
 | Sprint 1 · Fundaciones y v0.1 | 14–25 sep 2026 | Primera versión usable | 392 h | 308 h | 302 h | 72 | Cerrado |
 | Sprint 2 · v0.2 y v0.3 | 28 sep–9 oct 2026 | Recurrentes, objetivos, backup y biometría | 392 h | 262 h | 262 h | 61 | Cerrado |
 | Sprint 3 · v0.4 y v0.5 | 12–23 oct 2026 | Saldo inicial, paletas, programados y análisis | 376 h | 264 h | 264 h | 59 | Cerrado |
-| Sprint 4 · Cartera y release | 26 oct–6 nov 2026 | Cartera, calculadora y entrega v0.6.0 | 392 h | 288 h* | 227 h | 65 | Activo |
-| **Total** | | | **1.752 h** | **1.230 h** | **1.163 h** | **284** | |
+| Sprint 4 · Cartera y release | 26 oct–6 nov 2026 | Cartera, calculadora y entrega v0.6.0 | 392 h | 288 h* | 227 h | 65 | Cerrado |
+| Sprint 5 · v0.7 a v0.9 | 2–13 nov 2026 | Patrimonio, deudas, importación, avisos, copias, widget y orden | 400 h | 350 h | 324 h | 89 | Activo |
+| **Total** | | | **2.152 h** | **1.580 h** | **1.487 h** | **373** | |
 
-\* Sprint 4 incluye 24 h de UAT que siguen abiertas al cierre de este registro.
+\* Sprint 4 incluyó 24 h de UAT que se cerraron al inicio del Sprint 5.
 
 ## Ausencias
 
@@ -48,13 +49,15 @@ Jira solo dispone de una cuenta real. Para que el histórico sea trazable, cada 
 | Sprint 4 | El release se bloqueó por lint y emulador | +1 día; 8 h no planificadas |
 | Sprint 4 | Retirada superior al valor de la cartera | 4 h de corrección |
 | Sprint 4 | Percentiles P10/P90 sin decimales | 4 h de corrección |
+| Sprint 5 | El parser CSV fallaba con separadores europeos | 4 h de corrección y casos de prueba |
+| Sprint 5 | El widget no refrescaba tras importar | 2 h de corrección |
 
 ## Lectura del histórico
 
 - **Capacidad nominal:** 5 personas × 8 h × 10 días = 400 h por sprint de dos semanas; el Sprint 0 fue una semana (200 h).
-- **Utilización:** 1.163 h registradas sobre 1.752 h disponibles (66 %). El resto se cubrió con ceremonias, revisiones, soporte y colchón.
-- **Puntos:** 284 puntos comprometidos; 277 entregados. En el Sprint 4, 58 de los 65 puntos ya están cerrados y quedan 7 en UAT/review.
-- **Versiones:** v0.1 en el Sprint 1, v0.2/v0.3 en el Sprint 2, v0.4/v0.5 en el Sprint 3 y v0.6.0 en el Sprint 4.
+- **Utilización:** 1.487 h registradas sobre 2.152 h disponibles (69 %). El resto se cubrió con ceremonias, revisiones, soporte y colchón.
+- **Puntos:** 373 puntos comprometidos; 360 entregados. En el Sprint 5, 83 de los 89 puntos están cerrados y quedan 6 en UAT/review.
+- **Versiones:** v0.1 en el Sprint 1, v0.2/v0.3 en el Sprint 2, v0.4/v0.5 en el Sprint 3, v0.6.0 en el Sprint 4 y v0.7.0/v0.7.1/v0.8.0/v0.9.0 en el Sprint 5.
 
 ## Enlaces
 
