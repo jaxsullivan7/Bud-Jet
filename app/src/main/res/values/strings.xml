@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Bud Jet</string>
+    <string name="app_name">BudJet</string>
     <string name="widget_brand">Bud Jet</string>
     <string name="widget_add">+ Añadir</string>
     <string name="widget_balance_preview">10.680,22 €</string>
