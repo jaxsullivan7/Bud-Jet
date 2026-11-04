@@ -136,6 +136,8 @@ data class Liability(
     val name: String,
     val kind: LiabilityKind = LiabilityKind.OTHER,
     val balanceCents: Long,
+    val annualRatePercent: Double = 0.0,
+    val minimumPaymentCents: Long = 0L,
     val createdAtEpochDay: Long = 0,
 )
 
@@ -203,7 +205,7 @@ data class Settings(
 
 @Serializable
 data class AppData(
-    val version: Int = 7,
+    val version: Int = 8,
     val settings: Settings = Settings(),
     val categories: List<Category> = emptyList(),
     val accounts: List<Account> = emptyList(),

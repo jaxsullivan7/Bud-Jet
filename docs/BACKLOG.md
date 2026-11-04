@@ -7,6 +7,10 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.8.0
+
+- **Plan de deudas**: pago mensual, interés anual y cuota mínima por deuda; simulación de pago con estrategia **bola de nieve** o **avalancha**, fecha libre, intereses totales y comparativa entre ambas.
+
 ### v0.7.1
 
 - **Pagos parciales de deudas**: registra importe, cuenta, fecha y nota; bajan la deuda y el efectivo, y el patrimonio neto se mantiene.

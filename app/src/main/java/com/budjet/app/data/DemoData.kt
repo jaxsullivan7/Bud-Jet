@@ -288,8 +288,8 @@ object DemoData {
         )
 
         val liabilities = listOf(
-            Liability("l_car", "Préstamo coche", LiabilityKind.LOAN, 630_000, monthsAgo(20)),
-            Liability("l_card", "Tarjeta", LiabilityKind.CARD, 42_000, monthsAgo(2)),
+            Liability("l_car", "Préstamo coche", LiabilityKind.LOAN, 630_000, 6.5, 15_000, monthsAgo(20)),
+            Liability("l_card", "Tarjeta", LiabilityKind.CARD, 42_000, 19.9, 2_500, monthsAgo(2)),
         )
 
         val liabilityPayments = listOf(
@@ -297,7 +297,7 @@ object DemoData {
         )
 
         return AppData(
-            version = 7,
+            version = 8,
             settings = Settings(openingBalanceCents = 1_345_000),
             categories = categories,
             accounts = accounts,

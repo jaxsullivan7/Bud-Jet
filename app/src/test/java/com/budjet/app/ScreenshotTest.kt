@@ -6,6 +6,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
@@ -62,7 +63,8 @@ class ScreenshotTest {
 
         compose.onNodeWithContentDescription("Movimientos").performClick()
         capture("04-movimientos")
-        compose.onNodeWithTag("tx-Casa Rafa").performSemanticsAction(SemanticsActions.OnLongClick)
+        compose.onAllNodesWithTag("tx-Casa Rafa").onFirst()
+            .performSemanticsAction(SemanticsActions.OnLongClick)
         capture("04c-movimientos-seleccion")
         compose.onNodeWithText("Fecha").performClick()
         capture("04d-fecha-multiple")
@@ -87,6 +89,10 @@ class ScreenshotTest {
         compose.onAllNodesWithText("Pagar").onFirst().performClick()
         capture("06d-pago-deuda")
         back()
+        compose.onNodeWithTag("patrimonio-list").performScrollToNode(hasText("Préstamo coche"))
+        compose.onNodeWithText("Plan").performClick()
+        capture("06e-plan-deudas")
+        compose.onNodeWithContentDescription("Volver").performClick()
         compose.onNodeWithTag("patrimonio-list").performScrollToNode(hasText("Transferir"))
         compose.onNodeWithText("Transferir").performClick()
         capture("06c-transferencia")
@@ -126,7 +132,7 @@ class ScreenshotTest {
         compose.onNodeWithText("Buscar pago a anular").performClick()
         capture("08b-anulacion-picker")
         compose.onNodeWithTag("reversal-list").performScrollToNode(hasText("Casa Rafa"))
-        compose.onNodeWithText("Casa Rafa").performClick()
+        compose.onAllNodesWithText("Casa Rafa").onFirst().performClick()
         capture("08c-anulacion")
         compose.onNodeWithContentDescription("Cerrar").performClick()
         compose.onNodeWithContentDescription("Ajustes").performClick()

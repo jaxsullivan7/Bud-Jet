@@ -63,6 +63,8 @@ import androidx.compose.ui.unit.sp
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Currency
+import com.budjet.app.data.DebtPlanMath
+import com.budjet.app.data.DebtStrategy
 import com.budjet.app.data.Finance
 import com.budjet.app.data.Investment
 import com.budjet.app.data.InvestmentMath
@@ -83,6 +85,7 @@ import com.budjet.app.ui.components.categoryIcon
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.centsToInput
 import com.budjet.app.util.formatMoney
+import com.budjet.app.util.formatMonth
 import com.budjet.app.util.formatMonthShort
 import com.budjet.app.util.formatShortDate
 import com.budjet.app.util.parseMoneyInput
@@ -110,6 +113,7 @@ fun PatrimonioScreen(
     var liabilityDraft by remember { mutableStateOf<LiabilityDraft?>(null) }
     var deleteTarget by remember { mutableStateOf<Liability?>(null) }
     var paymentTarget by remember { mutableStateOf<Liability?>(null) }
+    var debtPlanOpen by remember { mutableStateOf(false) }
 
     if (transferOpen) {
         TransferFormScreen(
@@ -136,6 +140,16 @@ fun PatrimonioScreen(
                 onPayLiability(it)
                 paymentTarget = null
             },
+        )
+        return
+    }
+
+    if (debtPlanOpen) {
+        DebtPlanScreen(
+            data = data,
+            currency = currency,
+            today = today,
+            onBack = { debtPlanOpen = false },
         )
         return
     }
@@ -340,19 +354,39 @@ fun PatrimonioScreen(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                SectionTitle("Deudas", formatMoney(netWorth.liabilitiesCents, currency))
-                Row(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .clickable { liabilityDraft = LiabilityDraft() }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Rounded.Add, contentDescription = null, tint = colors.primary, modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Añadir", style = MaterialTheme.typography.labelMedium, color = colors.primary)
+                Text("Deudas", style = MaterialTheme.typography.titleMedium, color = colors.ink)
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = formatMoney(netWorth.liabilitiesCents, currency),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.inkMuted,
+                )
+                Spacer(Modifier.width(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable { debtPlanOpen = true }
+                            .testTag("debt-plan-button")
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.AutoMirrored.Rounded.TrendingUp, contentDescription = null, tint = colors.primary, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Plan", style = MaterialTheme.typography.labelMedium, color = colors.primary)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable { liabilityDraft = LiabilityDraft() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null, tint = colors.primary, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Añadir", style = MaterialTheme.typography.labelMedium, color = colors.primary)
+                    }
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -371,7 +405,16 @@ fun PatrimonioScreen(
                             liability = liability,
                             paidCents = data.paymentsFor(liability.id).sumOf { it.amountCents },
                             currency = currency,
-                            onEdit = { liabilityDraft = LiabilityDraft(liability.id, liability.name, liability.kind, liability.balanceCents) },
+                            onEdit = {
+                                liabilityDraft = LiabilityDraft(
+                                    id = liability.id,
+                                    name = liability.name,
+                                    kind = liability.kind,
+                                    balanceCents = liability.balanceCents,
+                                    annualRatePercent = liability.annualRatePercent,
+                                    minimumPaymentCents = liability.minimumPaymentCents,
+                                )
+                            },
                             onDelete = { deleteTarget = liability },
                             onPay = { paymentTarget = liability },
                         )
@@ -980,6 +1023,268 @@ private fun TransferFormScreen(
 }
 
 @Composable
+private fun DebtPlanScreen(
+    data: AppData,
+    currency: Currency,
+    today: LocalDate,
+    onBack: () -> Unit,
+) {
+    val colors = BudTheme.colors
+    val debts = remember(data.liabilities) { DebtPlanMath.fromData(data) }
+    val minimums = remember(debts) { DebtPlanMath.minimumTotal(debts) }
+    val defaultBudget = if (minimums > 0L) minimums + 5_000L else 10_000L
+    var budget by remember { mutableStateOf(centsToInput(defaultBudget)) }
+    var strategy by remember { mutableStateOf(DebtStrategy.SNOWBALL) }
+    val parsedBudget = parseMoneyInput(budget)
+    val result = remember(debts, parsedBudget, strategy, today) {
+        DebtPlanMath.simulate(debts, parsedBudget, strategy, today)
+    }
+    val snowball = remember(debts, parsedBudget, today) {
+        DebtPlanMath.simulate(debts, parsedBudget, DebtStrategy.SNOWBALL, today)
+    }
+    val avalanche = remember(debts, parsedBudget, today) {
+        DebtPlanMath.simulate(debts, parsedBudget, DebtStrategy.AVALANCHE, today)
+    }
+
+    BackHandler(enabled = true) { onBack() }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 40.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                SoftIconButton(
+                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = "Volver",
+                    onClick = onBack,
+                    size = 38.dp,
+                )
+                Overline("PATRIMONIO · PLAN")
+                Spacer(Modifier.size(38.dp))
+            }
+            Spacer(Modifier.height(22.dp))
+            Text("Plan de deudas.", style = MaterialTheme.typography.headlineLarge, color = colors.ink)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Elige cuánto puedes destinar cada mes y cómo quieres atacar las deudas.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.inkMuted,
+            )
+            Spacer(Modifier.height(18.dp))
+        }
+
+        if (debts.isEmpty()) {
+            item {
+                BudCard {
+                    Text(
+                        text = "Sin deudas registradas. Añade una deuda en Patrimonio para calcular tu fecha libre.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.inkMuted,
+                    )
+                }
+            }
+            return@LazyColumn
+        }
+
+        item {
+            BudCard {
+                Text("Pago mensual total", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Spacer(Modifier.height(6.dp))
+                OutlinedTextField(
+                    value = budget,
+                    onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) budget = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Cuánto puedes pagar al mes") },
+                    placeholder = { Text("0") },
+                    suffix = { Text(currency.symbol, color = colors.inkMuted) },
+                    singleLine = true,
+                    textStyle = TextStyle(color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.Medium),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(14.dp),
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Cuotas mínimas: ${formatMoney(minimums, currency)} · el resto se aplica como pago extra.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
+                Spacer(Modifier.height(14.dp))
+                Text("Estrategia", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Spacer(Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DebtStrategy.entries.forEach { option ->
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (strategy == option) colors.primarySoft else Color.Transparent)
+                                .border(1.dp, if (strategy == option) colors.primary else colors.line, RoundedCornerShape(12.dp))
+                                .clickable { strategy = option }
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                        ) {
+                            Text(
+                                text = option.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (strategy == option) colors.primary else colors.inkMuted,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(12.dp))
+            BudCard(modifier = Modifier.fillMaxWidth(), color = colors.heroStart, border = false) {
+                Overline("TU FECHA LIBRE", color = colors.heroMuted)
+                Spacer(Modifier.height(8.dp))
+                if (result.feasible && result.months > 0) {
+                    Text(
+                        text = "${result.months} meses",
+                        style = BudTheme.type.moneyHero.copy(fontSize = 34.sp, lineHeight = 40.sp),
+                        color = colors.heroText,
+                    )
+                    Text(
+                        text = result.debtFreeDate?.let { formatMonth(YearMonth.from(it)) } ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.heroMuted,
+                    )
+                } else if (result.feasible) {
+                    Text("Sin deudas", style = BudTheme.type.moneyHero.copy(fontSize = 34.sp), color = colors.heroText)
+                } else {
+                    Text(
+                        text = result.message ?: "No se puede calcular",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.heroText,
+                    )
+                }
+                if (result.feasible) {
+                    Spacer(Modifier.height(14.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+                        HeroMetric("Intereses", result.totalInterestCents, currency)
+                        HeroMetric("Total pagado", result.totalPaidCents, currency)
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(12.dp))
+            BudCard {
+                Overline("COMPARATIVA")
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "La bola de nieve busca victorias rápidas. La avalancha prioriza el interés más alto.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
+                Spacer(Modifier.height(10.dp))
+                ComparisonRow("Bola de nieve", snowball, strategy == DebtStrategy.SNOWBALL, currency)
+                Spacer(Modifier.height(8.dp))
+                ComparisonRow("Avalancha", avalanche, strategy == DebtStrategy.AVALANCHE, currency)
+                if (snowball.months == avalanche.months &&
+                    kotlin.math.abs(snowball.totalInterestCents - avalanche.totalInterestCents) < 1L
+                ) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "Con estas deudas, ambas estrategias llegan al mismo sitio.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(12.dp))
+            Overline("ORDEN DE PAGO")
+            Spacer(Modifier.height(8.dp))
+            BudCard(padding = 0.dp) {
+                result.items.forEachIndexed { index, item ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 11.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(colors.primarySoft),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "${index + 1}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.primary,
+                            )
+                        }
+                        Spacer(Modifier.width(9.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(item.name, style = MaterialTheme.typography.bodyMedium, color = colors.ink)
+                            Text(
+                                text = if (item.payoffMonth > 0) "Libre en el mes ${item.payoffMonth}" else "Sin deuda",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.inkMuted,
+                            )
+                        }
+                        Text(
+                            text = formatMoney(item.interestPaidCents, currency),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.inkMuted,
+                        )
+                    }
+                    if (index != result.items.lastIndex) SettingsLine()
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Los intereses se calculan con el tipo anual indicado en cada deuda. No incluyen comisiones ni seguros.",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.inkMuted,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ComparisonRow(
+    label: String,
+    result: com.budjet.app.data.DebtPlanResult,
+    selected: Boolean,
+    currency: Currency,
+) {
+    val colors = BudTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (selected) colors.primarySoft else Color.Transparent)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = colors.ink)
+            Text(
+                text = if (result.feasible) "${result.months} meses" else "No amortiza",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.inkMuted,
+            )
+        }
+        Text(
+            text = if (result.feasible) formatMoney(result.totalInterestCents, currency) else "—",
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) colors.primary else colors.inkMuted,
+        )
+    }
+}
+
+@Composable
 private fun LiabilityPaymentScreen(
     liability: Liability,
     data: AppData,
@@ -1312,7 +1617,15 @@ private fun LiabilityDialog(
     var name by remember { mutableStateOf(initial.name) }
     var kind by remember { mutableStateOf(initial.kind) }
     var amount by remember { mutableStateOf(if (initial.balanceCents > 0L) centsToInput(initial.balanceCents) else "") }
+    var rate by remember {
+        mutableStateOf(if (initial.annualRatePercent > 0.0) initial.annualRatePercent.toString().replace('.', ',') else "")
+    }
+    var minimum by remember {
+        mutableStateOf(if (initial.minimumPaymentCents > 0L) centsToInput(initial.minimumPaymentCents) else "")
+    }
     val parsed = parseMoneyInput(amount)
+    val rateValue = rate.replace(',', '.').toDoubleOrNull() ?: 0.0
+    val minimumCents = parseMoneyInput(minimum)
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = colors.surface,
@@ -1377,11 +1690,55 @@ private fun LiabilityDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = RoundedCornerShape(14.dp),
                 )
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = rate,
+                        onValueChange = {
+                            if (it.length <= 6 && it.all { c -> c.isDigit() || c == ',' }) rate = it
+                        },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("Interés anual") },
+                        suffix = { Text("%", color = colors.inkMuted) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(14.dp),
+                    )
+                    OutlinedTextField(
+                        value = minimum,
+                        onValueChange = {
+                            if (it.length <= 10 && it.all { c -> c.isDigit() || c == ',' }) minimum = it
+                        },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("Cuota mínima") },
+                        suffix = { Text(currency.symbol, color = colors.inkMuted) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(14.dp),
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "El interés y la cuota mínima se usan para el plan de deudas. Puedes dejarlos a 0.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(LiabilityDraft(initial.id, name, kind, parsed)) },
+                onClick = {
+                    onSave(
+                        LiabilityDraft(
+                            id = initial.id,
+                            name = name,
+                            kind = kind,
+                            balanceCents = parsed,
+                            annualRatePercent = rateValue,
+                            minimumPaymentCents = minimumCents,
+                        ),
+                    )
+                },
                 enabled = name.isNotBlank() && parsed >= 0L,
             ) { Text(if (initial.id == null) "Añadir" else "Guardar", color = colors.primary) }
         },

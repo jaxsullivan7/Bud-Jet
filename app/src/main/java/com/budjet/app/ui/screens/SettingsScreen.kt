@@ -651,7 +651,7 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Un lugar tranquilo para tu dinero. Versión 0.7.1 · boceto.",
+                            text = "Un lugar tranquilo para tu dinero. Versión 0.8.0 · boceto.",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )

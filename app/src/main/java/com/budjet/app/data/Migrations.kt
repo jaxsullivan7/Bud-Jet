@@ -39,5 +39,9 @@ fun AppData.migratedToCurrent(): AppData {
         result = result.copy(version = 7)
     }
 
+    if (result.version < 8) {
+        result = result.copy(version = 8)
+    }
+
     return if (result.version >= Backup.CURRENT_VERSION) result else result.copy(version = Backup.CURRENT_VERSION)
 }

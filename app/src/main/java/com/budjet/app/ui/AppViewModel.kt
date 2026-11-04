@@ -104,6 +104,8 @@ data class LiabilityDraft(
     val name: String = "",
     val kind: LiabilityKind = LiabilityKind.OTHER,
     val balanceCents: Long = 0L,
+    val annualRatePercent: Double = 0.0,
+    val minimumPaymentCents: Long = 0L,
 )
 
 data class LiabilityPaymentDraft(
@@ -512,6 +514,8 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     name = draft.name.trim(),
                     kind = draft.kind,
                     balanceCents = draft.balanceCents,
+                    annualRatePercent = draft.annualRatePercent.coerceIn(0.0, 100.0),
+                    minimumPaymentCents = draft.minimumPaymentCents.coerceAtLeast(0L),
                     createdAtEpochDay = existing?.createdAtEpochDay ?: LocalDate.now().toEpochDay(),
                 )
                 current.copy(

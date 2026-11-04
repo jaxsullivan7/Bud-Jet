@@ -20,7 +20,7 @@ object Backup {
 
     const val APP_NAME = "Bud Jet"
     const val FORMAT = 1
-    const val CURRENT_VERSION = 7
+    const val CURRENT_VERSION = 8
     const val MAX_BYTES = 10 * 1024 * 1024
 
     private val json = Json {
@@ -177,7 +177,13 @@ object Backup {
         require(data.investmentEntries.all { it.transferId == null || it.transferId in transferIds }) {
             "Hay aportaciones vinculadas a transferencias que no existen."
         }
-        require(data.liabilities.all { it.name.isNotBlank() && it.balanceCents >= 0L }) {
+        require(data.liabilities.all {
+            it.name.isNotBlank() &&
+                it.balanceCents >= 0L &&
+                it.annualRatePercent >= 0.0 &&
+                it.annualRatePercent <= 100.0 &&
+                it.minimumPaymentCents >= 0L
+        }) {
             "Hay deudas con datos no válidos."
         }
         val liabilityIds = data.liabilities.map { it.id }.toSet()

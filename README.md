@@ -2,7 +2,7 @@
 
 Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos y objetivos de ahorro. Diseño sobrio, cálido y editorial, con tres gamas de color.
 
-> Estado: **boceto funcional v0.7.1**. Datos locales, patrimonio con transferencias y pagos de deuda, cartera, importación de extractos, avisos, copias cifradas, widget adaptado a la paleta y captura rápida.
+> Estado: **boceto funcional v0.8.0**. Datos locales, patrimonio con deudas y plan de pago, cartera, importación de extractos, avisos, copias cifradas, widget adaptado a la paleta y captura rápida.
 
 | Resumen | Objetivos | Movimientos |
 |---|---|---|
@@ -27,6 +27,10 @@ Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos
 | Pago de deuda | Selección múltiple | Captura desde el widget |
 |---|---|---|
 | ![Pago de deuda](docs/screenshots/06d-pago-deuda.png) | ![Selección múltiple](docs/screenshots/04c-movimientos-seleccion.png) | ![Captura rápida](docs/screenshots/21-widget-quickadd.png) |
+
+| Plan de deudas |
+|---|
+| ![Plan de deudas](docs/screenshots/06e-plan-deudas.png) |
 
 | Añadir movimiento | Movimientos recurrentes | Ajustes |
 |---|---|---|
@@ -64,6 +68,7 @@ Las categorías conservan sus colores en las tres gamas para no perder identidad
 - **Balance del mes** — cada mes arranca con el saldo real del cierre anterior (aunque la nómina llegue el último día), suma ingresos, resta gastos y muestra el saldo final.
 - **Patrimonio neto** — efectivo + inversiones − deudas, con evolución de 6 meses, saldo por cuenta y edición de deudas (hipoteca, préstamo, tarjeta u otras). El saldo inicial se asigna a la primera cuenta.
 - **Pagos parciales de deudas** — registra cuánto has pagado, desde qué cuenta y en qué fecha. El saldo de la deuda y el efectivo bajan a la vez, y el patrimonio neto se mantiene coherente.
+- **Plan de deudas** — indica cuánto puedes pagar al mes y elige entre **bola de nieve** (menor saldo primero) y **avalancha** (mayor interés primero). Calcula fecha libre, intereses totales, orden de pago y compara ambas estrategias.
 - **Transferencias internas** — mueve dinero entre cuentas o entre una cuenta y un producto de inversión sin contarlo como ingreso ni gasto. Una aportación desde una cuenta descuenta el efectivo y suma cartera; una retirada hace lo contrario.
 - **Selección múltiple en Movimientos** — mantén pulsado un movimiento para seleccionar varios, cambiarles la fecha de una vez o eliminarlos en bloque.
 - **Cartera de inversión** — productos de fondos, acciones, ETF, cripto, depósitos, planes de pensiones, inmuebles u otros; aportaciones, retiradas, rendimientos y ajustes de valor. Calcula valor actual, rentabilidad total, **rentabilidad anualizada (XIRR)**, distribución y evolución de 12 meses. Puede ir enlazada a tus cuentas o seguirse por separado.
@@ -112,19 +117,20 @@ Requiere JDK 17+ y Android SDK 37.
 
 ## Probar el boceto
 
-1. Instala `BudJet-0.7.1-boceto.apk` en un Android 8.0 o superior.
+1. Instala `BudJet-0.8.0-boceto.apk` en un Android 8.0 o superior.
 2. La app arranca con datos de ejemplo de los últimos 6 meses.
 3. Para empezar con todo a cero: **Ajustes → Datos → Empezar de cero**. El saldo total, ingresos, gastos, presupuestos, objetivos, recurrentes, cartera, transferencias y deudas quedarán a 0. Si quieres registrar el dinero que ya tenías, cambia **Saldo inicial** en la misma pantalla.
 4. Prueba las gamas **Business / Navy / Boss** en **Ajustes → Apariencia**.
 5. En **Análisis → Patrimonio** revisa efectivo, inversiones y deudas. Prueba **Transferir** entre cuentas y hacia un producto de la cartera; el saldo de las cuentas debe moverse sin alterar ingresos/gastos.
 6. En una deuda, pulsa **Pagar** y registra un pago parcial: la deuda y el efectivo deben bajar a la vez.
-7. En **Movimientos**, mantén pulsado un movimiento para seleccionar varios. Prueba **Fecha** para cambiarla en bloque y **Eliminar** para borrarlos juntos.
-8. En **Ajustes → Datos → Importar extracto**, elige un CSV/OFX de prueba. Revisa columnas, categorías y duplicados antes de importar.
-9. En **Ajustes → Avisos**, activa recordatorios y prueba los permisos de notificación de Android 13+.
-10. En **Ajustes → Datos → Copia cifrada**, exporta un `.bjet` con contraseña y restáuralo. Revisa también **Copias automáticas**.
-11. Añade el widget de Bud Jet: debe usar la gama y el modo claro/oscuro de la app. Prueba “+ Añadir”; si el bloqueo biométrico está activo, pedirá desbloqueo antes de mostrar la captura compacta.
-12. En **Análisis → Cartera de inversión**, añade un producto, registra una aportación y prueba «Actualizar valor» y «Rendimiento». Después abre la calculadora y simula con volatilidad.
-13. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
+7. En **Patrimonio → Deudas → Plan**, ajusta el pago mensual y compara **bola de nieve** con **avalancha**. Comprueba la fecha libre, los intereses y el orden de pago.
+8. En **Movimientos**, mantén pulsado un movimiento para seleccionar varios. Prueba **Fecha** para cambiarla en bloque y **Eliminar** para borrarlos juntos.
+9. En **Ajustes → Datos → Importar extracto**, elige un CSV/OFX de prueba. Revisa columnas, categorías y duplicados antes de importar.
+10. En **Ajustes → Avisos**, activa recordatorios y prueba los permisos de notificación de Android 13+.
+11. En **Ajustes → Datos → Copia cifrada**, exporta un `.bjet` con contraseña y restáuralo. Revisa también **Copias automáticas**.
+12. Añade el widget de Bud Jet: debe usar la gama y el modo claro/oscuro de la app. Prueba “+ Añadir”; si el bloqueo biométrico está activo, pedirá desbloqueo antes de mostrar la captura compacta.
+13. En **Análisis → Cartera de inversión**, añade un producto, registra una aportación y prueba «Actualizar valor» y «Rendimiento». Después abre la calculadora y simula con volatilidad.
+14. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
 
 La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirve para probar, no para publicar en Google Play.
 
@@ -135,8 +141,8 @@ La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirv
 ./gradlew :app:lintDebug
 ```
 
-- **68 tests de lógica** — finanzas, balance inicial/final, transferencias y patrimonio, pagos de deuda, movimientos futuros, fechas recordadas, recurrencias, objetivos, cartera y XIRR, calculadora determinista y Monte Carlo, importación CSV/OFX, copias cifradas, backup, migraciones, filtros y biometría.
-- **3 tests de captura** con Robolectric/Roborazzi que renderizan 39 pantallas (incluida la captura rápida del widget).
+- **73 tests de lógica** — finanzas, balance inicial/final, transferencias y patrimonio, pagos y plan de deudas, movimientos futuros, fechas recordadas, recurrencias, objetivos, cartera y XIRR, calculadora determinista y Monte Carlo, importación CSV/OFX, copias cifradas, backup, migraciones, filtros y biometría.
+- **3 tests de captura** con Robolectric/Roborazzi que renderizan 40 pantallas (incluida la captura rápida del widget).
 - **Lint: 0 errores**.
 
 ## Estructura
@@ -157,7 +163,8 @@ app/src/main/java/com/budjet/app/
 - Los movimientos futuros aparecen en la lista del mes en que caen y se marcan como “Programado”; no cuentan hasta su fecha.
 - Los objetivos son una asignación virtual: no mueven dinero entre cuentas ni descuentan del saldo.
 - La cartera de inversión puede ir enlazada a cuentas o seguirse por separado. Las aportaciones desde una cuenta sí mueven el efectivo; las externas no. Los valores se actualizan a mano: no hay cotizaciones automáticas.
-- Las deudas se registran con su saldo actual y permiten pagos parciales; todavía no calculan intereses ni generan un calendario de amortización.
+- Las deudas se registran con su saldo actual, interés anual y cuota mínima; permiten pagos parciales, pero no generan un calendario de amortización contractual ni incluyen comisiones o seguros.
+- El plan de deudas supone que el pago mensual se mantiene constante y que los intereses se calculan mensualmente sobre el saldo. Es una estimación, no una oferta financiera.
 - La selección múltiple de movimientos no tiene deshacer: el borrado en bloque pide confirmación.
 - La importación CSV/OFX es local y tolerante a formatos comunes, pero cada banco puede tener particularidades. Revisa siempre la vista previa antes de importar.
 - Los avisos son locales y dependen de que Android permita notificaciones y no limite el trabajo en segundo plano.
