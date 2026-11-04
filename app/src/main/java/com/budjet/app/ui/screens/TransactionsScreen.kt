@@ -31,9 +31,12 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -84,6 +87,13 @@ private enum class TxFilter(val label: String) {
     INCOME("Ingresos"),
 }
 
+private enum class MovementSort(val label: String, val short: String) {
+    DATE("Fecha (más reciente primero)", "Fecha"),
+    REGISTERED("Registro (último primero)", "Registro"),
+    AMOUNT_DESC("Importe (mayor primero)", "Importe ↓"),
+    AMOUNT_ASC("Importe (menor primero)", "Importe ↑"),
+}
+
 @Composable
 fun TransactionsScreen(
     data: AppData,
@@ -102,10 +112,12 @@ fun TransactionsScreen(
     var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showBulkDate by rememberSaveable { mutableStateOf(false) }
     var confirmBulkDelete by rememberSaveable { mutableStateOf(false) }
+    var sort by remember { mutableStateOf(MovementSort.DATE) }
+    var sortMenu by remember { mutableStateOf(false) }
     val today = remember { LocalDate.now() }
     val selectionMode = selectedIds.isNotEmpty()
 
-    LaunchedEffect(month, filter, query) {
+    LaunchedEffect(month, filter, query, sort) {
         selectedIds = emptySet()
     }
 
@@ -130,9 +142,37 @@ fun TransactionsScreen(
             matchesType && matchesQuery
         }
     }
-    val grouped = remember(filtered) {
-        filtered.groupBy { LocalDate.ofEpochDay(it.dateEpochDay) }
-            .toSortedMap(compareByDescending { it })
+    val sorted = remember(filtered, sort) {
+        when (sort) {
+            MovementSort.DATE -> filtered.sortedWith(
+                compareByDescending<Transaction> { it.dateEpochDay }
+                    .thenByDescending { it.createdAtEpochMillis }
+                    .thenByDescending { it.id },
+            )
+            MovementSort.REGISTERED -> filtered.sortedWith(
+                compareByDescending<Transaction> { it.createdAtEpochMillis }
+                    .thenByDescending { it.dateEpochDay }
+                    .thenByDescending { it.id },
+            )
+            MovementSort.AMOUNT_DESC -> filtered.sortedWith(
+                compareByDescending<Transaction> { it.amountCents }
+                    .thenByDescending { it.dateEpochDay }
+                    .thenByDescending { it.createdAtEpochMillis },
+            )
+            MovementSort.AMOUNT_ASC -> filtered.sortedWith(
+                compareBy<Transaction> { it.amountCents }
+                    .thenByDescending { it.dateEpochDay }
+                    .thenByDescending { it.createdAtEpochMillis },
+            )
+        }
+    }
+    val groupedForDate = remember(sorted, sort) {
+        if (sort == MovementSort.DATE) {
+            sorted.groupBy { LocalDate.ofEpochDay(it.dateEpochDay) }
+                .toSortedMap(compareByDescending { it })
+        } else {
+            emptyMap()
+        }
     }
     val summarySource = remember(filtered, query, postedMonthTx, today) {
         if (query.isNotBlank()) {
@@ -178,22 +218,42 @@ fun TransactionsScreen(
 
         item {
             Spacer(Modifier.height(18.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                MonthSelector(
-                    month = month,
-                    onPrevious = onPreviousMonth,
-                    onNext = onNextMonth,
-                    canGoNext = month.isBefore(YearMonth.now()),
-                )
-                Text(
-                    text = "${allMonthTx.size} mov.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.inkMuted,
-                )
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    MonthSelector(
+                        month = month,
+                        onPrevious = onPreviousMonth,
+                        onNext = onNextMonth,
+                        canGoNext = month.isBefore(YearMonth.now()),
+                    )
+                    Text(
+                        text = "${allMonthTx.size} mov.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Ordenar por",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
+                    SortControl(
+                        sort = sort,
+                        expanded = sortMenu,
+                        onExpandedChange = { sortMenu = it },
+                        onSelect = { sort = it; sortMenu = false },
+                    )
+                }
             }
         }
 
@@ -293,7 +353,7 @@ fun TransactionsScreen(
             Spacer(Modifier.height(18.dp))
         }
 
-        if (grouped.isEmpty()) {
+        if (sorted.isEmpty()) {
             item {
                 EmptyState(
                     icon = Icons.Rounded.ReceiptLong,
@@ -305,8 +365,8 @@ fun TransactionsScreen(
                     },
                 )
             }
-        } else {
-            grouped.forEach { (date, transactions) ->
+        } else if (sort == MovementSort.DATE) {
+            groupedForDate.forEach { (date, transactions) ->
                 item(key = "day-$date") {
                     DayGroup(
                         date = date,
@@ -321,6 +381,35 @@ fun TransactionsScreen(
                         },
                     )
                     Spacer(Modifier.height(12.dp))
+                }
+            }
+        } else {
+            item {
+                BudCard(padding = 10.dp) {
+                    sorted.forEachIndexed { index, tx ->
+                        TransactionRow(
+                            transaction = tx,
+                            category = data.category(tx.categoryId),
+                            account = data.account(tx.accountId),
+                            currency = currency,
+                            selected = tx.id in selectedIds,
+                            selectionMode = selectionMode,
+                            showDate = true,
+                            onClick = {
+                                if (selectionMode) {
+                                    selectedIds = if (tx.id in selectedIds) selectedIds - tx.id else selectedIds + tx.id
+                                } else {
+                                    onOpenTransaction(tx)
+                                }
+                            },
+                            onLongClick = {
+                                selectedIds = if (tx.id in selectedIds) selectedIds - tx.id else selectedIds + tx.id
+                            },
+                        )
+                        if (index != sorted.lastIndex) {
+                            ThinDivider(Modifier.padding(horizontal = 4.dp))
+                        }
+                    }
                 }
             }
         }
@@ -413,6 +502,7 @@ private fun BulkSelectionBar(
                     modifier = Modifier
                         .clip(CircleShape)
                         .clickable(onClick = onDate)
+                        .testTag("bulk-date")
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -538,6 +628,58 @@ private fun SummaryCell(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Composable
+private fun SortControl(
+    sort: MovementSort,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onSelect: (MovementSort) -> Unit,
+) {
+    val colors = BudTheme.colors
+    Box {
+        Row(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(colors.surface)
+                .border(1.dp, colors.line, CircleShape)
+                .clickable { onExpandedChange(true) }
+                .testTag("sort-control")
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Rounded.SwapVert,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(14.dp),
+            )
+            Spacer(Modifier.width(5.dp))
+            Text(
+                text = sort.short,
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.ink,
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { onExpandedChange(false) },
+        ) {
+            MovementSort.entries.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = option.label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (option == sort) colors.primary else colors.ink,
+                        )
+                    },
+                    onClick = { onSelect(option) },
+                )
+            }
+        }
     }
 }
 

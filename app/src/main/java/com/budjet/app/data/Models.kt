@@ -20,6 +20,8 @@ data class Transaction(
     val reversalOfId: String? = null,
     /** Stable hash used to skip duplicates when importing a bank statement. */
     val importHash: String? = null,
+    /** When the movement was registered in Bud Jet, for "orden de registro". */
+    val createdAtEpochMillis: Long = 0L,
 )
 
 @Serializable
@@ -205,7 +207,7 @@ data class Settings(
 
 @Serializable
 data class AppData(
-    val version: Int = 8,
+    val version: Int = 9,
     val settings: Settings = Settings(),
     val categories: List<Category> = emptyList(),
     val accounts: List<Account> = emptyList(),

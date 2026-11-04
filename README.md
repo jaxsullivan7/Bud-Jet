@@ -2,7 +2,7 @@
 
 Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos y objetivos de ahorro. Diseño sobrio, cálido y editorial, con tres gamas de color.
 
-> Estado: **boceto funcional v0.8.0**. Datos locales, patrimonio con deudas y plan de pago, cartera, importación de extractos, avisos, copias cifradas, widget adaptado a la paleta y captura rápida.
+> Estado: **boceto funcional v0.9.0**. Datos locales, patrimonio con deudas y plan de pago, cartera, importación de extractos, avisos, copias cifradas, widget adaptado a la paleta y captura rápida.
 
 | Resumen | Objetivos | Movimientos |
 |---|---|---|
@@ -31,6 +31,10 @@ Aplicación Android para llevar el control de tus gastos, ingresos, presupuestos
 | Plan de deudas |
 |---|
 | ![Plan de deudas](docs/screenshots/06e-plan-deudas.png) |
+
+| Orden de movimientos | Orden por importe |
+|---|---|
+| ![Orden de movimientos](docs/screenshots/04e-orden-menu.png) | ![Orden por importe](docs/screenshots/04f-movimientos-importe.png) |
 
 | Añadir movimiento | Movimientos recurrentes | Ajustes |
 |---|---|---|
@@ -63,6 +67,7 @@ Las categorías conservan sus colores en las tres gamas para no perder identidad
 
 - **Inicio** — saldo total, evolución de 6 meses, ingresos/gastos del mes, presupuesto, objetivos y últimos movimientos.
 - **Movimientos** — historial agrupado por día, filtros, búsqueda, edición y borrado con deshacer. Al buscar, el resumen de ingresos/gastos/balance se recalcula solo con los resultados.
+- **Orden de movimientos** — por defecto, la fecha más reciente primero y, dentro de cada día, el último registro primero. Puedes cambiar a **orden de registro** o **importe** (mayor o menor).
 - **Presupuestos** — límite mensual general y por categoría, con ritmo de gasto diario.
 - **Análisis** — desglose por categorías, comparativa de 6 meses, estadísticas e ideas automáticas. Puedes fijar **desde qué fecha** empieza a contar el histórico.
 - **Balance del mes** — cada mes arranca con el saldo real del cierre anterior (aunque la nómina llegue el último día), suma ingresos, resta gastos y muestra el saldo final.
@@ -117,20 +122,21 @@ Requiere JDK 17+ y Android SDK 37.
 
 ## Probar el boceto
 
-1. Instala `BudJet-0.8.0-boceto.apk` en un Android 8.0 o superior.
+1. Instala `BudJet-0.9.0-boceto.apk` en un Android 8.0 o superior.
 2. La app arranca con datos de ejemplo de los últimos 6 meses.
 3. Para empezar con todo a cero: **Ajustes → Datos → Empezar de cero**. El saldo total, ingresos, gastos, presupuestos, objetivos, recurrentes, cartera, transferencias y deudas quedarán a 0. Si quieres registrar el dinero que ya tenías, cambia **Saldo inicial** en la misma pantalla.
 4. Prueba las gamas **Business / Navy / Boss** en **Ajustes → Apariencia**.
 5. En **Análisis → Patrimonio** revisa efectivo, inversiones y deudas. Prueba **Transferir** entre cuentas y hacia un producto de la cartera; el saldo de las cuentas debe moverse sin alterar ingresos/gastos.
 6. En una deuda, pulsa **Pagar** y registra un pago parcial: la deuda y el efectivo deben bajar a la vez.
-7. En **Patrimonio → Deudas → Plan**, ajusta el pago mensual y compara **bola de nieve** con **avalancha**. Comprueba la fecha libre, los intereses y el orden de pago.
-8. En **Movimientos**, mantén pulsado un movimiento para seleccionar varios. Prueba **Fecha** para cambiarla en bloque y **Eliminar** para borrarlos juntos.
-9. En **Ajustes → Datos → Importar extracto**, elige un CSV/OFX de prueba. Revisa columnas, categorías y duplicados antes de importar.
-10. En **Ajustes → Avisos**, activa recordatorios y prueba los permisos de notificación de Android 13+.
-11. En **Ajustes → Datos → Copia cifrada**, exporta un `.bjet` con contraseña y restáuralo. Revisa también **Copias automáticas**.
-12. Añade el widget de Bud Jet: debe usar la gama y el modo claro/oscuro de la app. Prueba “+ Añadir”; si el bloqueo biométrico está activo, pedirá desbloqueo antes de mostrar la captura compacta.
-13. En **Análisis → Cartera de inversión**, añade un producto, registra una aportación y prueba «Actualizar valor» y «Rendimiento». Después abre la calculadora y simula con volatilidad.
-14. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
+7. En **Movimientos**, prueba **Ordenar por**: fecha, registro e importe (mayor o menor). Por defecto verás primero lo más reciente y, dentro del día, lo último registrado.
+8. En **Patrimonio → Deudas → Plan**, ajusta el pago mensual y compara **bola de nieve** con **avalancha**. Comprueba la fecha libre, los intereses y el orden de pago.
+9. En **Movimientos**, mantén pulsado un movimiento para seleccionar varios. Prueba **Fecha** para cambiarla en bloque y **Eliminar** para borrarlos juntos.
+10. En **Ajustes → Datos → Importar extracto**, elige un CSV/OFX de prueba. Revisa columnas, categorías y duplicados antes de importar.
+11. En **Ajustes → Avisos**, activa recordatorios y prueba los permisos de notificación de Android 13+.
+12. En **Ajustes → Datos → Copia cifrada**, exporta un `.bjet` con contraseña y restáuralo. Revisa también **Copias automáticas**.
+13. Añade el widget de Bud Jet: debe usar la gama y el modo claro/oscuro de la app. Prueba “+ Añadir”; si el bloqueo biométrico está activo, pedirá desbloqueo antes de mostrar la captura compacta.
+14. En **Análisis → Cartera de inversión**, añade un producto, registra una aportación y prueba «Actualizar valor» y «Rendimiento». Después abre la calculadora y simula con volatilidad.
+15. El bloqueo biométrico se activa en **Ajustes → Seguridad**; sigue [`docs/BIOMETRIC_TEST.md`](docs/BIOMETRIC_TEST.md).
 
 La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirve para probar, no para publicar en Google Play.
 
@@ -142,7 +148,7 @@ La APK de la raíz es una build *debug* firmada con la clave de desarrollo: sirv
 ```
 
 - **73 tests de lógica** — finanzas, balance inicial/final, transferencias y patrimonio, pagos y plan de deudas, movimientos futuros, fechas recordadas, recurrencias, objetivos, cartera y XIRR, calculadora determinista y Monte Carlo, importación CSV/OFX, copias cifradas, backup, migraciones, filtros y biometría.
-- **3 tests de captura** con Robolectric/Roborazzi que renderizan 40 pantallas (incluida la captura rápida del widget).
+- **3 tests de captura** con Robolectric/Roborazzi que renderizan 42 pantallas (incluida la captura rápida del widget).
 - **Lint: 0 errores**.
 
 ## Estructura

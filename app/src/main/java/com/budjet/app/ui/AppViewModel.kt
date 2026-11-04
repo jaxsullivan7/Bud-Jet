@@ -160,6 +160,8 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     note = draft.note.trim(),
                     recurringId = previous?.recurringId,
                     reversalOfId = draft.reversalOfId,
+                    createdAtEpochMillis = previous?.createdAtEpochMillis?.takeIf { it > 0L }
+                        ?: System.currentTimeMillis(),
                 )
                 val list = if (draft.id == null) {
                     current.transactions + transaction
@@ -264,6 +266,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                                 current.category(rule.categoryId)?.name ?: "Movimiento recurrente"
                             },
                             recurringId = rule.id,
+                            createdAtEpochMillis = System.currentTimeMillis(),
                         )
                     }
                     rule.copy(lastPostedMonth = key.toString())
@@ -622,7 +625,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
         viewModelScope.launch {
             repository.update { current ->
                 val existing = current.transactions.mapNotNull { it.importHash }.toSet()
-                val fresh = rows.filter { !it.duplicate && it.hash !in existing }.map { row ->
+                val fresh = rows.filter { !it.duplicate && it.hash !in existing }.mapIndexed { index, row ->
                     Transaction(
                         id = "imp_" + UUID.randomUUID().toString().take(10),
                         amountCents = row.amountCents,
@@ -632,6 +635,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                         dateEpochDay = row.date.toEpochDay(),
                         note = row.note,
                         importHash = row.hash,
+                        createdAtEpochMillis = System.currentTimeMillis() + index,
                     )
                 }
                 if (fresh.isEmpty()) current else current.copy(

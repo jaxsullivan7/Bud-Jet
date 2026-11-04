@@ -7,6 +7,10 @@ El proyecto de Jira no tiene campo de prioridad en la pantalla de creación, as�
 
 ## Hecho
 
+### v0.9.0
+
+- **Orden de movimientos**: por defecto fecha descendente y último registro primero dentro del día; opciones de orden por registro e importe (mayor/menor).
+
 ### v0.8.0
 
 - **Plan de deudas**: pago mensual, interés anual y cuota mínima por deuda; simulación de pago con estrategia **bola de nieve** o **avalancha**, fecha libre, intereses totales y comparativa entre ambas.

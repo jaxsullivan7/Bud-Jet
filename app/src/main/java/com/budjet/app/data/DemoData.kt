@@ -90,6 +90,7 @@ object DemoData {
                 accountId = account,
                 dateEpochDay = date.toEpochDay(),
                 note = note,
+                createdAtEpochMillis = date.toEpochDay() * 86_400_000L + counter,
             )
         }
 
@@ -297,7 +298,7 @@ object DemoData {
         )
 
         return AppData(
-            version = 8,
+            version = 9,
             settings = Settings(openingBalanceCents = 1_345_000),
             categories = categories,
             accounts = accounts,

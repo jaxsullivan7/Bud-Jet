@@ -43,5 +43,15 @@ fun AppData.migratedToCurrent(): AppData {
         result = result.copy(version = 8)
     }
 
+    if (result.version < 9) {
+        val ordered = result.transactions.sortedByDescending { it.dateEpochDay }
+        val stamped = ordered.mapIndexed { index, tx ->
+            if (tx.createdAtEpochMillis > 0L) tx else tx.copy(
+                createdAtEpochMillis = tx.dateEpochDay * 86_400_000L + index,
+            )
+        }
+        result = result.copy(version = 9, transactions = stamped)
+    }
+
     return if (result.version >= Backup.CURRENT_VERSION) result else result.copy(version = Backup.CURRENT_VERSION)
 }
