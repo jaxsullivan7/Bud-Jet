@@ -23,7 +23,7 @@
   - [x] Bloque 1: navegación, Inicio, fechas y formato de importes.
   - [x] Bloque 2: Movimientos, orden, búsqueda y selección múltiple.
   - [x] Bloque 3: Presupuestos y Análisis.
-  - [ ] Bloque 4: Patrimonio, deudas y cartera.
+  - [x] Bloque 4: Patrimonio, deudas, plan de deudas, cartera y calculadora.
   - [ ] Bloque 5: Ajustes, formularios, importación y avisos.
   - [ ] Bloque 6: widget, notificaciones y accesibilidad.
   - [ ] Bloque 7: categorías, cuentas y datos de ejemplo por ID.
@@ -43,7 +43,7 @@
 
 ## Siguiente tarea
 
-1. Bloque 4 de localización: Patrimonio, deudas y cartera.
+1. Bloque 5 de localización: Ajustes, formularios, importación y avisos.
 2. Mantener el español como idioma base y el inglés en `values-en`.
 3. QA de la build release en dispositivo real.
 4. Política de privacidad, términos y ficha de tienda.

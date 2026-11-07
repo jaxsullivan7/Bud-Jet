@@ -54,12 +54,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Currency
@@ -82,13 +84,17 @@ import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.components.Sparkline
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.localizedLabel
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.centsToInput
+import com.budjet.app.util.filterAmountInput
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.formatMonth
 import com.budjet.app.util.formatMonthShort
 import com.budjet.app.util.formatShortDate
 import com.budjet.app.util.parseMoneyInput
+import com.budjet.app.util.parsePercentInput
+import com.budjet.app.util.rateToInput
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -170,22 +176,22 @@ fun PatrimonioScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onClose,
                     size = 38.dp,
                 )
-                Overline("ANÁLISIS · PATRIMONIO")
+                Overline(stringResource(R.string.patrimonio_overline))
                 Spacer(Modifier.size(38.dp))
             }
             Spacer(Modifier.height(22.dp))
             Text(
-                text = "Tu patrimonio.",
+                text = stringResource(R.string.patrimonio_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.ink,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Efectivo, inversiones y deudas en una sola foto.",
+                text = stringResource(R.string.patrimonio_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -199,7 +205,7 @@ fun PatrimonioScreen(
         item {
             Spacer(Modifier.height(12.dp))
             BudCard {
-                Overline("EVOLUCIÓN · 6 MESES")
+                Overline(stringResource(R.string.patrimonio_evolution))
                 Spacer(Modifier.height(10.dp))
                 Sparkline(
                     values = series.map { it.totalCents.toFloat() },
@@ -226,7 +232,11 @@ fun PatrimonioScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text("Patrimonio actual", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                    Text(
+                        stringResource(R.string.patrimonio_current),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
                     Text(
                         text = formatMoney(netWorth.totalCents, currency),
                         style = MaterialTheme.typography.labelMedium,
@@ -240,7 +250,7 @@ fun PatrimonioScreen(
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 PrimaryButton(
-                    text = "Transferir",
+                    text = stringResource(R.string.action_transfer),
                     onClick = { transferOpen = true },
                     icon = Icons.Rounded.SwapHoriz,
                     modifier = Modifier.weight(1f),
@@ -258,7 +268,11 @@ fun PatrimonioScreen(
                             modifier = Modifier.size(16.dp),
                         )
                         Spacer(Modifier.width(6.dp))
-                        Text("Cartera", style = MaterialTheme.typography.labelLarge, color = colors.ink)
+                        Text(
+                            stringResource(R.string.label_portfolio),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = colors.ink,
+                        )
                     }
                 }
             }
@@ -266,7 +280,7 @@ fun PatrimonioScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionTitle("Cuentas", formatMoney(netWorth.cashCents, currency))
+            SectionTitle(stringResource(R.string.label_accounts), formatMoney(netWorth.cashCents, currency))
             Spacer(Modifier.height(8.dp))
             BudCard(padding = 0.dp) {
                 data.accounts.forEachIndexed { index, account ->
@@ -280,7 +294,7 @@ fun PatrimonioScreen(
             }
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "El saldo inicial se asigna a la primera cuenta. Las transferencias mueven dinero entre cuentas sin contar como gasto.",
+                text = stringResource(R.string.patrimonio_accounts_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )
@@ -288,12 +302,12 @@ fun PatrimonioScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionTitle("Inversiones", formatMoney(netWorth.investmentsCents, currency))
+            SectionTitle(stringResource(R.string.label_investments), formatMoney(netWorth.investmentsCents, currency))
             Spacer(Modifier.height(8.dp))
             BudCard(onClick = onOpenPortfolio) {
                 if (data.investments.isEmpty()) {
                     Text(
-                        text = "Aún no tienes productos. Crea el primero en la cartera.",
+                        text = stringResource(R.string.patrimonio_investments_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -340,7 +354,10 @@ fun PatrimonioScreen(
                     if (data.investments.size > 4) {
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            text = "+${data.investments.size - 4} productos más",
+                            text = stringResource(
+                                R.string.patrimonio_more_products,
+                                data.investments.size - 4,
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.primary,
                         )
@@ -355,7 +372,11 @@ fun PatrimonioScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Deudas", style = MaterialTheme.typography.titleMedium, color = colors.ink)
+                Text(
+                    stringResource(R.string.label_debts),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.ink,
+                )
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = formatMoney(netWorth.liabilitiesCents, currency),
@@ -374,7 +395,7 @@ fun PatrimonioScreen(
                     ) {
                         Icon(Icons.AutoMirrored.Rounded.TrendingUp, contentDescription = null, tint = colors.primary, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Plan", style = MaterialTheme.typography.labelMedium, color = colors.primary)
+                        Text(stringResource(R.string.action_plan), style = MaterialTheme.typography.labelMedium, color = colors.primary)
                     }
                     Row(
                         modifier = Modifier
@@ -385,7 +406,7 @@ fun PatrimonioScreen(
                     ) {
                         Icon(Icons.Rounded.Add, contentDescription = null, tint = colors.primary, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Añadir", style = MaterialTheme.typography.labelMedium, color = colors.primary)
+                        Text(stringResource(R.string.action_add), style = MaterialTheme.typography.labelMedium, color = colors.primary)
                     }
                 }
             }
@@ -393,7 +414,7 @@ fun PatrimonioScreen(
             if (data.liabilities.isEmpty()) {
                 BudCard {
                     Text(
-                        text = "Sin deudas registradas. Si tienes un préstamo o una tarjeta, añádelo para ver tu patrimonio real.",
+                        text = stringResource(R.string.patrimonio_no_debts),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -427,7 +448,7 @@ fun PatrimonioScreen(
         item {
             Spacer(Modifier.height(28.dp))
             Text(
-                text = "Patrimonio neto = efectivo + inversiones − deudas. Las aportaciones a la cartera desde una cuenta ya descuentan el efectivo.",
+                text = stringResource(R.string.patrimonio_formula_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )
@@ -451,10 +472,10 @@ fun PatrimonioScreen(
             onDismissRequest = { deleteTarget = null },
             containerColor = colors.surface,
             shape = RoundedCornerShape(26.dp),
-            title = { Text("¿Eliminar deuda?", color = colors.ink) },
+            title = { Text(stringResource(R.string.patrimonio_delete_title), color = colors.ink) },
             text = {
                 Text(
-                    text = "Se borrará «${liability.name}». No afecta a tus movimientos ni a tu cartera.",
+                    text = stringResource(R.string.patrimonio_delete_body, liability.name),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.inkMuted,
                 )
@@ -465,10 +486,10 @@ fun PatrimonioScreen(
                         onDeleteLiability(liability.id)
                         deleteTarget = null
                     },
-                ) { Text("Eliminar", color = colors.expense) }
+                ) { Text(stringResource(R.string.action_delete), color = colors.expense) }
             },
             dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { deleteTarget = null }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         )
     }
@@ -478,7 +499,7 @@ fun PatrimonioScreen(
 private fun NetWorthHero(netWorth: NetWorth, currency: Currency) {
     val colors = BudTheme.colors
     BudCard(color = colors.heroStart, border = false) {
-        Overline("PATRIMONIO NETO", color = colors.heroMuted)
+        Overline(stringResource(R.string.patrimonio_net_worth), color = colors.heroMuted)
         Spacer(Modifier.height(8.dp))
         Text(
             text = formatMoney(netWorth.totalCents, currency),
@@ -488,9 +509,9 @@ private fun NetWorthHero(netWorth: NetWorth, currency: Currency) {
         )
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            HeroMetric("Efectivo", netWorth.cashCents, currency)
-            HeroMetric("Inversiones", netWorth.investmentsCents, currency)
-            HeroMetric("Deudas", netWorth.liabilitiesCents, currency)
+            HeroMetric(stringResource(R.string.label_cash), netWorth.cashCents, currency)
+            HeroMetric(stringResource(R.string.label_investments), netWorth.investmentsCents, currency)
+            HeroMetric(stringResource(R.string.label_debts), netWorth.liabilitiesCents, currency)
         }
     }
 }
@@ -581,9 +602,13 @@ private fun LiabilityRow(
             Text(liability.name, style = MaterialTheme.typography.bodyMedium, color = colors.ink)
             Text(
                 text = if (paidCents > 0L) {
-                    "${liability.kind.label} · pagado ${formatMoney(paidCents, currency)}"
+                    stringResource(
+                        R.string.liability_paid,
+                        liability.kind.localizedLabel(),
+                        formatMoney(paidCents, currency),
+                    )
                 } else {
-                    liability.kind.label
+                    liability.kind.localizedLabel()
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
@@ -605,216 +630,20 @@ private fun LiabilityRow(
             ) {
                 Icon(
                     Icons.Rounded.SwapHoriz,
-                    contentDescription = "Pagar deuda",
+                    contentDescription = stringResource(R.string.action_pay_debt),
                     tint = colors.primary,
                     modifier = Modifier.size(14.dp),
                 )
                 Spacer(Modifier.width(3.dp))
-                Text("Pagar", style = MaterialTheme.typography.labelSmall, color = colors.primary)
+                Text(stringResource(R.string.action_pay), style = MaterialTheme.typography.labelSmall, color = colors.primary)
             }
         }
         SoftIconButton(
             icon = Icons.Rounded.DeleteOutline,
-            contentDescription = "Eliminar deuda",
+            contentDescription = stringResource(R.string.action_delete_debt),
             onClick = onDelete,
             size = 28.dp,
         )
-    }
-}
-
-@Composable
-private fun TransferDialog(
-    data: AppData,
-    currency: Currency,
-    today: LocalDate,
-    onDismiss: () -> Unit,
-    onSave: (TransferDraft) -> Unit,
-) {
-    val colors = BudTheme.colors
-    var fromType by remember { mutableIntStateOf(if (data.accounts.isNotEmpty()) 0 else 1) }
-    var toType by remember { mutableIntStateOf(if (data.investments.isNotEmpty()) 1 else 0) }
-    var fromAccount by remember { mutableStateOf(data.accounts.firstOrNull()?.id) }
-    var fromInvestment by remember { mutableStateOf<String?>(null) }
-    var toAccount by remember { mutableStateOf<String?>(null) }
-    var toInvestment by remember { mutableStateOf(data.investments.firstOrNull()?.id) }
-    var amount by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf(today) }
-    var showDate by remember { mutableStateOf(false) }
-
-    val fromId = if (fromType == 0) fromAccount else fromInvestment
-    val toId = if (toType == 0) toAccount else toInvestment
-    val parsed = parseMoneyInput(amount)
-    val available = when {
-        fromType == 0 && fromAccount != null -> Finance.accountBalanceAt(data, fromAccount!!, date)
-        fromType == 1 && fromInvestment != null ->
-            InvestmentMath.summary(data.entriesFor(fromInvestment!!), date).valueCents
-        else -> 0L
-    }
-    val distinct = fromId != null && toId != null && !(fromType == toType && fromId == toId)
-    val valid = distinct && !(fromType == 1 && toType == 1) && parsed > 0L && parsed <= available
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = colors.surface,
-        shape = RoundedCornerShape(26.dp),
-        title = {
-            Column {
-                Overline("MOVIMIENTO INTERNO")
-                Spacer(Modifier.height(4.dp))
-                Text("Transferir dinero", style = MaterialTheme.typography.headlineSmall, color = colors.ink)
-            }
-        },
-        text = {
-            Column(
-                Modifier
-                    .heightIn(max = 430.dp)
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                Text("Desde", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
-                Spacer(Modifier.height(6.dp))
-                TypeTabs(
-                    first = "Cuenta",
-                    second = "Inversión",
-                    selected = fromType,
-                    onSelect = { fromType = it; fromInvestment = data.investments.firstOrNull()?.id },
-                )
-                Spacer(Modifier.height(6.dp))
-                if (fromType == 0) {
-                    ChoiceList(
-                        items = data.accounts.map { it.id to it.name },
-                        selected = fromAccount,
-                        onSelect = { fromAccount = it },
-                    )
-                } else {
-                    ChoiceList(
-                        items = data.investments.map { it.id to it.name },
-                        selected = fromInvestment,
-                        onSelect = { fromInvestment = it },
-                    )
-                }
-
-                Spacer(Modifier.height(14.dp))
-                Text("Hacia", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
-                Spacer(Modifier.height(6.dp))
-                TypeTabs(
-                    first = "Cuenta",
-                    second = "Inversión",
-                    selected = toType,
-                    onSelect = { toType = it; toInvestment = data.investments.firstOrNull()?.id },
-                )
-                Spacer(Modifier.height(6.dp))
-                if (toType == 0) {
-                    ChoiceList(
-                        items = data.accounts.map { it.id to it.name },
-                        selected = toAccount,
-                        onSelect = { toAccount = it },
-                    )
-                } else {
-                    ChoiceList(
-                        items = data.investments.map { it.id to it.name },
-                        selected = toInvestment,
-                        onSelect = { toInvestment = it },
-                    )
-                }
-
-                Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) amount = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Importe") },
-                    placeholder = { Text("0") },
-                    suffix = { Text(currency.symbol, color = colors.inkMuted) },
-                    singleLine = true,
-                    textStyle = TextStyle(color = colors.ink, fontSize = 18.sp, fontWeight = FontWeight.Medium),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    shape = RoundedCornerShape(14.dp),
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "Disponible: ${formatMoney(available, currency)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.inkMuted,
-                )
-                if (parsed > available) {
-                    Text(
-                        text = "El importe supera el saldo disponible.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.expense,
-                    )
-                }
-                Spacer(Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(colors.surfaceMuted.copy(alpha = 0.5f))
-                        .clickable { showDate = true }
-                        .padding(horizontal = 12.dp, vertical = 11.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Rounded.CalendarToday, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(15.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = if (date == today) "Hoy, ${formatShortDate(date)}" else formatShortDate(date),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.ink,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Spacer(Modifier.height(10.dp))
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it.take(48) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nota (opcional)") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onSave(
-                        TransferDraft(
-                            fromAccountId = if (fromType == 0) fromAccount else null,
-                            fromInvestmentId = if (fromType == 1) fromInvestment else null,
-                            toAccountId = if (toType == 0) toAccount else null,
-                            toInvestmentId = if (toType == 1) toInvestment else null,
-                            amountCents = parsed,
-                            date = date,
-                            note = note,
-                        ),
-                    )
-                },
-                enabled = valid,
-            ) { Text("Transferir", color = colors.primary) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
-        },
-    )
-
-    if (showDate) {
-        val state = rememberDatePickerState(
-            initialSelectedDateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
-        )
-        DatePickerDialog(
-            onDismissRequest = { showDate = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        state.selectedDateMillis?.let {
-                            date = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
-                        }
-                        showDate = false
-                    },
-                ) { Text("Listo", color = colors.primary) }
-            },
-            dismissButton = { TextButton(onClick = { showDate = false }) { Text("Cancelar", color = colors.inkMuted) } },
-        ) { DatePicker(state = state, showModeToggle = false) }
     }
 }
 
@@ -864,18 +693,18 @@ private fun TransferFormScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onBack,
                     size = 38.dp,
                 )
-                Overline("PATRIMONIO · TRANSFERIR")
+                Overline(stringResource(R.string.transfer_overline))
                 Spacer(Modifier.size(38.dp))
             }
             Spacer(Modifier.height(22.dp))
-            Text("Mover dinero.", style = MaterialTheme.typography.headlineLarge, color = colors.ink)
+            Text(stringResource(R.string.transfer_title), style = MaterialTheme.typography.headlineLarge, color = colors.ink)
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Entre cuentas o hacia una inversión. No cuenta como ingreso ni como gasto.",
+                text = stringResource(R.string.transfer_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -884,11 +713,11 @@ private fun TransferFormScreen(
 
         item {
             BudCard {
-                Text("Desde", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_from), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 TypeTabs(
-                    first = "Cuenta",
-                    second = "Inversión",
+                    first = stringResource(R.string.label_account),
+                    second = stringResource(R.string.label_investment),
                     selected = fromType,
                     onSelect = { fromType = it; fromInvestment = data.investments.firstOrNull()?.id },
                 )
@@ -908,11 +737,11 @@ private fun TransferFormScreen(
                 }
 
                 Spacer(Modifier.height(16.dp))
-                Text("Hacia", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_to), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 TypeTabs(
-                    first = "Cuenta",
-                    second = "Inversión",
+                    first = stringResource(R.string.label_account),
+                    second = stringResource(R.string.label_investment),
                     selected = toType,
                     onSelect = { toType = it; toInvestment = data.investments.firstOrNull()?.id },
                 )
@@ -934,9 +763,9 @@ private fun TransferFormScreen(
                 Spacer(Modifier.height(14.dp))
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) amount = it },
+                    onValueChange = { amount = filterAmountInput(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Importe") },
+                    label = { Text(stringResource(R.string.label_amount)) },
                     placeholder = { Text("0") },
                     suffix = { Text(currency.symbol, color = colors.inkMuted) },
                     singleLine = true,
@@ -946,7 +775,7 @@ private fun TransferFormScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Disponible: ${formatMoney(available, currency)}",
+                    text = stringResource(R.string.transfer_available, formatMoney(available, currency)),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (parsed > available) colors.expense else colors.inkMuted,
                 )
@@ -963,7 +792,11 @@ private fun TransferFormScreen(
                     Icon(Icons.Rounded.CalendarToday, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(15.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = if (date == today) "Hoy, ${formatShortDate(date)}" else formatShortDate(date),
+                        text = if (date == today) {
+                            stringResource(R.string.today_prefix, formatShortDate(date))
+                        } else {
+                            formatShortDate(date)
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.ink,
                         modifier = Modifier.weight(1f),
@@ -974,13 +807,13 @@ private fun TransferFormScreen(
                     value = note,
                     onValueChange = { note = it.take(48) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nota (opcional)") },
+                    label = { Text(stringResource(R.string.label_note_optional)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                 )
                 Spacer(Modifier.height(14.dp))
                 PrimaryButton(
-                    text = "Transferir",
+                    text = stringResource(R.string.action_transfer),
                     onClick = {
                         onSave(
                             TransferDraft(
@@ -1015,9 +848,9 @@ private fun TransferFormScreen(
                         }
                         showDate = false
                     },
-                ) { Text("Listo", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_done), color = colors.primary) }
             },
-            dismissButton = { TextButton(onClick = { showDate = false }) { Text("Cancelar", color = colors.inkMuted) } },
+            dismissButton = { TextButton(onClick = { showDate = false }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) } },
         ) { DatePicker(state = state, showModeToggle = false) }
     }
 }
@@ -1060,18 +893,18 @@ private fun DebtPlanScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onBack,
                     size = 38.dp,
                 )
-                Overline("PATRIMONIO · PLAN")
+                Overline(stringResource(R.string.debt_plan_overline))
                 Spacer(Modifier.size(38.dp))
             }
             Spacer(Modifier.height(22.dp))
-            Text("Plan de deudas.", style = MaterialTheme.typography.headlineLarge, color = colors.ink)
+            Text(stringResource(R.string.debt_plan_title), style = MaterialTheme.typography.headlineLarge, color = colors.ink)
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Elige cuánto puedes destinar cada mes y cómo quieres atacar las deudas.",
+                text = stringResource(R.string.debt_plan_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -1082,7 +915,7 @@ private fun DebtPlanScreen(
             item {
                 BudCard {
                     Text(
-                        text = "Sin deudas registradas. Añade una deuda en Patrimonio para calcular tu fecha libre.",
+                        text = stringResource(R.string.debt_plan_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -1093,13 +926,13 @@ private fun DebtPlanScreen(
 
         item {
             BudCard {
-                Text("Pago mensual total", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.debt_plan_monthly_total), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(
                     value = budget,
-                    onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) budget = it },
+                    onValueChange = { budget = filterAmountInput(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Cuánto puedes pagar al mes") },
+                    label = { Text(stringResource(R.string.debt_plan_monthly_hint)) },
                     placeholder = { Text("0") },
                     suffix = { Text(currency.symbol, color = colors.inkMuted) },
                     singleLine = true,
@@ -1109,12 +942,15 @@ private fun DebtPlanScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Cuotas mínimas: ${formatMoney(minimums, currency)} · el resto se aplica como pago extra.",
+                    text = stringResource(
+                    R.string.debt_plan_minimums,
+                    formatMoney(minimums, currency),
+                ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
                 Spacer(Modifier.height(14.dp))
-                Text("Estrategia", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_strategy), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DebtStrategy.entries.forEach { option ->
@@ -1127,7 +963,7 @@ private fun DebtPlanScreen(
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                         ) {
                             Text(
-                                text = option.label,
+                                text = option.localizedLabel(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (strategy == option) colors.primary else colors.inkMuted,
                             )
@@ -1140,11 +976,11 @@ private fun DebtPlanScreen(
         item {
             Spacer(Modifier.height(12.dp))
             BudCard(modifier = Modifier.fillMaxWidth(), color = colors.heroStart, border = false) {
-                Overline("TU FECHA LIBRE", color = colors.heroMuted)
+                Overline(stringResource(R.string.debt_plan_free_date), color = colors.heroMuted)
                 Spacer(Modifier.height(8.dp))
                 if (result.feasible && result.months > 0) {
                     Text(
-                        text = "${result.months} meses",
+                        text = stringResource(R.string.debt_plan_months, result.months),
                         style = BudTheme.type.moneyHero.copy(fontSize = 34.sp, lineHeight = 40.sp),
                         color = colors.heroText,
                     )
@@ -1154,10 +990,17 @@ private fun DebtPlanScreen(
                         color = colors.heroMuted,
                     )
                 } else if (result.feasible) {
-                    Text("Sin deudas", style = BudTheme.type.moneyHero.copy(fontSize = 34.sp), color = colors.heroText)
+                    Text(stringResource(R.string.debt_plan_no_debts), style = BudTheme.type.moneyHero.copy(fontSize = 34.sp), color = colors.heroText)
                 } else {
                     Text(
-                        text = result.message ?: "No se puede calcular",
+                        text = when {
+                            parsedBudget <= 0L -> stringResource(R.string.debt_plan_needs_payment)
+                            parsedBudget < minimums -> stringResource(
+                                R.string.debt_plan_below_minimums,
+                                formatMoney(minimums, currency),
+                            )
+                            else -> stringResource(R.string.debt_plan_not_amortizing)
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.heroText,
                     )
@@ -1165,8 +1008,8 @@ private fun DebtPlanScreen(
                 if (result.feasible) {
                     Spacer(Modifier.height(14.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-                        HeroMetric("Intereses", result.totalInterestCents, currency)
-                        HeroMetric("Total pagado", result.totalPaidCents, currency)
+                        HeroMetric(stringResource(R.string.debt_plan_interest), result.totalInterestCents, currency)
+                        HeroMetric(stringResource(R.string.debt_plan_total_paid), result.totalPaidCents, currency)
                     }
                 }
             }
@@ -1175,23 +1018,23 @@ private fun DebtPlanScreen(
         item {
             Spacer(Modifier.height(12.dp))
             BudCard {
-                Overline("COMPARATIVA")
+                Overline(stringResource(R.string.debt_plan_comparison))
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "La bola de nieve busca victorias rápidas. La avalancha prioriza el interés más alto.",
+                    text = stringResource(R.string.debt_plan_comparison_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
                 Spacer(Modifier.height(10.dp))
-                ComparisonRow("Bola de nieve", snowball, strategy == DebtStrategy.SNOWBALL, currency)
+                ComparisonRow(stringResource(R.string.debt_strategy_snowball), snowball, strategy == DebtStrategy.SNOWBALL, currency)
                 Spacer(Modifier.height(8.dp))
-                ComparisonRow("Avalancha", avalanche, strategy == DebtStrategy.AVALANCHE, currency)
+                ComparisonRow(stringResource(R.string.debt_strategy_avalanche), avalanche, strategy == DebtStrategy.AVALANCHE, currency)
                 if (snowball.months == avalanche.months &&
                     kotlin.math.abs(snowball.totalInterestCents - avalanche.totalInterestCents) < 1L
                 ) {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "Con estas deudas, ambas estrategias llegan al mismo sitio.",
+                        text = stringResource(R.string.debt_plan_same_end),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -1201,7 +1044,7 @@ private fun DebtPlanScreen(
 
         item {
             Spacer(Modifier.height(12.dp))
-            Overline("ORDEN DE PAGO")
+            Overline(stringResource(R.string.debt_plan_order))
             Spacer(Modifier.height(8.dp))
             BudCard(padding = 0.dp) {
                 result.items.forEachIndexed { index, item ->
@@ -1228,7 +1071,11 @@ private fun DebtPlanScreen(
                         Column(Modifier.weight(1f)) {
                             Text(item.name, style = MaterialTheme.typography.bodyMedium, color = colors.ink)
                             Text(
-                                text = if (item.payoffMonth > 0) "Libre en el mes ${item.payoffMonth}" else "Sin deuda",
+                                text = if (item.payoffMonth > 0) {
+                                    stringResource(R.string.debt_plan_free_month, item.payoffMonth)
+                                } else {
+                                    stringResource(R.string.debt_plan_no_debt)
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.inkMuted,
                             )
@@ -1244,7 +1091,7 @@ private fun DebtPlanScreen(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Los intereses se calculan con el tipo anual indicado en cada deuda. No incluyen comisiones ni seguros.",
+                text = stringResource(R.string.debt_plan_interest_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )
@@ -1271,7 +1118,11 @@ private fun ComparisonRow(
         Column(Modifier.weight(1f)) {
             Text(label, style = MaterialTheme.typography.bodyMedium, color = colors.ink)
             Text(
-                text = if (result.feasible) "${result.months} meses" else "No amortiza",
+                text = if (result.feasible) {
+                    stringResource(R.string.debt_plan_months, result.months)
+                } else {
+                    stringResource(R.string.debt_plan_no_amortize)
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )
@@ -1317,18 +1168,18 @@ private fun LiabilityPaymentScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onBack,
                     size = 38.dp,
                 )
-                Overline("DEUDAS · PAGO")
+                Overline(stringResource(R.string.debt_payment_overline))
                 Spacer(Modifier.size(38.dp))
             }
             Spacer(Modifier.height(22.dp))
-            Text("Pagar deuda.", style = MaterialTheme.typography.headlineLarge, color = colors.ink)
+            Text(stringResource(R.string.debt_payment_title), style = MaterialTheme.typography.headlineLarge, color = colors.ink)
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Registra un pago parcial de «${liability.name}». El saldo de la deuda y el efectivo bajan a la vez.",
+                text = stringResource(R.string.debt_payment_subtitle, liability.name),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -1338,16 +1189,19 @@ private fun LiabilityPaymentScreen(
         item {
             BudCard {
                 Text(
-                    text = "Saldo pendiente: ${formatMoney(liability.balanceCents, currency)}",
+                    text = stringResource(
+                    R.string.debt_pending_balance,
+                    formatMoney(liability.balanceCents, currency),
+                ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) amount = it },
+                    onValueChange = { amount = filterAmountInput(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Importe a pagar") },
+                    label = { Text(stringResource(R.string.debt_payment_amount)) },
                     placeholder = { Text("0") },
                     suffix = { Text(currency.symbol, color = colors.inkMuted) },
                     singleLine = true,
@@ -1356,7 +1210,7 @@ private fun LiabilityPaymentScreen(
                     shape = RoundedCornerShape(14.dp),
                 )
                 Spacer(Modifier.height(10.dp))
-                Text("Desde la cuenta", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.debt_from_account), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(data.accounts, key = { it.id }) { account ->
@@ -1378,13 +1232,13 @@ private fun LiabilityPaymentScreen(
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Disponible: ${formatMoney(available, currency)}",
+                    text = stringResource(R.string.transfer_available, formatMoney(available, currency)),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (parsed > available) colors.expense else colors.inkMuted,
                 )
                 if (parsed > liability.balanceCents) {
                     Text(
-                        text = "No puedes pagar más del saldo pendiente.",
+                        text = stringResource(R.string.debt_payment_exceeds_balance),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.expense,
                     )
@@ -1402,7 +1256,11 @@ private fun LiabilityPaymentScreen(
                     Icon(Icons.Rounded.CalendarToday, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(15.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = if (date == today) "Hoy, ${formatShortDate(date)}" else formatShortDate(date),
+                        text = if (date == today) {
+                            stringResource(R.string.today_prefix, formatShortDate(date))
+                        } else {
+                            formatShortDate(date)
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.ink,
                         modifier = Modifier.weight(1f),
@@ -1413,13 +1271,13 @@ private fun LiabilityPaymentScreen(
                     value = note,
                     onValueChange = { note = it.take(48) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nota (opcional)") },
+                    label = { Text(stringResource(R.string.label_note_optional)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                 )
                 Spacer(Modifier.height(14.dp))
                 PrimaryButton(
-                    text = "Registrar pago",
+                    text = stringResource(R.string.action_register_payment),
                     onClick = {
                         onSave(
                             LiabilityPaymentDraft(
@@ -1452,156 +1310,9 @@ private fun LiabilityPaymentScreen(
                         }
                         showDate = false
                     },
-                ) { Text("Listo", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_done), color = colors.primary) }
             },
-            dismissButton = { TextButton(onClick = { showDate = false }) { Text("Cerrar calendario", color = colors.inkMuted) } },
-        ) { DatePicker(state = state, showModeToggle = false) }
-    }
-}
-
-@Composable
-private fun LiabilityPaymentDialog(
-    liability: Liability,
-    data: AppData,
-    currency: Currency,
-    today: LocalDate,
-    onDismiss: () -> Unit,
-    onSave: (LiabilityPaymentDraft) -> Unit,
-) {
-    val colors = BudTheme.colors
-    var amount by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf(today) }
-    var showDate by remember { mutableStateOf(false) }
-    var accountId by remember { mutableStateOf(data.accounts.firstOrNull()?.id.orEmpty()) }
-    val parsed = parseMoneyInput(amount)
-    val available = if (accountId.isNotBlank()) Finance.accountBalanceAt(data, accountId, date) else 0L
-    val valid = parsed > 0L && parsed <= liability.balanceCents && parsed <= available
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = colors.surface,
-        shape = RoundedCornerShape(26.dp),
-        title = {
-            Column {
-                Overline("PAGO DE DEUDA")
-                Spacer(Modifier.height(4.dp))
-                Text("Pagar «${liability.name}»", style = MaterialTheme.typography.headlineSmall, color = colors.ink)
-            }
-        },
-        text = {
-            Column {
-                Text(
-                    text = "Saldo pendiente: ${formatMoney(liability.balanceCents, currency)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.inkMuted,
-                )
-                Spacer(Modifier.height(10.dp))
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) amount = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Importe a pagar") },
-                    placeholder = { Text("0") },
-                    suffix = { Text(currency.symbol, color = colors.inkMuted) },
-                    singleLine = true,
-                    textStyle = TextStyle(color = colors.ink, fontSize = 18.sp, fontWeight = FontWeight.Medium),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    shape = RoundedCornerShape(14.dp),
-                )
-                Spacer(Modifier.height(10.dp))
-                Text("Desde la cuenta", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
-                Spacer(Modifier.height(6.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(data.accounts, key = { it.id }) { account ->
-                        Row(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(if (accountId == account.id) colors.primarySoft else Color.Transparent)
-                                .border(1.dp, if (accountId == account.id) colors.primary else colors.line, CircleShape)
-                                .clickable { accountId = account.id }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                        ) {
-                            Text(
-                                text = account.name,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = if (accountId == account.id) colors.primary else colors.inkMuted,
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "Disponible: ${formatMoney(available, currency)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (parsed > available) colors.expense else colors.inkMuted,
-                )
-                Spacer(Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(colors.surfaceMuted.copy(alpha = 0.5f))
-                        .clickable { showDate = true }
-                        .padding(horizontal = 12.dp, vertical = 11.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Rounded.CalendarToday, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(15.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = if (date == today) "Hoy, ${formatShortDate(date)}" else formatShortDate(date),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.ink,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Spacer(Modifier.height(10.dp))
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it.take(48) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nota (opcional)") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onSave(
-                        LiabilityPaymentDraft(
-                            liabilityId = liability.id,
-                            accountId = accountId,
-                            amountCents = parsed,
-                            date = date,
-                            note = note,
-                        ),
-                    )
-                },
-                enabled = valid,
-            ) { Text("Registrar pago", color = colors.primary) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) } },
-    )
-
-    if (showDate) {
-        val state = rememberDatePickerState(
-            initialSelectedDateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
-        )
-        DatePickerDialog(
-            onDismissRequest = { showDate = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        state.selectedDateMillis?.let {
-                            date = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
-                        }
-                        showDate = false
-                    },
-                ) { Text("Listo", color = colors.primary) }
-            },
-            dismissButton = { TextButton(onClick = { showDate = false }) { Text("Cancelar", color = colors.inkMuted) } },
+            dismissButton = { TextButton(onClick = { showDate = false }) { Text(stringResource(R.string.action_close_calendar), color = colors.inkMuted) } },
         ) { DatePicker(state = state, showModeToggle = false) }
     }
 }
@@ -1618,13 +1329,13 @@ private fun LiabilityDialog(
     var kind by remember { mutableStateOf(initial.kind) }
     var amount by remember { mutableStateOf(if (initial.balanceCents > 0L) centsToInput(initial.balanceCents) else "") }
     var rate by remember {
-        mutableStateOf(if (initial.annualRatePercent > 0.0) initial.annualRatePercent.toString().replace('.', ',') else "")
+        mutableStateOf(rateToInput(initial.annualRatePercent))
     }
     var minimum by remember {
         mutableStateOf(if (initial.minimumPaymentCents > 0L) centsToInput(initial.minimumPaymentCents) else "")
     }
     val parsed = parseMoneyInput(amount)
-    val rateValue = rate.replace(',', '.').toDoubleOrNull() ?: 0.0
+    val rateValue = parsePercentInput(rate)
     val minimumCents = parseMoneyInput(minimum)
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1632,10 +1343,14 @@ private fun LiabilityDialog(
         shape = RoundedCornerShape(26.dp),
         title = {
             Column {
-                Overline(if (initial.id == null) "NUEVA DEUDA" else "EDITAR DEUDA")
+                Overline(
+                    stringResource(if (initial.id == null) R.string.debt_new else R.string.debt_edit),
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = if (initial.id == null) "¿Qué debes?" else "Ajusta la deuda",
+                    text = stringResource(
+                        if (initial.id == null) R.string.debt_dialog_what else R.string.debt_dialog_adjust,
+                    ),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.ink,
                 )
@@ -1647,13 +1362,13 @@ private fun LiabilityDialog(
                     value = name,
                     onValueChange = { name = it.take(32) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nombre") },
-                    placeholder = { Text("Ej. Préstamo coche") },
+                    label = { Text(stringResource(R.string.label_name)) },
+                    placeholder = { Text(stringResource(R.string.debt_name_placeholder)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                 )
                 Spacer(Modifier.height(10.dp))
-                Text("Tipo", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_type), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     LiabilityKind.entries.forEach { option ->
@@ -1673,16 +1388,16 @@ private fun LiabilityDialog(
                                 modifier = Modifier.size(13.dp),
                             )
                             Spacer(Modifier.width(4.dp))
-                            Text(option.label, style = MaterialTheme.typography.labelSmall, color = colors.ink)
+                            Text(option.localizedLabel(), style = MaterialTheme.typography.labelSmall, color = colors.ink)
                         }
                     }
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) amount = it },
+                    onValueChange = { amount = filterAmountInput(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Saldo pendiente") },
+                    label = { Text(stringResource(R.string.debt_balance)) },
                     placeholder = { Text("0") },
                     suffix = { Text(currency.symbol, color = colors.inkMuted) },
                     singleLine = true,
@@ -1694,11 +1409,9 @@ private fun LiabilityDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = rate,
-                        onValueChange = {
-                            if (it.length <= 6 && it.all { c -> c.isDigit() || c == ',' }) rate = it
-                        },
+                        onValueChange = { rate = filterAmountInput(it, 6) },
                         modifier = Modifier.weight(1f),
-                        label = { Text("Interés anual") },
+                        label = { Text(stringResource(R.string.debt_annual_rate)) },
                         suffix = { Text("%", color = colors.inkMuted) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -1706,11 +1419,9 @@ private fun LiabilityDialog(
                     )
                     OutlinedTextField(
                         value = minimum,
-                        onValueChange = {
-                            if (it.length <= 10 && it.all { c -> c.isDigit() || c == ',' }) minimum = it
-                        },
+                        onValueChange = { minimum = filterAmountInput(it, 10) },
                         modifier = Modifier.weight(1f),
-                        label = { Text("Cuota mínima") },
+                        label = { Text(stringResource(R.string.debt_minimum_payment)) },
                         suffix = { Text(currency.symbol, color = colors.inkMuted) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -1719,7 +1430,7 @@ private fun LiabilityDialog(
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "El interés y la cuota mínima se usan para el plan de deudas. Puedes dejarlos a 0.",
+                    text = stringResource(R.string.debt_dialog_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -1740,10 +1451,15 @@ private fun LiabilityDialog(
                     )
                 },
                 enabled = name.isNotBlank() && parsed >= 0L,
-            ) { Text(if (initial.id == null) "Añadir" else "Guardar", color = colors.primary) }
+            ) {
+                Text(
+                    stringResource(if (initial.id == null) R.string.action_add else R.string.action_save),
+                    color = colors.primary,
+                )
+            }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
         },
     )
 }

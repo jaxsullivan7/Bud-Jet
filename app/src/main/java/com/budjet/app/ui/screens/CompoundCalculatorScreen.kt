@@ -37,11 +37,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.CompoundFrequency
 import com.budjet.app.data.CompoundResult
 import com.budjet.app.data.Currency
@@ -49,11 +51,15 @@ import com.budjet.app.data.InvestmentMath
 import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.MiniBarChart
 import com.budjet.app.ui.components.Overline
+import com.budjet.app.ui.components.localizedLabel
 import com.budjet.app.ui.components.PrimaryButton
 import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.theme.BudTheme
+import com.budjet.app.util.filterAmountInput
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.parseMoneyInput
+import com.budjet.app.util.parsePercentInput
+import com.budjet.app.util.rateToInput
 import com.budjet.app.util.percentText
 
 @Composable
@@ -69,7 +75,7 @@ fun CompoundCalculatorScreen(
         mutableStateOf(
             initialAnnualRate
                 ?.takeIf { it.isFinite() && it > 0 }
-                ?.let { String.format(java.util.Locale.US, "%.1f", it).replace('.', ',') }
+                ?.let { rateToInput(it) }
                 ?: "7",
         )
     }
@@ -78,20 +84,22 @@ fun CompoundCalculatorScreen(
     var volatility by remember { mutableStateOf("") }
     var result by remember { mutableStateOf<CompoundResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    val errorYears = stringResource(R.string.calculator_error_years)
+    val errorRate = stringResource(R.string.calculator_error_rate)
 
     fun calculate() {
         val initialCents = parseMoneyInput(initial)
         val monthlyCents = parseMoneyInput(monthly)
-        val annualRate = parsePercent(rate)
+        val annualRate = parsePercentInput(rate)
         val yearsInt = years.toIntOrNull() ?: 0
-        val vol = if (volatility.isBlank()) 0.0 else parsePercent(volatility)
+        val vol = parsePercentInput(volatility)
         if (yearsInt !in 1..60) {
-            error = "Introduce entre 1 y 60 años."
+            error = errorYears
             result = null
             return
         }
         if (annualRate == null || vol == null) {
-            error = "Revisa la rentabilidad y la volatilidad."
+            error = errorRate
             result = null
             return
         }
@@ -120,22 +128,22 @@ fun CompoundCalculatorScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onBack,
                     size = 38.dp,
                 )
-                Overline("HERRAMIENTA")
+                Overline(stringResource(R.string.calculator_overline))
                 Spacer(Modifier.size(38.dp))
             }
             Spacer(Modifier.height(22.dp))
             Text(
-                text = "Interés compuesto.",
+                text = stringResource(R.string.calculator_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.ink,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Juega con el tiempo y la rentabilidad. Es una estimación, no una promesa.",
+                text = stringResource(R.string.calculator_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -146,35 +154,35 @@ fun CompoundCalculatorScreen(
             BudCard {
                 CalculatorField(
                     value = initial,
-                    onValueChange = { initial = filterMoney(it) },
-                    label = "Capital inicial",
+                    onValueChange = { initial = filterAmountInput(it) },
+                    label = stringResource(R.string.calculator_initial),
                     suffix = currency.symbol,
                 )
                 Spacer(Modifier.height(10.dp))
                 CalculatorField(
                     value = monthly,
-                    onValueChange = { monthly = filterMoney(it) },
-                    label = "Aportación mensual",
+                    onValueChange = { monthly = filterAmountInput(it) },
+                    label = stringResource(R.string.calculator_monthly),
                     suffix = currency.symbol,
                 )
                 Spacer(Modifier.height(10.dp))
                 CalculatorField(
                     value = rate,
-                    onValueChange = { rate = filterPercent(it) },
-                    label = "Rentabilidad anual",
+                    onValueChange = { rate = filterAmountInput(it, 6) },
+                    label = stringResource(R.string.calculator_rate),
                     suffix = "%",
                 )
                 Spacer(Modifier.height(10.dp))
                 CalculatorField(
                     value = years,
                     onValueChange = { years = it.filter(Char::isDigit).take(2) },
-                    label = "Años",
-                    suffix = "años",
+                    label = stringResource(R.string.label_years),
+                    suffix = stringResource(R.string.suffix_years),
                     keyboardType = KeyboardType.Number,
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = "Frecuencia de capitalización",
+                    text = stringResource(R.string.calculator_frequency),
                     style = MaterialTheme.typography.labelMedium,
                     color = colors.inkMuted,
                 )
@@ -196,7 +204,7 @@ fun CompoundCalculatorScreen(
                                 .padding(horizontal = 13.dp, vertical = 8.dp),
                         ) {
                             Text(
-                                text = option.label,
+                                text = option.localizedLabel(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (frequency == option) colors.primary else colors.inkMuted,
                             )
@@ -206,20 +214,20 @@ fun CompoundCalculatorScreen(
                 Spacer(Modifier.height(12.dp))
                 CalculatorField(
                     value = volatility,
-                    onValueChange = { volatility = filterPercent(it) },
-                    label = "Volatilidad anual (opcional)",
+                    onValueChange = { volatility = filterAmountInput(it, 6) },
+                    label = stringResource(R.string.calculator_volatility),
                     suffix = "%",
                     modifier = Modifier.testTag("volatility-field"),
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Cuánto puede variar la rentabilidad de un año a otro. 0 % = cálculo fijo.",
+                    text = stringResource(R.string.calculator_volatility_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
                 Spacer(Modifier.height(16.dp))
                 PrimaryButton(
-                    text = "Calcular",
+                    text = stringResource(R.string.action_calculate),
                     onClick = { calculate() },
                     icon = Icons.AutoMirrored.Rounded.TrendingUp,
                 )
@@ -258,11 +266,13 @@ fun CompoundCalculatorScreen(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = if (result?.simulated == true) {
-                        "Simulación con 1.200 escenarios. Los resultados son probabilísticos y no garantizan rentabilidad futura."
-                    } else {
-                        "Cálculo determinista. No incluye impuestos, comisiones ni inflación."
-                    },
+                    text = stringResource(
+                        if (result?.simulated == true) {
+                            R.string.calculator_simulated_note
+                        } else {
+                            R.string.calculator_deterministic_note
+                        },
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -276,7 +286,12 @@ private fun ResultCard(result: CompoundResult, currency: Currency) {
     val colors = BudTheme.colors
     val positive = result.finalCents >= result.contributedCents
     BudCard(modifier = Modifier.testTag("result-card"), color = colors.heroStart, border = false) {
-        Overline(if (result.simulated) "ESCENARIO CENTRAL" else "CAPITAL FINAL", color = colors.heroMuted)
+        Overline(
+            stringResource(
+                if (result.simulated) R.string.calculator_central_scenario else R.string.calculator_final_capital,
+            ),
+            color = colors.heroMuted,
+        )
         Spacer(Modifier.height(8.dp))
         Text(
             text = formatMoney(if (result.simulated) result.medianCents else result.finalCents, currency),
@@ -286,22 +301,28 @@ private fun ResultCard(result: CompoundResult, currency: Currency) {
         )
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            ResultMetric("Aportado", formatMoney(result.contributedCents, currency))
-            ResultMetric("Intereses", (if (positive) "+" else "−") + formatMoney(kotlin.math.abs(result.interestCents), currency))
+            ResultMetric(
+                stringResource(R.string.analysis_contributed),
+                formatMoney(result.contributedCents, currency),
+            )
+            ResultMetric(
+                stringResource(R.string.calculator_interest),
+                (if (positive) "+" else "−") + formatMoney(kotlin.math.abs(result.interestCents), currency),
+            )
         }
         if (result.simulated) {
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                RangeChip("Pesimista", result.lowCents, colors.heroMuted, currency, Modifier.weight(1f))
-                RangeChip("Central", result.medianCents, colors.heroText, currency, Modifier.weight(1f))
-                RangeChip("Optimista", result.highCents, colors.heroMuted, currency, Modifier.weight(1f))
+                RangeChip(stringResource(R.string.range_pessimistic), result.lowCents, colors.heroMuted, currency, Modifier.weight(1f))
+                RangeChip(stringResource(R.string.range_central), result.medianCents, colors.heroText, currency, Modifier.weight(1f))
+                RangeChip(stringResource(R.string.range_optimistic), result.highCents, colors.heroMuted, currency, Modifier.weight(1f))
             }
         }
     }
 
     Spacer(Modifier.height(12.dp))
     BudCard {
-        Overline("EVOLUCIÓN")
+        Overline(stringResource(R.string.calculator_evolution))
         Spacer(Modifier.height(12.dp))
         MiniBarChart(
             values = result.yearlyBalances.mapIndexed { index, balance ->
@@ -311,7 +332,7 @@ private fun ResultCard(result: CompoundResult, currency: Currency) {
         )
         Spacer(Modifier.height(10.dp))
         Text(
-            text = "Valor al final de cada año.",
+            text = stringResource(R.string.calculator_end_of_year),
             style = MaterialTheme.typography.bodySmall,
             color = colors.inkMuted,
         )
@@ -321,7 +342,11 @@ private fun ResultCard(result: CompoundResult, currency: Currency) {
         Spacer(Modifier.height(12.dp))
         BudCard(color = colors.primarySoft, border = false) {
             Text(
-                text = "Rango probable: entre ${formatMoney(result.lowCents, currency)} y ${formatMoney(result.highCents, currency)} (P10–P90).",
+                text = stringResource(
+                    R.string.calculator_range,
+                    formatMoney(result.lowCents, currency),
+                    formatMoney(result.highCents, currency),
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.ink,
             )
@@ -389,12 +414,3 @@ private fun CalculatorField(
         shape = RoundedCornerShape(14.dp),
     )
 }
-
-private fun filterMoney(text: String): String =
-    if (text.length <= 11) text.filter { it.isDigit() || it == ',' } else text
-
-private fun filterPercent(text: String): String =
-    if (text.length <= 6) text.filter { it.isDigit() || it == ',' } else text
-
-private fun parsePercent(text: String): Double? =
-    if (text.isBlank()) 0.0 else text.replace(',', '.').toDoubleOrNull()

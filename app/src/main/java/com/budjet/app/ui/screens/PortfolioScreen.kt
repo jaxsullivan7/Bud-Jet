@@ -56,12 +56,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
@@ -85,9 +88,11 @@ import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.components.ThinDivider
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.localizedLabel
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.formatMonthShort
 import com.budjet.app.util.formatMoney
+import com.budjet.app.util.filterAmountInput
 import com.budjet.app.util.formatShortDate
 import com.budjet.app.util.parseMoneyInput
 import com.budjet.app.util.percentText
@@ -160,14 +165,14 @@ fun PortfolioScreen(
                 ) {
                     SoftIconButton(
                         icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Volver",
+                        contentDescription = stringResource(R.string.action_back),
                         onClick = onClose,
                         size = 38.dp,
                     )
-                    Overline("ANÁLISIS · CARTERA")
+                    Overline(stringResource(R.string.portfolio_overline))
                     SoftIconButton(
                         icon = Icons.Rounded.Add,
-                        contentDescription = "Nuevo producto",
+                        contentDescription = stringResource(R.string.action_new_product),
                         onClick = { productDialog = ProductDialogState() },
                         size = 38.dp,
                         container = colors.primarySoft,
@@ -176,13 +181,13 @@ fun PortfolioScreen(
                 }
                 Spacer(Modifier.height(22.dp))
                 Text(
-                    text = "Tu cartera.",
+                    text = stringResource(R.string.portfolio_title),
                     style = MaterialTheme.typography.headlineLarge,
                     color = colors.ink,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Inversión con seguimiento propio. No se mezcla con el saldo disponible.",
+                    text = stringResource(R.string.portfolio_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.inkMuted,
                 )
@@ -196,8 +201,8 @@ fun PortfolioScreen(
                     BudCard {
                         EmptyState(
                             icon = Icons.AutoMirrored.Rounded.TrendingUp,
-                            title = "Tu cartera está vacía",
-                            message = "Crea un producto, registra aportaciones y sigue su rentabilidad en el tiempo.",
+                            title = stringResource(R.string.portfolio_empty_title),
+                            message = stringResource(R.string.portfolio_empty_body),
                         )
                         Box(
                             modifier = Modifier
@@ -209,7 +214,7 @@ fun PortfolioScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = "Crear producto",
+                                text = stringResource(R.string.action_create_product),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = colors.onPrimary,
                             )
@@ -222,7 +227,7 @@ fun PortfolioScreen(
                     Spacer(Modifier.height(14.dp))
                 }
                 item {
-                    Overline("PRODUCTOS")
+                    Overline(stringResource(R.string.portfolio_products))
                     Spacer(Modifier.height(8.dp))
                 }
                 items(summary.products, key = { it.investment.id }) { product ->
@@ -259,12 +264,12 @@ fun PortfolioScreen(
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                text = "Calculadora de interés compuesto",
+                                text = stringResource(R.string.calculator_card_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = colors.ink,
                             )
                             Text(
-                                text = "Simula tu inversión con rentabilidad y volatilidad opcional.",
+                                text = stringResource(R.string.calculator_card_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.inkMuted,
                             )
@@ -279,7 +284,7 @@ fun PortfolioScreen(
                 }
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    text = "Las aportaciones desde una cuenta mueven tu saldo. Las externas solo actualizan la cartera.",
+                    text = stringResource(R.string.portfolio_transfer_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -337,10 +342,10 @@ fun PortfolioScreen(
             onDismissRequest = { deleteTarget = null },
             containerColor = colors.surface,
             shape = RoundedCornerShape(26.dp),
-            title = { Text("¿Eliminar producto?", color = colors.ink) },
+            title = { Text(stringResource(R.string.portfolio_delete_title), color = colors.ink) },
             text = {
                 Text(
-                    text = "Se borrarán «${product.name}» y todo su historial. No afecta a tus movimientos.",
+                    text = stringResource(R.string.portfolio_delete_body, product.name),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.inkMuted,
                 )
@@ -352,10 +357,10 @@ fun PortfolioScreen(
                         selectedId = null
                         deleteTarget = null
                     },
-                ) { Text("Eliminar", color = colors.expense) }
+                ) { Text(stringResource(R.string.action_delete), color = colors.expense) }
             },
             dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { deleteTarget = null }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         )
     }
@@ -375,7 +380,7 @@ private fun PortfolioHero(summary: PortfolioSummary, currency: Currency) {
             verticalAlignment = Alignment.Top,
         ) {
             Column {
-                Overline("VALOR DE LA CARTERA", color = colors.heroMuted)
+                Overline(stringResource(R.string.portfolio_value), color = colors.heroMuted)
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = formatMoney(summary.valueCents, currency),
@@ -396,7 +401,7 @@ private fun PortfolioHero(summary: PortfolioSummary, currency: Currency) {
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(26.dp)) {
             Column {
-                Text("Aportado", style = MaterialTheme.typography.bodySmall, color = colors.heroMuted)
+                Text(stringResource(R.string.analysis_contributed), style = MaterialTheme.typography.bodySmall, color = colors.heroMuted)
                 Text(
                     text = formatMoney(summary.contributedCents, currency),
                     style = BudTheme.type.moneySmall,
@@ -404,7 +409,7 @@ private fun PortfolioHero(summary: PortfolioSummary, currency: Currency) {
                 )
             }
             Column {
-                Text("Rentabilidad", style = MaterialTheme.typography.bodySmall, color = colors.heroMuted)
+                Text(stringResource(R.string.analysis_return), style = MaterialTheme.typography.bodySmall, color = colors.heroMuted)
                 Text(
                     text = (if (positive) "+" else "−") + formatMoney(abs(summary.returnsCents), currency),
                     style = BudTheme.type.moneySmall,
@@ -412,7 +417,7 @@ private fun PortfolioHero(summary: PortfolioSummary, currency: Currency) {
                 )
             }
             Column {
-                Text("Anualizada", style = MaterialTheme.typography.bodySmall, color = colors.heroMuted)
+                Text(stringResource(R.string.label_annualized), style = MaterialTheme.typography.bodySmall, color = colors.heroMuted)
                 Text(
                     text = summary.annualizedReturn?.let { percentText(it.toFloat(), decimals = 1) } ?: "—",
                     style = BudTheme.type.moneySmall,
@@ -437,7 +442,7 @@ private fun AllocationCard(summary: PortfolioSummary, currency: Currency) {
         )
     }
     BudCard {
-        Overline("DISTRIBUCIÓN")
+        Overline(stringResource(R.string.portfolio_allocation))
         Spacer(Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             DonutChart(
@@ -509,7 +514,7 @@ private fun ProductCard(summary: ProductSummary, currency: Currency, onClick: ()
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = summary.investment.kind.label,
+                    text = summary.investment.kind.localizedLabel(),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -539,7 +544,10 @@ private fun ProductCard(summary: ProductSummary, currency: Currency, onClick: ()
         Spacer(Modifier.height(10.dp))
         Row {
             Text(
-                text = "Aportado ${formatMoney(summary.summary.contributedCents, currency)}",
+                text = stringResource(
+                    R.string.portfolio_contributed_amount,
+                    formatMoney(summary.summary.contributedCents, currency),
+                ),
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                 color = colors.inkMuted,
             )
@@ -579,14 +587,14 @@ private fun ProductDetail(
             ) {
                 SoftIconButton(
                     icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onBack,
                     size = 38.dp,
                 )
-                Overline("PRODUCTO")
+                Overline(stringResource(R.string.portfolio_product))
                 SoftIconButton(
                     icon = Icons.Rounded.Edit,
-                    contentDescription = "Editar producto",
+                    contentDescription = stringResource(R.string.action_edit_product),
                     onClick = onEdit,
                     size = 38.dp,
                 )
@@ -602,7 +610,7 @@ private fun ProductDetail(
                         color = colors.ink,
                     )
                     Text(
-                        text = product.kind.label,
+                        text = product.kind.localizedLabel(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -639,10 +647,18 @@ private fun ProductDetail(
                         .fillMaxWidth()
                         .padding(vertical = 14.dp),
                 ) {
-                    ProductMetric("APORTADO", formatMoney(summary.contributedCents, currency), Modifier.weight(1f))
-                    ProductMetric("RENDIMIENTO", formatMoney(summary.returnsCents, currency), Modifier.weight(1f))
                     ProductMetric(
-                        "ANUALIZADA",
+                        stringResource(R.string.metric_contributed),
+                        formatMoney(summary.contributedCents, currency),
+                        Modifier.weight(1f),
+                    )
+                    ProductMetric(
+                        stringResource(R.string.metric_return),
+                        formatMoney(summary.returnsCents, currency),
+                        Modifier.weight(1f),
+                    )
+                    ProductMetric(
+                        stringResource(R.string.metric_annualized),
                         summary.annualizedReturn?.let { percentText(it.toFloat(), decimals = 1) } ?: "—",
                         Modifier.weight(1f),
                     )
@@ -650,25 +666,25 @@ private fun ProductDetail(
             }
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActionButton("Aportar", Icons.Rounded.Add, Modifier.weight(1f)) {
+                ActionButton(stringResource(R.string.action_contribute), Icons.Rounded.Add, Modifier.weight(1f)) {
                     onAction(InvestmentEntryKind.CONTRIBUTION)
                 }
-                ActionButton("Retirar", Icons.AutoMirrored.Rounded.TrendingDown, Modifier.weight(1f)) {
+                ActionButton(stringResource(R.string.action_withdraw), Icons.AutoMirrored.Rounded.TrendingDown, Modifier.weight(1f)) {
                     onAction(InvestmentEntryKind.WITHDRAWAL)
                 }
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActionButton("Rendimiento", Icons.AutoMirrored.Rounded.TrendingUp, Modifier.weight(1f)) {
+                ActionButton(stringResource(R.string.action_return), Icons.AutoMirrored.Rounded.TrendingUp, Modifier.weight(1f)) {
                     onAction(InvestmentEntryKind.RETURN)
                 }
-                ActionButton("Actualizar valor", Icons.Rounded.Edit, Modifier.weight(1f)) {
+                ActionButton(stringResource(R.string.action_update_value), Icons.Rounded.Edit, Modifier.weight(1f)) {
                     onAction(InvestmentEntryKind.VALUATION)
                 }
             }
             Spacer(Modifier.height(26.dp))
             BudCard {
-                Overline("EVOLUCIÓN · 12 MESES")
+                Overline(stringResource(R.string.portfolio_trend))
                 Spacer(Modifier.height(12.dp))
                 MiniBarChart(values = series, color = color)
                 Spacer(Modifier.height(12.dp))
@@ -679,7 +695,7 @@ private fun ProductDetail(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = "Valor actual",
+                        text = stringResource(R.string.portfolio_current_value),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -698,12 +714,16 @@ private fun ProductDetail(
             ) {
                 Column {
                     Text(
-                        text = "Historial",
+                        text = stringResource(R.string.label_history),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.ink,
                     )
                     Text(
-                        text = "${entries.size} ${if (entries.size == 1) "movimiento" else "movimientos"}",
+                        text = pluralStringResource(
+                            R.plurals.portfolio_entries,
+                            entries.size,
+                            entries.size,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -713,7 +733,7 @@ private fun ProductDetail(
             if (entries.isEmpty()) {
                 BudCard {
                     Text(
-                        text = "Aún no hay aportaciones. Empieza con el botón Aportar.",
+                        text = stringResource(R.string.portfolio_no_entries),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -824,7 +844,7 @@ private fun InvestmentEntryRow(entry: InvestmentEntry, currency: Currency) {
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                text = entry.note.ifBlank { entry.kind.label },
+                text = entry.note.ifBlank { entry.kind.localizedLabel() },
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.ink,
                 maxLines = 1,
@@ -881,10 +901,16 @@ private fun ProductEditorDialog(
         shape = RoundedCornerShape(26.dp),
         title = {
             Column {
-                Overline(if (state.existing == null) "NUEVO PRODUCTO" else "EDITAR PRODUCTO")
+                Overline(
+                    stringResource(
+                        if (state.existing == null) R.string.portfolio_new_product else R.string.portfolio_edit_product,
+                    ),
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = if (state.existing == null) "¿Qué vas a seguir?" else "Ajusta el producto",
+                    text = stringResource(
+                        if (state.existing == null) R.string.portfolio_dialog_what else R.string.portfolio_dialog_adjust,
+                    ),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.ink,
                 )
@@ -896,13 +922,13 @@ private fun ProductEditorDialog(
                     value = name,
                     onValueChange = { name = it.take(32) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nombre") },
-                    placeholder = { Text("Ej. Fondo indexado global") },
+                    label = { Text(stringResource(R.string.label_name)) },
+                    placeholder = { Text(stringResource(R.string.portfolio_name_placeholder)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                 )
                 Spacer(Modifier.height(14.dp))
-                Text("Tipo", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_type), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(InvestmentKind.entries) { option ->
@@ -927,7 +953,7 @@ private fun ProductEditorDialog(
                             )
                             Spacer(Modifier.width(5.dp))
                             Text(
-                                text = option.label,
+                                text = option.localizedLabel(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (kind == option) colors.primary else colors.inkMuted,
                                 maxLines = 1,
@@ -941,16 +967,21 @@ private fun ProductEditorDialog(
             TextButton(
                 onClick = { onSave(name, kind) },
                 enabled = name.isNotBlank(),
-            ) { Text(if (state.existing == null) "Crear" else "Guardar", color = colors.primary) }
+            ) {
+                Text(
+                    stringResource(if (state.existing == null) R.string.action_create else R.string.action_save),
+                    color = colors.primary,
+                )
+            }
         },
         dismissButton = {
             Row {
                 if (onDelete != null) {
                     TextButton(onClick = onDelete) {
-                        Text("Eliminar", color = colors.expense)
+                        Text(stringResource(R.string.action_delete), color = colors.expense)
                     }
                 }
-                TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             }
         },
     )
@@ -1000,10 +1031,10 @@ private fun InvestmentEntryDialog(
     }
 
     val title = when (action) {
-        InvestmentEntryKind.CONTRIBUTION -> "Aportar"
-        InvestmentEntryKind.WITHDRAWAL -> "Retirar"
-        InvestmentEntryKind.RETURN -> "Registrar rendimiento"
-        InvestmentEntryKind.VALUATION -> "Actualizar valor"
+        InvestmentEntryKind.CONTRIBUTION -> stringResource(R.string.action_contribute)
+        InvestmentEntryKind.WITHDRAWAL -> stringResource(R.string.action_withdraw)
+        InvestmentEntryKind.RETURN -> stringResource(R.string.action_return)
+        InvestmentEntryKind.VALUATION -> stringResource(R.string.action_update_value)
     }
 
     AlertDialog(
@@ -1021,7 +1052,10 @@ private fun InvestmentEntryDialog(
             Column {
                 if (action == InvestmentEntryKind.VALUATION) {
                     Text(
-                        text = "Valor actual registrado: ${formatMoney(currentValue, currency)}",
+                        text = stringResource(
+                        R.string.portfolio_current_value_registered,
+                        formatMoney(currentValue, currency),
+                    ),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -1035,23 +1069,23 @@ private fun InvestmentEntryDialog(
                             .background(colors.surfaceMuted)
                             .padding(3.dp),
                     ) {
-                        EntryTypeButton("Ganancia", !isLoss, Modifier.weight(1f)) { isLoss = false }
-                        EntryTypeButton("Pérdida", isLoss, Modifier.weight(1f)) { isLoss = true }
+                        EntryTypeButton(stringResource(R.string.label_gain), !isLoss, Modifier.weight(1f)) { isLoss = false }
+                        EntryTypeButton(stringResource(R.string.label_loss), isLoss, Modifier.weight(1f)) { isLoss = true }
                     }
                     Spacer(Modifier.height(10.dp))
                 }
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { text ->
-                        if (text.length <= 11 && text.all { it.isDigit() || it == ',' }) amount = text
+                        amount = filterAmountInput(text)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     label = {
                         Text(
                             when (action) {
-                                InvestmentEntryKind.VALUATION -> "Valor actual"
-                                InvestmentEntryKind.RETURN -> "Importe del rendimiento"
-                                else -> "Importe"
+                                InvestmentEntryKind.VALUATION -> stringResource(R.string.portfolio_current_value)
+                                InvestmentEntryKind.RETURN -> stringResource(R.string.portfolio_return_amount)
+                                else -> stringResource(R.string.label_amount)
                             },
                         )
                     },
@@ -1065,7 +1099,10 @@ private fun InvestmentEntryDialog(
                 if (action == InvestmentEntryKind.VALUATION && parsed > 0) {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "Ajuste: ${if (signedAmount >= 0) "+" else "−"}${formatMoney(abs(signedAmount), currency)}",
+                        text = stringResource(
+                            R.string.portfolio_adjustment,
+                            (if (signedAmount >= 0) "+" else "−") + formatMoney(abs(signedAmount), currency),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (signedAmount >= 0) colors.income else colors.expense,
                     )
@@ -1073,7 +1110,10 @@ private fun InvestmentEntryDialog(
                 if (action == InvestmentEntryKind.WITHDRAWAL && parsed > currentValue) {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "No puedes retirar más del valor actual (${formatMoney(currentValue, currency)}).",
+                        text = stringResource(
+                            R.string.portfolio_withdraw_exceeds,
+                            formatMoney(currentValue, currency),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.expense,
                     )
@@ -1081,11 +1121,13 @@ private fun InvestmentEntryDialog(
                 if (action == InvestmentEntryKind.CONTRIBUTION || action == InvestmentEntryKind.WITHDRAWAL) {
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        text = if (action == InvestmentEntryKind.CONTRIBUTION) {
-                            "Sale de la cuenta"
-                        } else {
-                            "Entra en la cuenta"
-                        },
+                        text = stringResource(
+                            if (action == InvestmentEntryKind.CONTRIBUTION) {
+                                R.string.portfolio_contribution_from
+                            } else {
+                                R.string.portfolio_contribution_to
+                            },
+                        ),
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.inkMuted,
                     )
@@ -1093,7 +1135,7 @@ private fun InvestmentEntryDialog(
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         item {
                             AccountChip(
-                                label = "Sin cuenta",
+                                label = stringResource(R.string.portfolio_no_account),
                                 selected = !useAccount,
                                 onClick = { useAccount = false },
                             )
@@ -1112,14 +1154,17 @@ private fun InvestmentEntryDialog(
                     if (useAccount && accountId != null) {
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Disponible en la cuenta: ${formatMoney(accountAvailable, currency)}",
+                            text = stringResource(
+                                R.string.portfolio_account_available,
+                                formatMoney(accountAvailable, currency),
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = if (parsed > accountAvailable) colors.expense else colors.inkMuted,
                         )
                     }
                     if (useAccount && parsed > accountAvailable) {
                         Text(
-                            text = "El importe supera el saldo de la cuenta.",
+                            text = stringResource(R.string.portfolio_account_exceeds),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.expense,
                         )
@@ -1143,7 +1188,11 @@ private fun InvestmentEntryDialog(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = if (date == LocalDate.now()) "Hoy, ${formatShortDate(date)}" else formatShortDate(date),
+                        text = if (date == LocalDate.now()) {
+                            stringResource(R.string.today_prefix, formatShortDate(date))
+                        } else {
+                            formatShortDate(date)
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.ink,
                         modifier = Modifier.weight(1f),
@@ -1154,7 +1203,7 @@ private fun InvestmentEntryDialog(
                     value = note,
                     onValueChange = { note = it.take(48) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nota (opcional)") },
+                    label = { Text(stringResource(R.string.label_note_optional)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                 )
@@ -1164,10 +1213,10 @@ private fun InvestmentEntryDialog(
             TextButton(
                 onClick = { onSave(signedAmount, date, note, if (useAccount) accountId else null) },
                 enabled = valid,
-            ) { Text("Guardar", color = colors.primary) }
+            ) { Text(stringResource(R.string.action_save), color = colors.primary) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
         },
     )
 
@@ -1185,10 +1234,10 @@ private fun InvestmentEntryDialog(
                         }
                         showDatePicker = false
                     },
-                ) { Text("Listo", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_done), color = colors.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         ) {
             DatePicker(state = state, showModeToggle = false)

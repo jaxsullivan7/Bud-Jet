@@ -1,9 +1,11 @@
 package com.budjet.app
 
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -56,5 +58,34 @@ class EnglishScreenshotTest {
     fun captureBudgetsInEnglish() {
         compose.onNodeWithContentDescription("Budgets").performClick()
         capture("07-budgets")
+    }
+
+    @Test
+    fun capturePatrimonioInEnglish() {
+        compose.onNodeWithContentDescription("Analysis").performClick()
+        compose.onNodeWithTag("patrimonio-card").performClick()
+        capture("08-patrimonio")
+    }
+
+    @Test
+    fun capturePortfolioInEnglish() {
+        compose.onNodeWithContentDescription("Analysis").performClick()
+        compose.onNodeWithTag("patrimonio-card").performClick()
+        compose.onNodeWithText("Portfolio").performClick()
+        capture("09-portfolio")
+        compose.onNodeWithTag("portfolio-list")
+            .performScrollToNode(hasTestTag("calculator-card"))
+        compose.onNodeWithTag("calculator-card").performClick()
+        capture("10-calculator")
+    }
+
+    @Test
+    fun captureDebtPlanInEnglish() {
+        compose.onNodeWithContentDescription("Analysis").performClick()
+        compose.onNodeWithTag("patrimonio-card").performClick()
+        compose.onNodeWithTag("patrimonio-list")
+            .performScrollToNode(hasTestTag("debt-plan-button"))
+        compose.onNodeWithTag("debt-plan-button").performClick()
+        capture("11-debt-plan")
     }
 }

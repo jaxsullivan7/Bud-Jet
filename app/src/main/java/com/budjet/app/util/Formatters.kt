@@ -171,3 +171,25 @@ fun centsToInput(cents: Long): String {
         "$unit${symbols.decimalSeparator}$fraction"
     }
 }
+
+/** Keeps digits and both decimal separators, capped at [maxLength] characters. */
+fun filterAmountInput(text: String, maxLength: Int = 11): String =
+    if (text.length <= maxLength) {
+        text.filter { it.isDigit() || it == ',' || it == '.' }
+    } else {
+        text
+    }
+
+/** Parses a percentage typed by the user, accepting `7,5` and `7.5`. */
+fun parsePercentInput(text: String): Double =
+    if (text.isBlank()) 0.0 else parseMoneyInput(text) / 100.0
+
+/** Formats a rate for an editable field, using the locale decimal separator. */
+fun rateToInput(value: Double): String {
+    if (value <= 0.0) return ""
+    val locale = appLocale()
+    val separator = decimalSymbols(locale).decimalSeparator
+    return String.format(locale, "%.2f", value)
+        .trimEnd('0')
+        .trimEnd(separator)
+}

@@ -223,4 +223,198 @@
     <string name="analysis_end_of_month">End of month</string>
     <string name="analysis_balance_filter_note">The balance uses your full history, not the date filter.</string>
     <string name="analysis_others">Others</string>
+
+    <!-- Data labels -->
+    <string name="investment_kind_index_fund">Index fund</string>
+    <string name="investment_kind_stock">Stocks</string>
+    <string name="investment_kind_etf">ETF</string>
+    <string name="investment_kind_crypto">Crypto</string>
+    <string name="investment_kind_deposit">Deposit</string>
+    <string name="investment_kind_pension">Pension plan</string>
+    <string name="investment_kind_real_estate">Real estate</string>
+    <string name="investment_kind_other">Other</string>
+    <string name="investment_entry_contribution">Contribution</string>
+    <string name="investment_entry_withdrawal">Withdrawal</string>
+    <string name="investment_entry_return">Return</string>
+    <string name="investment_entry_valuation">Value adjustment</string>
+    <string name="liability_kind_mortgage">Mortgage</string>
+    <string name="liability_kind_loan">Loan</string>
+    <string name="liability_kind_card">Card</string>
+    <string name="liability_kind_other">Other debt</string>
+    <string name="debt_strategy_snowball">Snowball</string>
+    <string name="debt_strategy_avalanche">Avalanche</string>
+    <string name="compound_monthly">Monthly</string>
+    <string name="compound_annual">Annual</string>
+
+    <!-- Common -->
+    <string name="action_back">Back</string>
+    <string name="action_done">Done</string>
+    <string name="label_name">Name</string>
+    <string name="label_type">Type</string>
+    <string name="label_amount">Amount</string>
+    <string name="label_note_optional">Note (optional)</string>
+    <string name="today_prefix">Today, %1$s</string>
+
+    <!-- Net worth -->
+    <string name="patrimonio_overline">ANALYSIS · NET WORTH</string>
+    <string name="patrimonio_title">Your net worth.</string>
+    <string name="patrimonio_subtitle">Cash, investments and debts in one picture.</string>
+    <string name="patrimonio_evolution">TREND · 6 MONTHS</string>
+    <string name="patrimonio_current">Current net worth</string>
+    <string name="action_transfer">Transfer</string>
+    <string name="label_portfolio">Portfolio</string>
+    <string name="label_accounts">Accounts</string>
+    <string name="patrimonio_accounts_note">The opening balance goes to the first account. Transfers move money between accounts without counting as an expense.</string>
+    <string name="patrimonio_investments_empty">No products yet. Create your first one in the portfolio.</string>
+    <string name="patrimonio_more_products">+%1$d more products</string>
+    <string name="action_plan">Plan</string>
+    <string name="patrimonio_no_debts">No debts recorded. If you have a loan or a card, add it to see your real net worth.</string>
+    <string name="patrimonio_formula_note">Net worth = cash + investments − debts. Portfolio contributions from an account already reduce your cash.</string>
+    <string name="patrimonio_delete_title">Delete debt?</string>
+    <string name="patrimonio_delete_body">“%1$s” will be deleted. This does not affect your transactions or portfolio.</string>
+    <string name="liability_paid">%1$s · paid %2$s</string>
+    <string name="action_pay_debt">Pay debt</string>
+    <string name="action_delete_debt">Delete debt</string>
+    <string name="action_pay">Pay</string>
+
+    <!-- Transfers -->
+    <string name="transfer_overline">NET WORTH · TRANSFER</string>
+    <string name="transfer_title">Move money.</string>
+    <string name="transfer_subtitle">Between accounts or into an investment. It does not count as income or expense.</string>
+    <string name="label_from">From</string>
+    <string name="label_to">To</string>
+    <string name="label_account">Account</string>
+    <string name="label_investment">Investment</string>
+    <string name="transfer_available">Available: %1$s</string>
+    <string name="transfer_exceeds">The amount exceeds the available balance.</string>
+
+    <!-- Debt plan -->
+    <string name="debt_plan_overline">NET WORTH · PLAN</string>
+    <string name="debt_plan_title">Debt plan.</string>
+    <string name="debt_plan_subtitle">Choose how much you can put toward debt each month and how you want to tackle it.</string>
+    <string name="debt_plan_empty">No debts recorded. Add a debt in Net worth to calculate your debt-free date.</string>
+    <string name="debt_plan_monthly_total">Total monthly payment</string>
+    <string name="debt_plan_monthly_hint">How much you can pay per month</string>
+    <string name="debt_plan_minimums">Minimum payments: %1$s · the rest goes toward extra payments.</string>
+    <string name="label_strategy">Strategy</string>
+    <string name="debt_plan_free_date">YOUR DEBT-FREE DATE</string>
+    <string name="debt_plan_months">%1$d months</string>
+    <string name="debt_plan_no_debts">No debts</string>
+    <string name="debt_plan_cannot_calculate">Cannot calculate</string>
+    <string name="debt_plan_interest">Interest</string>
+    <string name="debt_plan_total_paid">Total paid</string>
+    <string name="debt_plan_comparison">COMPARISON</string>
+    <string name="debt_plan_comparison_body">Snowball seeks quick wins. Avalanche prioritizes the highest interest.</string>
+    <string name="debt_plan_same_end">With these debts, both strategies end at the same place.</string>
+    <string name="debt_plan_order">PAYOFF ORDER</string>
+    <string name="debt_plan_free_month">Paid off in month %1$d</string>
+    <string name="debt_plan_no_debt">No debt</string>
+    <string name="debt_plan_interest_note">Interest is calculated using each debt\'s annual rate. It does not include fees or insurance.</string>
+    <string name="debt_plan_no_amortize">Does not amortize</string>
+    <string name="debt_plan_needs_payment">Enter a monthly payment.</string>
+    <string name="debt_plan_below_minimums">The monthly payment does not cover the minimums (%1$s).</string>
+    <string name="debt_plan_not_amortizing">With this monthly payment, the debt never goes down.</string>
+
+    <!-- Debt payment -->
+    <string name="debt_payment_overline">DEBTS · PAYMENT</string>
+    <string name="debt_payment_title">Pay debt.</string>
+    <string name="debt_payment_subtitle">Record a partial payment of “%1$s”. The debt balance and your cash go down together.</string>
+    <string name="debt_pending_balance">Outstanding balance: %1$s</string>
+    <string name="debt_payment_amount">Payment amount</string>
+    <string name="debt_from_account">From account</string>
+    <string name="debt_payment_exceeds_balance">You cannot pay more than the outstanding balance.</string>
+    <string name="action_register_payment">Record payment</string>
+    <string name="debt_payment_dialog_overline">DEBT PAYMENT</string>
+    <string name="debt_payment_dialog_title">Pay “%1$s”</string>
+
+    <!-- Debt editor -->
+    <string name="debt_new">NEW DEBT</string>
+    <string name="debt_edit">EDIT DEBT</string>
+    <string name="debt_dialog_what">What do you owe?</string>
+    <string name="debt_dialog_adjust">Adjust the debt</string>
+    <string name="debt_name_placeholder">e.g. Car loan</string>
+    <string name="debt_balance">Outstanding balance</string>
+    <string name="debt_annual_rate">Annual interest</string>
+    <string name="debt_minimum_payment">Minimum payment</string>
+    <string name="debt_dialog_note">Interest and minimum payment are used for the debt plan. You can leave them at 0.</string>
+
+    <!-- Portfolio -->
+    <string name="portfolio_overline">ANALYSIS · PORTFOLIO</string>
+    <string name="action_new_product">New product</string>
+    <string name="portfolio_title">Your portfolio.</string>
+    <string name="portfolio_subtitle">Investments tracked separately. Not mixed with your available balance.</string>
+    <string name="portfolio_empty_title">Your portfolio is empty</string>
+    <string name="portfolio_empty_body">Create a product, record contributions and track its return over time.</string>
+    <string name="action_create_product">Create product</string>
+    <string name="portfolio_products">PRODUCTS</string>
+    <string name="portfolio_value">PORTFOLIO VALUE</string>
+    <string name="label_annualized">Annualized</string>
+    <string name="portfolio_allocation">ALLOCATION</string>
+    <string name="portfolio_contributed_amount">Contributed %1$s</string>
+    <string name="portfolio_product">PRODUCT</string>
+    <string name="action_edit_product">Edit product</string>
+    <string name="metric_contributed">CONTRIBUTED</string>
+    <string name="metric_return">RETURN</string>
+    <string name="metric_annualized">ANNUALIZED</string>
+    <string name="action_contribute">Contribute</string>
+    <string name="action_withdraw">Withdraw</string>
+    <string name="action_return">Return</string>
+    <string name="action_update_value">Update value</string>
+    <string name="portfolio_trend">TREND · 12 MONTHS</string>
+    <string name="portfolio_current_value">Current value</string>
+    <string name="label_history">History</string>
+    <plurals name="portfolio_entries">
+        <item quantity="one">%1$d entry</item>
+        <item quantity="other">%1$d entries</item>
+    </plurals>
+    <string name="portfolio_no_entries">No contributions yet. Start with the Contribute button.</string>
+    <string name="portfolio_new_product">NEW PRODUCT</string>
+    <string name="portfolio_edit_product">EDIT PRODUCT</string>
+    <string name="portfolio_dialog_what">What will you track?</string>
+    <string name="portfolio_dialog_adjust">Adjust the product</string>
+    <string name="portfolio_name_placeholder">e.g. Global index fund</string>
+    <string name="action_delete_product">Delete product</string>
+    <string name="portfolio_delete_title">Delete product?</string>
+    <string name="portfolio_delete_body">“%1$s” and all its history will be deleted. This does not affect your transactions.</string>
+    <string name="portfolio_current_value_registered">Current recorded value: %1$s</string>
+    <string name="label_gain">Gain</string>
+    <string name="label_loss">Loss</string>
+    <string name="portfolio_return_amount">Return amount</string>
+    <string name="portfolio_adjustment">Adjustment: %1$s</string>
+    <string name="portfolio_withdraw_exceeds">You cannot withdraw more than the current value (%1$s).</string>
+    <string name="portfolio_contribution_from">Comes out of the account</string>
+    <string name="portfolio_contribution_to">Goes into the account</string>
+    <string name="portfolio_no_account">No account</string>
+    <string name="portfolio_account_available">Available in account: %1$s</string>
+    <string name="portfolio_account_exceeds">The amount exceeds the account balance.</string>
+    <string name="calculator_card_title">Compound interest calculator</string>
+    <string name="calculator_card_subtitle">Simulate your investment with return and optional volatility.</string>
+    <string name="portfolio_transfer_note">Contributions from an account move your balance. External ones only update the portfolio.</string>
+
+    <!-- Calculator -->
+    <string name="calculator_overline">TOOL</string>
+    <string name="calculator_title">Compound interest.</string>
+    <string name="calculator_subtitle">Play with time and return. It is an estimate, not a promise.</string>
+    <string name="calculator_initial">Initial capital</string>
+    <string name="calculator_monthly">Monthly contribution</string>
+    <string name="calculator_rate">Annual return</string>
+    <string name="label_years">Years</string>
+    <string name="suffix_years">years</string>
+    <string name="calculator_frequency">Compounding frequency</string>
+    <string name="calculator_volatility">Annual volatility (optional)</string>
+    <string name="calculator_volatility_hint">How much the return can vary from year to year. 0% = fixed calculation.</string>
+    <string name="action_calculate">Calculate</string>
+    <string name="calculator_error_years">Enter between 1 and 60 years.</string>
+    <string name="calculator_error_rate">Check the return and volatility.</string>
+    <string name="calculator_simulated_note">Simulation with 1,200 scenarios. Results are probabilistic and do not guarantee future returns.</string>
+    <string name="calculator_deterministic_note">Deterministic calculation. It does not include taxes, fees or inflation.</string>
+    <string name="calculator_central_scenario">CENTRAL SCENARIO</string>
+    <string name="calculator_final_capital">FINAL CAPITAL</string>
+    <string name="calculator_interest">Interest</string>
+    <string name="range_pessimistic">Pessimistic</string>
+    <string name="range_central">Central</string>
+    <string name="range_optimistic">Optimistic</string>
+    <string name="calculator_evolution">TREND</string>
+    <string name="calculator_end_of_year">Value at the end of each year.</string>
+    <string name="calculator_range">Likely range: between %1$s and %2$s (P10–P90).</string>
 </resources>
