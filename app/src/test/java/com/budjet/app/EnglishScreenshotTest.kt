@@ -125,6 +125,14 @@ class EnglishScreenshotTest {
         capture("16-import")
     }
 
+    @Test
+    fun capturePayrollInEnglish() {
+        openSettings()
+        compose.onNodeWithTag("settings-list").performScrollToNode(hasTestTag("settings-payroll"))
+        compose.onNodeWithTag("settings-payroll").performClick()
+        capture("18-payroll")
+    }
+
     private fun openSettings() {
         compose.onNodeWithContentDescription("Settings").performClick()
     }

@@ -53,5 +53,9 @@ fun AppData.migratedToCurrent(): AppData {
         result = result.copy(version = 9, transactions = stamped)
     }
 
+    if (result.version < 10) {
+        result = result.copy(version = 10)
+    }
+
     return if (result.version >= Backup.CURRENT_VERSION) result else result.copy(version = Backup.CURRENT_VERSION)
 }

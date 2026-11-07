@@ -24,9 +24,12 @@ import com.budjet.app.data.InvestmentEntry
 import com.budjet.app.data.InvestmentEntryKind
 import com.budjet.app.data.InvestmentKind
 import com.budjet.app.data.InvestmentMath
+import com.budjet.app.data.IrpfRegion
 import com.budjet.app.data.Liability
 import com.budjet.app.data.LiabilityKind
 import com.budjet.app.data.LiabilityPayment
+import com.budjet.app.data.PayrollKind
+import com.budjet.app.data.Payslip
 import com.budjet.app.data.Recurring
 import com.budjet.app.data.RecurringRule
 import com.budjet.app.data.SavingsGoal
@@ -119,6 +122,22 @@ data class LiabilityPaymentDraft(
     val date: LocalDate = LocalDate.now(),
     val note: String = "",
 )
+
+data class PayrollDraft(
+    val id: String? = null,
+    val date: LocalDate = LocalDate.now(),
+    val employer: String = "",
+    val kind: PayrollKind = PayrollKind.MONTHLY,
+    val grossCents: Long = 0L,
+    val irpfCents: Long = 0L,
+    val socialSecurityCents: Long = 0L,
+    val otherDeductionsCents: Long = 0L,
+    val accountId: String = "",
+    val note: String = "",
+) {
+    val netCents: Long
+        get() = grossCents - irpfCents - socialSecurityCents - otherDeductionsCents
+}
 
 class AppViewModel(private val repository: BudRepository) : ViewModel() {
 
@@ -713,6 +732,78 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
     fun setBiometricLock(enabled: Boolean) = updateSettings { it.copy(biometricLock = enabled) }
     fun setOpeningBalance(cents: Long) = updateSettings { it.copy(openingBalanceCents = cents.coerceAtLeast(0L)) }
     fun setAnalysisStart(date: LocalDate?) = updateSettings { it.copy(analysisStartEpochDay = date?.toEpochDay()) }
+    fun setIrpfRegion(region: IrpfRegion) = updateSettings { it.copy(irpfRegion = region) }
+
+    fun savePayroll(draft: PayrollDraft) {
+        if (draft.grossCents <= 0L || draft.accountId.isBlank() || draft.netCents < 0L) return
+        viewModelScope.launch {
+            repository.update { current ->
+                val existing = current.payslips.firstOrNull { it.id == draft.id }
+                val transactionId = existing?.transactionId
+                    ?: "pay_" + UUID.randomUUID().toString().take(8)
+                val employer = draft.employer.trim()
+                val note = draft.note.trim().ifBlank {
+                    employer.ifBlank { repository.context.getString(R.string.payroll_default_note) }
+                }
+                val salaryCategory = if (current.category("salary") != null) {
+                    "salary"
+                } else {
+                    current.categories.firstOrNull { it.type == TxType.INCOME }?.id.orEmpty()
+                }
+                val transaction = Transaction(
+                    id = transactionId,
+                    amountCents = draft.netCents,
+                    type = TxType.INCOME,
+                    categoryId = salaryCategory,
+                    accountId = draft.accountId,
+                    dateEpochDay = draft.date.toEpochDay(),
+                    note = note,
+                    createdAtEpochMillis = System.currentTimeMillis(),
+                )
+                val payslip = Payslip(
+                    id = existing?.id ?: "p_" + UUID.randomUUID().toString().take(8),
+                    dateEpochDay = draft.date.toEpochDay(),
+                    employer = employer,
+                    kind = draft.kind,
+                    grossCents = draft.grossCents,
+                    irpfCents = draft.irpfCents,
+                    socialSecurityCents = draft.socialSecurityCents,
+                    otherDeductionsCents = draft.otherDeductionsCents,
+                    accountId = draft.accountId,
+                    transactionId = transactionId,
+                    note = draft.note.trim(),
+                )
+                current.copy(
+                    payslips = if (existing == null) {
+                        current.payslips + payslip
+                    } else {
+                        current.payslips.map { if (it.id == existing.id) payslip else it }
+                    },
+                    transactions = if (current.transactions.any { it.id == transactionId }) {
+                        current.transactions.map {
+                            if (it.id == transactionId) transaction else it
+                        }
+                    } else {
+                        current.transactions + transaction
+                    },
+                )
+            }
+        }
+    }
+
+    fun deletePayroll(id: String) {
+        viewModelScope.launch {
+            repository.update { current ->
+                val payslip = current.payslips.firstOrNull { it.id == id }
+                current.copy(
+                    payslips = current.payslips.filterNot { it.id == id },
+                    transactions = current.transactions.filterNot {
+                        it.id == payslip?.transactionId
+                    },
+                )
+            }
+        }
+    }
 
     fun addCategory(name: String, icon: String, colorHex: String, type: TxType) {
         val clean = name.trim()

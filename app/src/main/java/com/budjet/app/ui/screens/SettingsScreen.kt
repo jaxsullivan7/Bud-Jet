@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.NotificationImportant
+import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Rule
@@ -120,6 +121,7 @@ fun SettingsScreen(
     onAddCategory: (name: String, icon: String, colorHex: String, type: TxType) -> Unit,
     onOpenGoals: () -> Unit,
     onOpenRecurring: () -> Unit,
+    onOpenPayrolls: () -> Unit,
     onSetBiometric: (Boolean) -> Unit,
     onTestBiometric: () -> Unit,
     onAddAccount: (name: String, icon: String, colorHex: String, initialBalanceCents: Long) -> Unit,
@@ -477,6 +479,25 @@ fun SettingsScreen(
                         )
                     },
                     onClick = onOpenRecurring,
+                )
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(26.dp))
+            SectionHeader(title = stringResource(R.string.settings_payroll))
+            Spacer(Modifier.height(10.dp))
+            BudCard(padding = 0.dp) {
+                SettingsRow(
+                    icon = Icons.Rounded.Payments,
+                    title = stringResource(R.string.settings_payroll),
+                    subtitle = pluralStringResource(
+                        R.plurals.payroll_count,
+                        data.payslips.size,
+                        data.payslips.size,
+                    ),
+                    onClick = onOpenPayrolls,
+                    modifier = Modifier.testTag("settings-payroll"),
                 )
             }
         }
@@ -1488,10 +1509,11 @@ private fun SettingsRow(
     trailing: String? = null,
     onClick: (() -> Unit)? = null,
     destructive: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     val colors = BudTheme.colors
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(enabled = onClick != null) { onClick?.invoke() }
             .padding(horizontal = 16.dp, vertical = 13.dp),

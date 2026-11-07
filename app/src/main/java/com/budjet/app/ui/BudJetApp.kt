@@ -66,6 +66,7 @@ import com.budjet.app.ui.screens.HomeScreen
 import com.budjet.app.ui.screens.ImportScreen
 import com.budjet.app.ui.screens.LockScreen
 import com.budjet.app.ui.screens.PatrimonioScreen
+import com.budjet.app.ui.screens.PayrollScreen
 import com.budjet.app.ui.screens.PortfolioScreen
 import com.budjet.app.ui.screens.RecurringScreen
 import com.budjet.app.ui.screens.SettingsScreen
@@ -115,6 +116,7 @@ fun BudJetApp(
     var portfolioOpen by rememberSaveable { mutableStateOf(false) }
     var patrimonioOpen by rememberSaveable { mutableStateOf(false) }
     var importOpen by rememberSaveable { mutableStateOf(false) }
+    var payrollOpen by rememberSaveable { mutableStateOf(false) }
     var editorDraft by remember { mutableStateOf<EditorDraft?>(null) }
     var editorVisible by remember { mutableStateOf(false) }
     var categoryDetail by remember { mutableStateOf<Category?>(null) }
@@ -288,7 +290,7 @@ fun BudJetApp(
     }
 
     BackHandler(enabled = locked) { }
-    BackHandler(enabled = editorVisible || goalsOpen || recurringOpen || portfolioOpen || patrimonioOpen || importOpen || categoryVisible || settingsOpen) {
+    BackHandler(enabled = editorVisible || goalsOpen || recurringOpen || portfolioOpen || patrimonioOpen || importOpen || payrollOpen || categoryVisible || settingsOpen) {
         when {
             editorVisible -> editorVisible = false
             categoryVisible -> categoryVisible = false
@@ -297,12 +299,13 @@ fun BudJetApp(
             portfolioOpen -> portfolioOpen = false
             patrimonioOpen -> patrimonioOpen = false
             importOpen -> importOpen = false
+            payrollOpen -> payrollOpen = false
             settingsOpen -> settingsOpen = false
         }
     }
     BackHandler(
         enabled = !locked && !editorVisible && !goalsOpen && !recurringOpen && !portfolioOpen && !patrimonioOpen &&
-            !importOpen && !categoryVisible && !settingsOpen && tab != AppTab.HOME,
+            !importOpen && !payrollOpen && !categoryVisible && !settingsOpen && tab != AppTab.HOME,
     ) {
         tab = AppTab.HOME
     }
@@ -409,6 +412,10 @@ fun BudJetApp(
                     onDeleteAccount = viewModel::deleteAccount,
                     onOpenGoals = { goalsOpen = true },
                     onOpenRecurring = { recurringOpen = true },
+                    onOpenPayrolls = {
+                        settingsOpen = false
+                        payrollOpen = true
+                    },
                     onSetBiometric = { enabled ->
                         if (!enabled) {
                             viewModel.setBiometricLock(false)
@@ -625,6 +632,24 @@ fun BudJetApp(
                     },
                 )
             }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = payrollOpen,
+            enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
+            exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
+        ) {
+            Box(Modifier.fillMaxSize().background(colors.background)) {
+                ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
+                    PayrollScreen(
+                        data = data,
+                        onClose = { payrollOpen = false },
+                        onSave = viewModel::savePayroll,
+                        onDelete = viewModel::deletePayroll,
+                        onSetRegion = viewModel::setIrpfRegion,
+                    )
+                }
             }
         }
 

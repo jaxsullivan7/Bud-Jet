@@ -7,6 +7,29 @@ import java.time.LocalDate
 enum class TxType { EXPENSE, INCOME }
 
 @Serializable
+enum class PayrollKind { MONTHLY, EXTRA, OTHER }
+
+@Serializable
+data class Payslip(
+    val id: String,
+    val dateEpochDay: Long,
+    val employer: String = "",
+    val kind: PayrollKind = PayrollKind.MONTHLY,
+    /** Devengos: gross pay before deductions. */
+    val grossCents: Long,
+    val irpfCents: Long = 0L,
+    val socialSecurityCents: Long = 0L,
+    val otherDeductionsCents: Long = 0L,
+    val accountId: String,
+    /** Net income transaction created by this payslip, when it exists. */
+    val transactionId: String? = null,
+    val note: String = "",
+) {
+    val netCents: Long
+        get() = grossCents - irpfCents - socialSecurityCents - otherDeductionsCents
+}
+
+@Serializable
 data class Transaction(
     val id: String,
     val amountCents: Long,
@@ -212,11 +235,12 @@ data class Settings(
     val valuationAlerts: Boolean = true,
     val autoBackupEnabled: Boolean = true,
     val notificationPermissionAsked: Boolean = false,
+    val irpfRegion: IrpfRegion = IrpfRegion.MADRID,
 )
 
 @Serializable
 data class AppData(
-    val version: Int = 9,
+    val version: Int = 10,
     val settings: Settings = Settings(),
     val categories: List<Category> = emptyList(),
     val accounts: List<Account> = emptyList(),
@@ -230,6 +254,7 @@ data class AppData(
     val liabilities: List<Liability> = emptyList(),
     val liabilityPayments: List<LiabilityPayment> = emptyList(),
     val categoryRules: List<CategoryRule> = emptyList(),
+    val payslips: List<Payslip> = emptyList(),
 ) {
     fun category(id: String?): Category? = categories.firstOrNull { it.id == id }
     fun account(id: String?): Account? = accounts.firstOrNull { it.id == id }
@@ -260,6 +285,7 @@ fun AppData.clearedFinancialData(): AppData = copy(
     transfers = emptyList(),
     liabilities = emptyList(),
     liabilityPayments = emptyList(),
+    payslips = emptyList(),
     accounts = accounts.map { it.copy(initialBalanceCents = 0L) },
     settings = settings.copy(
         openingBalanceCents = 0L,

@@ -16,10 +16,11 @@
 - [x] Build de release con R8 y `shrinkResources`.
 - [x] Firma de release configurada con un keystore de subida.
 - [x] Versión **1.0.0** (`versionCode 14`).
-- [x] AAB 1.0.0 firmado (`BudJet-1.0.0-release.aab`, 6,86 MB).
-- [x] APK 1.0.0 firmada (`BudJet-1.0.0-release.apk`, 3,91 MB).
+- [x] AAB 1.0.0 firmado (`BudJet-1.0.0-release.aab`, 6,93 MB).
+- [x] APK 1.0.0 firmada (`BudJet-1.0.0-release.apk`, 3,95 MB).
 - [x] Firma y versión verificadas con `apksigner` y `aapt`.
 - [x] Cuentas personalizadas: alta, edición, saldo inicial y suma al balance total.
+- [x] Nóminas e IRPF: devengos, retenciones, Seguridad Social, neto y estimación anual por comunidad.
 - [x] Landscape y tablets: activities redimensionables, sin bloqueo de orientación y contenido centrado con ancho máximo.
 - [x] Nombre visible de la app: BudJet.
 - [x] Cuenta de Google Play creada y verificada.

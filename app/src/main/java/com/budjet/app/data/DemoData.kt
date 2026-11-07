@@ -301,7 +301,7 @@ object DemoData {
         )
 
         val data = AppData(
-            version = 9,
+            version = 10,
             settings = Settings(openingBalanceCents = 1_345_000),
             categories = categories,
             accounts = accounts,
