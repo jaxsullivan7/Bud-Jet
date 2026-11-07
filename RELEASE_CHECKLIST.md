@@ -19,6 +19,7 @@
 - [x] AAB 1.0.0 firmado (`BudJet-1.0.0-release.aab`, 6,83 MB).
 - [x] APK 1.0.0 firmada (`BudJet-1.0.0-release.apk`, 3,89 MB).
 - [x] Firma y versión verificadas con `apksigner` y `aapt`.
+- [x] Landscape y tablets: activities redimensionables, sin bloqueo de orientación y contenido centrado con ancho máximo.
 - [x] Nombre visible de la app: BudJet.
 - [x] Cuenta de Google Play creada y verificada.
 - [x] Inglés completo de la interfaz.

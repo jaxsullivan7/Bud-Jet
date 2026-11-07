@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
@@ -56,6 +57,7 @@ import com.budjet.app.data.TxType
 import com.budjet.app.data.movementDateOrDefault
 import com.budjet.app.ui.components.AppTab
 import com.budjet.app.ui.components.BudBottomBar
+import com.budjet.app.ui.components.ResponsiveContent
 import com.budjet.app.ui.screens.AnalysisScreen
 import com.budjet.app.ui.screens.BudgetsScreen
 import com.budjet.app.ui.screens.CategoryDetailScreen
@@ -317,7 +319,7 @@ fun BudJetApp(
             },
             label = "tabs",
         ) { target ->
-            Box(Modifier.fillMaxSize().statusBarsPadding()) {
+            ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
                 when (target) {
                     AppTab.HOME -> HomeScreen(
                         data = data,
@@ -382,7 +384,9 @@ fun BudJetApp(
             selected = tab,
             onSelect = { tab = it },
             onAdd = { openEditor(newDraft()) },
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .widthIn(max = 840.dp),
         )
 
         AnimatedVisibility(
@@ -390,12 +394,8 @@ fun BudJetApp(
             enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
             exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
         ) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(colors.background)
-                    .statusBarsPadding(),
-            ) {
+            Box(Modifier.fillMaxSize().background(colors.background)) {
+            ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
                 SettingsScreen(
                     data = data,
                     onClose = { settingsOpen = false },
@@ -516,6 +516,7 @@ fun BudJetApp(
                     },
                 )
             }
+            }
         }
 
         AnimatedVisibility(
@@ -525,19 +526,16 @@ fun BudJetApp(
         ) {
             val category = categoryDetail
             if (category != null) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(colors.background)
-                        .statusBarsPadding(),
-                ) {
-                    CategoryDetailScreen(
+                Box(Modifier.fillMaxSize().background(colors.background)) {
+            ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
+                CategoryDetailScreen(
                         data = data,
                         category = category,
                         month = month,
                         onClose = { categoryVisible = false },
                         onOpenTransaction = { openEditor(draftFor(it)) },
                     )
+            }
                 }
             }
         }
@@ -547,12 +545,8 @@ fun BudJetApp(
             enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
             exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
         ) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(colors.background)
-                    .statusBarsPadding(),
-            ) {
+            Box(Modifier.fillMaxSize().background(colors.background)) {
+            ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
                 GoalsScreen(
                     data = data,
                     onClose = { goalsOpen = false },
@@ -568,6 +562,7 @@ fun BudJetApp(
                     },
                 )
             }
+            }
         }
 
         AnimatedVisibility(
@@ -575,12 +570,8 @@ fun BudJetApp(
             enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
             exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
         ) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(colors.background)
-                    .statusBarsPadding(),
-            ) {
+            Box(Modifier.fillMaxSize().background(colors.background)) {
+            ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
                 RecurringScreen(
                     data = data,
                     onClose = { recurringOpen = false },
@@ -589,6 +580,7 @@ fun BudJetApp(
                     onToggle = viewModel::setRecurringActive,
                 )
             }
+            }
         }
 
         AnimatedVisibility(
@@ -596,12 +588,8 @@ fun BudJetApp(
             enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
             exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
         ) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(colors.background)
-                    .statusBarsPadding(),
-            ) {
+            Box(Modifier.fillMaxSize().background(colors.background)) {
+            ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
                 PortfolioScreen(
                     data = data,
                     onClose = { portfolioOpen = false },
@@ -611,6 +599,7 @@ fun BudJetApp(
                     onAddEntry = viewModel::addInvestmentEntry,
                 )
             }
+            }
         }
 
         AnimatedVisibility(
@@ -618,12 +607,8 @@ fun BudJetApp(
             enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
             exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
         ) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(colors.background)
-                    .statusBarsPadding(),
-            ) {
+            Box(Modifier.fillMaxSize().background(colors.background)) {
+            ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
                 PatrimonioScreen(
                     data = data,
                     onClose = { patrimonioOpen = false },
@@ -637,6 +622,7 @@ fun BudJetApp(
                     },
                 )
             }
+            }
         }
 
         AnimatedVisibility(
@@ -644,12 +630,8 @@ fun BudJetApp(
             enter = slideInVertically(tween(320)) { it / 8 } + fadeIn(tween(240)),
             exit = slideOutVertically(tween(260)) { it / 8 } + fadeOut(tween(180)),
         ) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(colors.background)
-                    .statusBarsPadding(),
-            ) {
+            Box(Modifier.fillMaxSize().background(colors.background)) {
+            ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
                 ImportScreen(
                     data = data,
                     onClose = { importOpen = false },
@@ -665,6 +647,7 @@ fun BudJetApp(
                     },
                 )
             }
+            }
         }
 
         AnimatedVisibility(
@@ -674,13 +657,9 @@ fun BudJetApp(
         ) {
             val draft = editorDraft
             if (draft != null) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(colors.background)
-                        .statusBarsPadding(),
-                ) {
-                    TransactionEditorScreen(
+                Box(Modifier.fillMaxSize().background(colors.background)) {
+            ResponsiveContent(Modifier.fillMaxSize().statusBarsPadding()) {
+                TransactionEditorScreen(
                         data = data,
                         initial = draft,
                         onClose = { editorVisible = false },
@@ -691,6 +670,7 @@ fun BudJetApp(
                         },
                         onDelete = { id -> deleteTransaction(id) },
                     )
+            }
                 }
             }
         }

@@ -155,6 +155,7 @@ private fun QuickAddContent(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.42f))
+            .verticalScroll(rememberScrollState())
             .clickable(onClick = onCancel),
         contentAlignment = Alignment.Center,
     ) {

@@ -19,6 +19,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
+            android:resizeableActivity="true"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.BudJet">
             <intent-filter>
@@ -42,6 +43,7 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTop"
+            android:resizeableActivity="true"
             android:theme="@style/Theme.BudJet.QuickAdd"
             android:windowSoftInputMode="adjustResize" />
 
