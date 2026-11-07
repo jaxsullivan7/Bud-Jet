@@ -6,7 +6,8 @@
 - **Package:** `com.budjet.app`
 - **Modelo:** gratis, sin anuncios
 - **Idiomas:** español + inglés
-- **Soporte:** newprojectsontheline@gmail.com
+- **Soporte:** supportbudjet@gmail.com
+- **Cuenta de Play:** personal verificada · nombre público NewProjects
 - **Legal:** New Project · España
 - **Analítica:** ninguna en v1.0; solo Play Console Vitals
 
@@ -17,8 +18,15 @@
 - [x] AAB generado (`app/build/outputs/bundle/release/app-release.aab`).
 - [x] APK de release firmada (`app/build/outputs/apk/release/app-release.apk`).
 - [x] Nombre visible de la app: BudJet.
-- [ ] Cuenta de Google Play creada y verificada.
+- [x] Cuenta de Google Play creada y verificada.
 - [ ] Inglés completo de la interfaz.
+  - [x] Bloque 1: navegación, Inicio, fechas y formato de importes.
+  - [ ] Bloque 2: Movimientos.
+  - [ ] Bloque 3: Presupuestos y Análisis.
+  - [ ] Bloque 4: Patrimonio, deudas y cartera.
+  - [ ] Bloque 5: Ajustes, formularios, importación y avisos.
+  - [ ] Bloque 6: widget, notificaciones y accesibilidad.
+  - [ ] Bloque 7: categorías, cuentas y datos de ejemplo por ID.
 - [ ] QA en dispositivos reales.
 - [ ] Política de privacidad y términos publicados.
 - [ ] Ficha de tienda (icono, capturas, textos).
@@ -35,7 +43,7 @@
 
 ## Siguiente tarea
 
-1. Crear la cuenta de Google Play con `newprojectsontheline@gmail.com`.
-2. Elegir cuenta personal, pagar la cuota única y verificar identidad.
-3. Configurar el nombre público del desarrollador: **New Project**.
-4. Avisar cuando la cuenta esté verificada para subir el AAB a Internal testing.
+1. Bloque 2 de localización: Movimientos, selector de orden y selección múltiple.
+2. Mantener el español como idioma base y el inglés en `values-en`.
+3. QA de la build release en dispositivo real.
+4. Política de privacidad, términos y ficha de tienda.

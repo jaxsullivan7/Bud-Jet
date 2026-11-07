@@ -35,7 +35,7 @@ import java.time.LocalDate
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w411dp-h891dp-420dpi")
+@Config(qualifiers = "es-rES-w411dp-h891dp-420dpi")
 class ScreenshotTest {
 
     @get:Rule

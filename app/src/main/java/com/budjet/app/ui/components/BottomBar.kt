@@ -1,5 +1,6 @@
 package com.budjet.app.ui.components
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -30,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,16 +39,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.ui.theme.BudTheme
 
 enum class AppTab(
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {
-    HOME("Inicio", Icons.Rounded.Home),
-    TRANSACTIONS("Movimientos", Icons.Rounded.ReceiptLong),
-    BUDGETS("Presupuestos", Icons.Rounded.PieChartOutline),
-    ANALYSIS("Análisis", Icons.Rounded.Insights),
+    HOME(R.string.nav_home, Icons.Rounded.Home),
+    TRANSACTIONS(R.string.nav_transactions, Icons.Rounded.ReceiptLong),
+    BUDGETS(R.string.nav_budgets, Icons.Rounded.PieChartOutline),
+    ANALYSIS(R.string.nav_analysis, Icons.Rounded.Insights),
 }
 
 @Composable
@@ -91,7 +94,7 @@ fun BudBottomBar(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Add,
-                        contentDescription = "Añadir movimiento",
+                        contentDescription = stringResource(R.string.action_add_transaction),
                         tint = colors.onPrimary,
                         modifier = Modifier.size(23.dp),
                     )
@@ -112,6 +115,7 @@ private fun BarTab(
 ) {
     val colors = BudTheme.colors
     val active = tab == selected
+    val label = stringResource(tab.labelRes)
     val tint by animateColorAsState(
         targetValue = if (active) colors.primary else colors.inkMuted,
         animationSpec = tween(220),
@@ -128,13 +132,13 @@ private fun BarTab(
     ) {
         Icon(
             imageVector = tab.icon,
-            contentDescription = tab.label,
+            contentDescription = label,
             tint = tint,
             modifier = Modifier.size(21.dp),
         )
         Spacer(Modifier.height(3.dp))
         Text(
-            text = tab.label,
+            text = label,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontSize = 8.5.sp,
                 letterSpacing = 0.1.sp,

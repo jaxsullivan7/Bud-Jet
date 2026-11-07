@@ -5,4 +5,69 @@
     <string name="widget_add">+ Añadir</string>
     <string name="widget_balance_preview">10.680,22 €</string>
     <string name="widget_month_preview">Este mes · 276,39 € de gastos</string>
+
+    <!-- Navegación -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_transactions">Movimientos</string>
+    <string name="nav_budgets">Presupuestos</string>
+    <string name="nav_analysis">Análisis</string>
+    <string name="action_add_transaction">Añadir movimiento</string>
+
+    <!-- Inicio -->
+    <string name="action_settings">Ajustes</string>
+    <string name="home_greeting">Hola, %1$s.</string>
+    <string name="home_date_pattern">EEEE, d \'de\' MMMM</string>
+    <string name="section_cash_flow">Flujo de caja</string>
+    <string name="action_view_analysis">Ver análisis</string>
+    <string name="overline_this_month">ESTE MES</string>
+    <string name="home_no_transactions_title">Aún no hay movimientos</string>
+    <plurals name="home_scheduled_transactions">
+        <item quantity="one">Tienes %1$d movimiento programado. Se contará en el saldo en su fecha.</item>
+        <item quantity="other">Tienes %1$d movimientos programados. Se contarán en el saldo en su fecha.</item>
+    </plurals>
+    <string name="home_add_first_hint">Apunta tu primer gasto o ingreso con el botón + y aquí verás tu flujo de caja.</string>
+    <string name="home_saved">Has ahorrado</string>
+    <string name="home_overspent">Has gastado de más</string>
+    <string name="legend_income">Ingresos</string>
+    <string name="legend_expenses">Gastos</string>
+    <string name="home_savings_rate">%1$s de ahorro</string>
+    <string name="home_no_income">Sin ingresos</string>
+    <plurals name="home_scheduled_pending">
+        <item quantity="one">%1$d movimiento programado sin contar todavía.</item>
+        <item quantity="other">%1$d movimientos programados sin contar todavía.</item>
+    </plurals>
+    <string name="section_budget">Presupuesto</string>
+    <string name="action_adjust">Ajustar</string>
+    <string name="action_create">Crear</string>
+    <string name="overline_monthly_budget">PRESUPUESTO MENSUAL</string>
+    <string name="home_budget_available">%1$s disponibles</string>
+    <string name="home_budget_over">%1$s de más</string>
+    <string name="home_budget_detail">de %1$s · %2$s gastados</string>
+    <string name="home_budget_daily">Puedes gastar unos %1$s al día hasta fin de mes.</string>
+    <string name="home_budget_exceeded">Has superado tu presupuesto. Buen momento para frenar un poco.</string>
+    <string name="home_budget_few_days">Quedan pocos días de mes.</string>
+    <string name="home_budget_empty_title">Pon un límite a tu mes</string>
+    <string name="home_budget_empty_body">Define cuánto quieres gastar y te avisaremos antes de pasarte.</string>
+    <string name="section_goals">Objetivos</string>
+    <string name="action_view_all">Ver todos</string>
+    <string name="home_goals_empty_title">Ponle nombre a tu próximo ahorro</string>
+    <string name="home_goals_empty_body">Crea un objetivo y ve apartando poco a poco.</string>
+    <string name="home_goal_of">de %1$s</string>
+    <string name="home_goal_reached">Conseguido</string>
+    <string name="home_goal_remaining">%1$s · faltan %2$s</string>
+    <string name="section_recent_transactions">Últimos movimientos</string>
+    <string name="home_no_movements_hint">Aún no hay movimientos. Pulsa + para apuntar el primero.</string>
+    <string name="section_upcoming">Próximos</string>
+    <plurals name="home_upcoming_count">
+        <item quantity="one">%1$d programado</item>
+        <item quantity="other">%1$d programados</item>
+    </plurals>
+    <string name="overline_total_balance">SALDO TOTAL</string>
+    <string name="badge_up_to_date">Al día</string>
+    <string name="home_vs_previous">vs. %1$s</string>
+    <string name="home_starting_point">Tu punto de partida</string>
+    <string name="overline_income">INGRESOS</string>
+    <string name="overline_expenses">GASTOS</string>
+    <string name="home_delta_more">%1$s más que el mes pasado</string>
+    <string name="home_delta_less">%1$s menos que el mes pasado</string>
 </resources>

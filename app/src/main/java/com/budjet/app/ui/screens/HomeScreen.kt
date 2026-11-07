@@ -37,11 +37,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
@@ -66,13 +70,11 @@ import com.budjet.app.ui.components.TransactionRow
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
 import com.budjet.app.ui.theme.BudTheme
-import com.budjet.app.util.capitalizeEs
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.percentText
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.math.abs
 
 @Composable
@@ -113,9 +115,11 @@ fun HomeScreen(
             Finance.balanceAt(data, date).toFloat()
         }
     }
-    val dayLine = remember {
-        today.format(DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", Locale("es", "ES")))
-            .capitalizeEs()
+    val locale = LocalConfiguration.current.locales[0]
+    val datePattern = stringResource(R.string.home_date_pattern)
+    val dayLine = remember(today, locale, datePattern) {
+        today.format(DateTimeFormatter.ofPattern(datePattern, locale))
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
     }
 
     val budget = Finance.overallBudget(data)
@@ -141,7 +145,7 @@ fun HomeScreen(
                 }
                 SoftIconButton(
                     icon = Icons.Rounded.Settings,
-                    contentDescription = "Ajustes",
+                    contentDescription = stringResource(R.string.action_settings),
                     onClick = onOpenSettings,
                     size = 38.dp,
                     container = Color.Transparent,
@@ -152,7 +156,7 @@ fun HomeScreen(
         item {
             Spacer(Modifier.height(24.dp))
             Text(
-                text = "Hola, ${data.settings.name}.",
+                text = stringResource(R.string.home_greeting, data.settings.name),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.ink,
             )
@@ -188,26 +192,30 @@ fun HomeScreen(
         item {
             Spacer(Modifier.height(28.dp))
             SectionHeader(
-                title = "Flujo de caja",
-                trailing = "Ver análisis",
+                title = stringResource(R.string.section_cash_flow),
+                trailing = stringResource(R.string.action_view_analysis),
                 onTrailingClick = onSeeAnalysis,
             )
             Spacer(Modifier.height(12.dp))
             BudCard(onClick = onSeeAnalysis) {
                 if (postedTx.isEmpty()) {
-                    Overline("ESTE MES")
+                    Overline(stringResource(R.string.overline_this_month))
                     Spacer(Modifier.height(3.dp))
                     Text(
-                        text = "Aún no hay movimientos",
+                        text = stringResource(R.string.home_no_transactions_title),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.ink,
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = if (futureCount > 0) {
-                            "Tienes $futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"}. Se contarán en el saldo en su fecha."
+                            pluralStringResource(
+                                R.plurals.home_scheduled_transactions,
+                                futureCount,
+                                futureCount,
+                            )
                         } else {
-                            "Apunta tu primer gasto o ingreso con el botón + y aquí verás tu flujo de caja."
+                            stringResource(R.string.home_add_first_hint)
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
@@ -219,10 +227,12 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column {
-                            Overline("ESTE MES")
+                            Overline(stringResource(R.string.overline_this_month))
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                text = if (totals.balance >= 0) "Has ahorrado" else "Has gastado de más",
+                                text = stringResource(
+                                    if (totals.balance >= 0) R.string.home_saved else R.string.home_overspent,
+                                ),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = colors.ink,
                             )
@@ -239,12 +249,19 @@ fun HomeScreen(
                     CashflowChart(points = series, highlightMonth = month)
                     Spacer(Modifier.height(16.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        LegendDot(colors.income, "Ingresos")
+                        LegendDot(colors.income, stringResource(R.string.legend_income))
                         Spacer(Modifier.width(16.dp))
-                        LegendDot(colors.expense, "Gastos")
+                        LegendDot(colors.expense, stringResource(R.string.legend_expenses))
                         Spacer(Modifier.weight(1f))
                         Text(
-                            text = if (totals.income > 0) "${percentText(totals.savingsRate)} de ahorro" else "Sin ingresos",
+                            text = if (totals.income > 0) {
+                                stringResource(
+                                    R.string.home_savings_rate,
+                                    percentText(totals.savingsRate),
+                                )
+                            } else {
+                                stringResource(R.string.home_no_income)
+                            },
                             style = MaterialTheme.typography.labelMedium,
                             color = colors.inkMuted,
                         )
@@ -252,7 +269,11 @@ fun HomeScreen(
                     if (futureCount > 0) {
                         Spacer(Modifier.height(10.dp))
                         Text(
-                            text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} sin contar todavía.",
+                            text = pluralStringResource(
+                                R.plurals.home_scheduled_pending,
+                                futureCount,
+                                futureCount,
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.warning,
                         )
@@ -264,8 +285,10 @@ fun HomeScreen(
         item {
             Spacer(Modifier.height(26.dp))
             SectionHeader(
-                title = "Presupuesto",
-                trailing = if (budget != null) "Ajustar" else "Crear",
+                title = stringResource(R.string.section_budget),
+                trailing = stringResource(
+                    if (budget != null) R.string.action_adjust else R.string.action_create,
+                ),
                 onTrailingClick = onSeeBudgets,
             )
             Spacer(Modifier.height(12.dp))
@@ -286,21 +309,30 @@ fun HomeScreen(
                         }
                         Spacer(Modifier.width(16.dp))
                         Column(Modifier.weight(1f)) {
-                            Overline("PRESUPUESTO MENSUAL")
+                            Overline(stringResource(R.string.overline_monthly_budget))
                             Spacer(Modifier.height(3.dp))
                             Text(
                                 text = if (budgetRemaining >= 0) {
-                                    "${formatMoney(budgetRemaining, currency)} disponibles"
+                                    stringResource(
+                                        R.string.home_budget_available,
+                                        formatMoney(budgetRemaining, currency),
+                                    )
                                 } else {
-                                    "${formatMoney(abs(budgetRemaining), currency)} de más"
+                                    stringResource(
+                                        R.string.home_budget_over,
+                                        formatMoney(abs(budgetRemaining), currency),
+                                    )
                                 },
                                 style = MaterialTheme.typography.titleLarge,
                                 color = if (budgetRemaining < 0) colors.expense else colors.ink,
                             )
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                text = "de ${formatMoney(budget.limitCents, currency)} · " +
-                                    "${formatMoney(budgetSpent, currency)} gastados",
+                                text = stringResource(
+                                    R.string.home_budget_detail,
+                                    formatMoney(budget.limitCents, currency),
+                                    formatMoney(budgetSpent, currency),
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.inkMuted,
                             )
@@ -321,11 +353,14 @@ fun HomeScreen(
                     Spacer(Modifier.height(9.dp))
                     Text(
                         text = if (budgetRemaining >= 0 && dailyAllowance > 0) {
-                            "Puedes gastar unos ${formatMoney(dailyAllowance, currency)} al día hasta fin de mes."
+                            stringResource(
+                                R.string.home_budget_daily,
+                                formatMoney(dailyAllowance, currency),
+                            )
                         } else if (budgetRemaining < 0) {
-                            "Has superado tu presupuesto. Buen momento para frenar un poco."
+                            stringResource(R.string.home_budget_exceeded)
                         } else {
-                            "Quedan pocos días de mes."
+                            stringResource(R.string.home_budget_few_days)
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
@@ -335,7 +370,7 @@ fun HomeScreen(
                 BudCard(onClick = onSeeBudgets) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "Pon un límite a tu mes",
+                            text = stringResource(R.string.home_budget_empty_title),
                             style = MaterialTheme.typography.titleMedium,
                             color = colors.ink,
                         )
@@ -349,7 +384,7 @@ fun HomeScreen(
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "Define cuánto quieres gastar y te avisaremos antes de pasarte.",
+                        text = stringResource(R.string.home_budget_empty_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -360,8 +395,12 @@ fun HomeScreen(
         item {
             Spacer(Modifier.height(26.dp))
             SectionHeader(
-                title = "Objetivos",
-                trailing = if (data.savingsGoals.isNotEmpty()) "Ver todos" else null,
+                title = stringResource(R.string.section_goals),
+                trailing = if (data.savingsGoals.isNotEmpty()) {
+                    stringResource(R.string.action_view_all)
+                } else {
+                    null
+                },
                 onTrailingClick = onSeeGoals,
             )
             Spacer(Modifier.height(12.dp))
@@ -369,7 +408,7 @@ fun HomeScreen(
                 BudCard(onClick = onSeeGoals) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "Ponle nombre a tu próximo ahorro",
+                            text = stringResource(R.string.home_goals_empty_title),
                             style = MaterialTheme.typography.titleMedium,
                             color = colors.ink,
                         )
@@ -383,7 +422,7 @@ fun HomeScreen(
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "Crea un objetivo y ve apartando poco a poco.",
+                        text = stringResource(R.string.home_goals_empty_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -407,8 +446,8 @@ fun HomeScreen(
         item {
             Spacer(Modifier.height(26.dp))
             SectionHeader(
-                title = "Últimos movimientos",
-                trailing = "Ver todos",
+                title = stringResource(R.string.section_recent_transactions),
+                trailing = stringResource(R.string.action_view_all),
                 onTrailingClick = onSeeTransactions,
             )
         }
@@ -421,7 +460,7 @@ fun HomeScreen(
             item {
                 BudCard {
                     Text(
-                        text = "Aún no hay movimientos. Pulsa + para apuntar el primero.",
+                        text = stringResource(R.string.home_no_movements_hint),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -455,8 +494,12 @@ fun HomeScreen(
             item {
                 Spacer(Modifier.height(26.dp))
                 SectionHeader(
-                    title = "Próximos",
-                    trailing = if (upcoming.size == 1) "1 programado" else "${upcoming.size} programados",
+                    title = stringResource(R.string.section_upcoming),
+                    trailing = pluralStringResource(
+                        R.plurals.home_upcoming_count,
+                        upcoming.size,
+                        upcoming.size,
+                    ),
                 )
             }
             item {
@@ -530,7 +573,7 @@ private fun HomeGoalCard(
             maxLines = 1,
         )
         Text(
-            text = "de ${formatMoney(goal.targetCents, currency)}",
+            text = stringResource(R.string.home_goal_of, formatMoney(goal.targetCents, currency)),
             style = MaterialTheme.typography.bodySmall,
             color = colors.inkMuted,
             maxLines = 1,
@@ -539,7 +582,15 @@ private fun HomeGoalCard(
         LinearProgressBar(progress = progress, color = color, height = 5.dp)
         Spacer(Modifier.height(6.dp))
         Text(
-            text = if (remaining == 0L) "Conseguido" else "${percentText(progress)} · faltan ${formatMoney(remaining, currency)}",
+            text = if (remaining == 0L) {
+                stringResource(R.string.home_goal_reached)
+            } else {
+                stringResource(
+                    R.string.home_goal_remaining,
+                    percentText(progress),
+                    formatMoney(remaining, currency),
+                )
+            },
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
             color = colors.inkMuted,
             maxLines = 1,
@@ -556,9 +607,12 @@ private fun BalanceHero(    balance: Long,
     month: YearMonth,
 ) {
     val colors = BudTheme.colors
-    val previousLabel = month.minusMonths(1)
-        .format(DateTimeFormatter.ofPattern("MMMM", Locale("es", "ES")))
-        .replace(".", "")
+    val locale = LocalConfiguration.current.locales[0]
+    val previousLabel = remember(month, locale) {
+        month.minusMonths(1)
+            .format(DateTimeFormatter.ofPattern("MMMM", locale))
+            .replace(".", "")
+    }
 
     Box(
         modifier = Modifier
@@ -591,7 +645,7 @@ private fun BalanceHero(    balance: Long,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Overline("SALDO TOTAL", color = colors.heroMuted)
+                Overline(stringResource(R.string.overline_total_balance), color = colors.heroMuted)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         Modifier
@@ -600,7 +654,7 @@ private fun BalanceHero(    balance: Long,
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "Al día",
+                        text = stringResource(R.string.badge_up_to_date),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.heroMuted,
                     )
@@ -639,13 +693,13 @@ private fun BalanceHero(    balance: Long,
                     }
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "vs. $previousLabel",
+                        text = stringResource(R.string.home_vs_previous, previousLabel),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.heroMuted,
                     )
                 } else {
                     Text(
-                        text = "Tu punto de partida",
+                        text = stringResource(R.string.home_starting_point),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.heroMuted,
                     )
@@ -678,7 +732,7 @@ private fun MonthSummaryCard(
                 .height(96.dp),
         ) {
             SummaryColumn(
-                label = "INGRESOS",
+                label = stringResource(R.string.overline_income),
                 value = income,
                 delta = Finance.monthDelta(income, previous.income),
                 color = colors.income,
@@ -692,7 +746,7 @@ private fun MonthSummaryCard(
                     .background(colors.line),
             )
             SummaryColumn(
-                label = "GASTOS",
+                label = stringResource(R.string.overline_expenses),
                 value = expense,
                 delta = Finance.monthDelta(expense, previous.expense),
                 color = colors.expense,
@@ -738,7 +792,10 @@ private fun SummaryColumn(
         )
         if (delta != null && abs(delta) > 0.0001f) {
             Text(
-                text = "${percentText(abs(delta))} ${if (delta > 0) "más" else "menos"} que el mes pasado",
+                text = stringResource(
+                    if (delta > 0) R.string.home_delta_more else R.string.home_delta_less,
+                    percentText(abs(delta)),
+                ),
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                 color = if (good) colors.inkMuted else colors.expense,
                 maxLines = 1,
