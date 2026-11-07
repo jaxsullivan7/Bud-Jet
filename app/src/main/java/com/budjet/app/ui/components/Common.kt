@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
 import com.budjet.app.data.TxType
@@ -230,7 +232,7 @@ fun MonthSelector(
     ) {
         SoftIconButton(
             icon = Icons.Rounded.ChevronLeft,
-            contentDescription = "Mes anterior",
+            contentDescription = stringResource(R.string.month_previous),
             onClick = onPrevious,
             size = 34.dp,
         )
@@ -244,7 +246,7 @@ fun MonthSelector(
         )
         SoftIconButton(
             icon = Icons.Rounded.ChevronRight,
-            contentDescription = "Mes siguiente",
+            contentDescription = stringResource(R.string.month_next),
             onClick = onNext,
             size = 34.dp,
             enabled = canGoNext,

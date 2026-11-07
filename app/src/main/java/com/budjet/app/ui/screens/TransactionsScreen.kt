@@ -1,5 +1,6 @@
 package com.budjet.app.ui.screens
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -56,10 +57,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
@@ -81,17 +85,20 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneOffset
 
-private enum class TxFilter(val label: String) {
-    ALL("Todo"),
-    EXPENSE("Gastos"),
-    INCOME("Ingresos"),
+private enum class TxFilter(@StringRes val labelRes: Int) {
+    ALL(R.string.filter_all),
+    EXPENSE(R.string.filter_expenses),
+    INCOME(R.string.filter_income),
 }
 
-private enum class MovementSort(val label: String, val short: String) {
-    DATE("Fecha (más reciente primero)", "Fecha"),
-    REGISTERED("Registro (último primero)", "Registro"),
-    AMOUNT_DESC("Importe (mayor primero)", "Importe ↓"),
-    AMOUNT_ASC("Importe (menor primero)", "Importe ↑"),
+private enum class MovementSort(
+    @StringRes val labelRes: Int,
+    @StringRes val shortRes: Int,
+) {
+    DATE(R.string.sort_date, R.string.sort_date_short),
+    REGISTERED(R.string.sort_registered, R.string.sort_registered_short),
+    AMOUNT_DESC(R.string.sort_amount_desc, R.string.sort_amount_desc_short),
+    AMOUNT_ASC(R.string.sort_amount_asc, R.string.sort_amount_asc_short),
 }
 
 @Composable
@@ -189,13 +196,13 @@ fun TransactionsScreen(
     ) {
         item {
             ScreenTitle(
-                overline = "HISTORIAL",
-                title = "Movimientos",
+                overline = stringResource(R.string.transactions_overline),
+                title = stringResource(R.string.nav_transactions),
                 trailing = {
                     if (selectionMode) {
                         SoftIconButton(
                             icon = Icons.Rounded.Close,
-                            contentDescription = "Cancelar selección",
+                            contentDescription = stringResource(R.string.action_cancel_selection),
                             onClick = { selectedIds = emptySet() },
                             size = 38.dp,
                             container = colors.primarySoft,
@@ -203,7 +210,9 @@ fun TransactionsScreen(
                     } else {
                         SoftIconButton(
                             icon = if (showSearch) Icons.Rounded.Close else Icons.Rounded.Search,
-                            contentDescription = if (showSearch) "Cerrar búsqueda" else "Buscar",
+                            contentDescription = stringResource(
+                                if (showSearch) R.string.action_close_search else R.string.action_search,
+                            ),
                             onClick = {
                                 showSearch = !showSearch
                                 if (!showSearch) query = ""
@@ -231,7 +240,11 @@ fun TransactionsScreen(
                         canGoNext = month.isBefore(YearMonth.now()),
                     )
                     Text(
-                        text = "${allMonthTx.size} mov.",
+                        text = pluralStringResource(
+                            R.plurals.transactions_count,
+                            allMonthTx.size,
+                            allMonthTx.size,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -243,7 +256,7 @@ fun TransactionsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Ordenar por",
+                        text = stringResource(R.string.transactions_sort_by),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -292,21 +305,21 @@ fun TransactionsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     SummaryCell(
-                        label = "INGRESOS",
+                        label = stringResource(R.string.overline_income),
                         value = totals.income,
                         color = colors.income,
                         currency = currency,
                         modifier = Modifier.weight(1f),
                     )
                     SummaryCell(
-                        label = "GASTOS",
+                        label = stringResource(R.string.overline_expenses),
                         value = totals.expense,
                         color = colors.expense,
                         currency = currency,
                         modifier = Modifier.weight(1f),
                     )
                     SummaryCell(
-                        label = "BALANCE",
+                        label = stringResource(R.string.overline_balance),
                         value = totals.balance,
                         color = if (totals.balance >= 0) colors.income else colors.expense,
                         currency = currency,
@@ -321,7 +334,11 @@ fun TransactionsScreen(
             item {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Cifras de los resultados de búsqueda · ${summarySource.size} ${if (summarySource.size == 1) "movimiento" else "movimientos"}",
+                    text = pluralStringResource(
+                        R.plurals.transactions_search_summary,
+                        summarySource.size,
+                        summarySource.size,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.primary,
                 )
@@ -332,7 +349,11 @@ fun TransactionsScreen(
             item {
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} · no afectan al saldo hasta su fecha.",
+                    text = pluralStringResource(
+                        R.plurals.transactions_scheduled_note,
+                        futureCount,
+                        futureCount,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.warning,
                 )
@@ -344,7 +365,7 @@ fun TransactionsScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TxFilter.entries.forEach { entry ->
                     FilterPill(
-                        text = entry.label,
+                        text = stringResource(entry.labelRes),
                         selected = filter == entry,
                         onClick = { filter = entry },
                     )
@@ -357,12 +378,20 @@ fun TransactionsScreen(
             item {
                 EmptyState(
                     icon = Icons.Rounded.ReceiptLong,
-                    title = if (query.isNotBlank()) "Sin resultados" else "Un mes sin movimientos",
-                    message = if (query.isNotBlank()) {
-                        "Prueba con otra palabra o cambia el filtro."
-                    } else {
-                        "Apunta tu primer gasto o ingreso con el botón +."
-                    },
+                    title = stringResource(
+                        if (query.isNotBlank()) {
+                            R.string.transactions_no_results
+                        } else {
+                            R.string.transactions_empty_month
+                        },
+                    ),
+                    message = stringResource(
+                        if (query.isNotBlank()) {
+                            R.string.transactions_no_results_hint
+                        } else {
+                            R.string.transactions_empty_hint
+                        },
+                    ),
                 )
             }
         } else if (sort == MovementSort.DATE) {
@@ -433,10 +462,12 @@ fun TransactionsScreen(
                         selectedIds = emptySet()
                         showBulkDate = false
                     },
-                ) { Text("Cambiar fecha", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_change_date), color = colors.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showBulkDate = false }) { Text("Cerrar calendario", color = colors.inkMuted) }
+                TextButton(onClick = { showBulkDate = false }) {
+                    Text(stringResource(R.string.action_close_calendar), color = colors.inkMuted)
+                }
             },
         ) {
             DatePicker(state = state, showModeToggle = false)
@@ -448,10 +479,19 @@ fun TransactionsScreen(
             onDismissRequest = { confirmBulkDelete = false },
             containerColor = colors.surface,
             shape = RoundedCornerShape(26.dp),
-            title = { Text("¿Eliminar ${selectedIds.size} movimientos?", color = colors.ink) },
+            title = {
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.transactions_delete_title,
+                        selectedIds.size,
+                        selectedIds.size,
+                    ),
+                    color = colors.ink,
+                )
+            },
             text = {
                 Text(
-                    text = "Se borrarán de tu historial. Esta acción no se puede deshacer desde aquí.",
+                    text = stringResource(R.string.transactions_delete_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.inkMuted,
                 )
@@ -463,10 +503,12 @@ fun TransactionsScreen(
                         selectedIds = emptySet()
                         confirmBulkDelete = false
                     },
-                ) { Text("Eliminar", color = colors.expense) }
+                ) { Text(stringResource(R.string.action_delete), color = colors.expense) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmBulkDelete = false }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { confirmBulkDelete = false }) {
+                    Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
+                }
             },
         )
     }
@@ -487,12 +529,16 @@ private fun BulkSelectionBar(
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = if (count == 1) "1 seleccionado" else "$count seleccionados",
+                    text = pluralStringResource(
+                        R.plurals.transactions_selected,
+                        count,
+                        count,
+                    ),
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.ink,
                 )
                 Text(
-                    text = "Mantén pulsado para elegir varios",
+                    text = stringResource(R.string.transactions_selection_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -508,7 +554,7 @@ private fun BulkSelectionBar(
                 ) {
                     Icon(Icons.Rounded.Event, contentDescription = null, tint = colors.primary, modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Fecha", style = MaterialTheme.typography.labelMedium, color = colors.primary)
+                    Text(stringResource(R.string.action_date), style = MaterialTheme.typography.labelMedium, color = colors.primary)
                 }
                 Row(
                     modifier = Modifier
@@ -519,10 +565,10 @@ private fun BulkSelectionBar(
                 ) {
                     Icon(Icons.Rounded.DeleteOutline, contentDescription = null, tint = colors.expense, modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Eliminar", style = MaterialTheme.typography.labelMedium, color = colors.expense)
+                    Text(stringResource(R.string.action_delete), style = MaterialTheme.typography.labelMedium, color = colors.expense)
                 }
                 TextButton(onClick = onCancel) {
-                    Text("Cancelar", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                    Text(stringResource(R.string.action_cancel), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 }
             }
         }
@@ -658,7 +704,7 @@ private fun SortControl(
             )
             Spacer(Modifier.width(5.dp))
             Text(
-                text = sort.short,
+                text = stringResource(sort.shortRes),
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.ink,
             )
@@ -671,7 +717,7 @@ private fun SortControl(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = option.label,
+                            text = stringResource(option.labelRes),
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (option == sort) colors.primary else colors.ink,
                         )
@@ -742,7 +788,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
             decorationBox = { inner ->
                 if (query.isEmpty()) {
                     Text(
-                        text = "Buscar por nota o categoría",
+                        text = stringResource(R.string.transactions_search_hint),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -753,7 +799,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
         if (query.isNotEmpty()) {
             Icon(
                 Icons.Rounded.Close,
-                contentDescription = "Borrar",
+                contentDescription = stringResource(R.string.action_clear),
                 tint = colors.inkMuted,
                 modifier = Modifier
                     .size(18.dp)

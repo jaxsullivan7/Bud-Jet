@@ -70,4 +70,64 @@
     <string name="overline_expenses">EXPENSES</string>
     <string name="home_delta_more">%1$s more than last month</string>
     <string name="home_delta_less">%1$s less than last month</string>
+
+    <!-- Transactions -->
+    <string name="transactions_overline">HISTORY</string>
+    <string name="action_cancel_selection">Cancel selection</string>
+    <string name="action_close_search">Close search</string>
+    <string name="action_search">Search</string>
+    <plurals name="transactions_count">
+        <item quantity="one">%1$d txn</item>
+        <item quantity="other">%1$d txns</item>
+    </plurals>
+    <string name="transactions_sort_by">Sort by</string>
+    <string name="sort_date">Date (newest first)</string>
+    <string name="sort_date_short">Date</string>
+    <string name="sort_registered">Added (newest first)</string>
+    <string name="sort_registered_short">Added</string>
+    <string name="sort_amount_desc">Amount (highest first)</string>
+    <string name="sort_amount_desc_short">Amount ↓</string>
+    <string name="sort_amount_asc">Amount (lowest first)</string>
+    <string name="sort_amount_asc_short">Amount ↑</string>
+    <string name="overline_balance">BALANCE</string>
+    <plurals name="transactions_search_summary">
+        <item quantity="one">Search results totals · %1$d transaction</item>
+        <item quantity="other">Search results totals · %1$d transactions</item>
+    </plurals>
+    <plurals name="transactions_scheduled_note">
+        <item quantity="one">%1$d scheduled transaction · does not affect your balance until its date.</item>
+        <item quantity="other">%1$d scheduled transactions · do not affect your balance until their dates.</item>
+    </plurals>
+    <string name="filter_all">All</string>
+    <string name="filter_expenses">Expenses</string>
+    <string name="filter_income">Income</string>
+    <string name="transactions_no_results">No results</string>
+    <string name="transactions_empty_month">No transactions this month</string>
+    <string name="transactions_no_results_hint">Try another word or change the filter.</string>
+    <string name="transactions_empty_hint">Add your first expense or income with the + button.</string>
+    <plurals name="transactions_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="transactions_selection_hint">Long-press to select several</string>
+    <string name="action_date">Date</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_change_date">Change date</string>
+    <string name="action_close_calendar">Close calendar</string>
+    <plurals name="transactions_delete_title">
+        <item quantity="one">Delete %1$d transaction?</item>
+        <item quantity="other">Delete %1$d transactions?</item>
+    </plurals>
+    <string name="transactions_delete_body">They will be removed from your history. This action cannot be undone from here.</string>
+    <string name="transactions_search_hint">Search by note or category</string>
+    <string name="action_clear">Clear</string>
+    <string name="semantics_selected">Selected</string>
+    <string name="semantics_not_selected">Not selected</string>
+    <string name="transaction_fallback">Transaction</string>
+    <string name="semantics_recurring">Recurring transaction</string>
+    <string name="transaction_scheduled">Scheduled</string>
+    <string name="category_uncategorized">Uncategorized</string>
+    <string name="month_previous">Previous month</string>
+    <string name="month_next">Next month</string>
 </resources>

@@ -21,7 +21,7 @@
 - [x] Cuenta de Google Play creada y verificada.
 - [ ] Inglés completo de la interfaz.
   - [x] Bloque 1: navegación, Inicio, fechas y formato de importes.
-  - [ ] Bloque 2: Movimientos.
+  - [x] Bloque 2: Movimientos, orden, búsqueda y selección múltiple.
   - [ ] Bloque 3: Presupuestos y Análisis.
   - [ ] Bloque 4: Patrimonio, deudas y cartera.
   - [ ] Bloque 5: Ajustes, formularios, importación y avisos.
@@ -43,7 +43,7 @@
 
 ## Siguiente tarea
 
-1. Bloque 2 de localización: Movimientos, selector de orden y selección múltiple.
+1. Bloque 3 de localización: Presupuestos y Análisis.
 2. Mantener el español como idioma base y el inglés en `values-en`.
 3. QA de la build release en dispositivo real.
 4. Política de privacidad, términos y ficha de tienda.

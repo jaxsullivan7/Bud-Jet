@@ -70,4 +70,64 @@
     <string name="overline_expenses">GASTOS</string>
     <string name="home_delta_more">%1$s más que el mes pasado</string>
     <string name="home_delta_less">%1$s menos que el mes pasado</string>
+
+    <!-- Movimientos -->
+    <string name="transactions_overline">HISTORIAL</string>
+    <string name="action_cancel_selection">Cancelar selección</string>
+    <string name="action_close_search">Cerrar búsqueda</string>
+    <string name="action_search">Buscar</string>
+    <plurals name="transactions_count">
+        <item quantity="one">%1$d mov.</item>
+        <item quantity="other">%1$d mov.</item>
+    </plurals>
+    <string name="transactions_sort_by">Ordenar por</string>
+    <string name="sort_date">Fecha (más reciente primero)</string>
+    <string name="sort_date_short">Fecha</string>
+    <string name="sort_registered">Registro (último primero)</string>
+    <string name="sort_registered_short">Registro</string>
+    <string name="sort_amount_desc">Importe (mayor primero)</string>
+    <string name="sort_amount_desc_short">Importe ↓</string>
+    <string name="sort_amount_asc">Importe (menor primero)</string>
+    <string name="sort_amount_asc_short">Importe ↑</string>
+    <string name="overline_balance">BALANCE</string>
+    <plurals name="transactions_search_summary">
+        <item quantity="one">Cifras de los resultados de búsqueda · %1$d movimiento</item>
+        <item quantity="other">Cifras de los resultados de búsqueda · %1$d movimientos</item>
+    </plurals>
+    <plurals name="transactions_scheduled_note">
+        <item quantity="one">%1$d movimiento programado · no afecta al saldo hasta su fecha.</item>
+        <item quantity="other">%1$d movimientos programados · no afectan al saldo hasta su fecha.</item>
+    </plurals>
+    <string name="filter_all">Todo</string>
+    <string name="filter_expenses">Gastos</string>
+    <string name="filter_income">Ingresos</string>
+    <string name="transactions_no_results">Sin resultados</string>
+    <string name="transactions_empty_month">Un mes sin movimientos</string>
+    <string name="transactions_no_results_hint">Prueba con otra palabra o cambia el filtro.</string>
+    <string name="transactions_empty_hint">Apunta tu primer gasto o ingreso con el botón +.</string>
+    <plurals name="transactions_selected">
+        <item quantity="one">%1$d seleccionado</item>
+        <item quantity="other">%1$d seleccionados</item>
+    </plurals>
+    <string name="transactions_selection_hint">Mantén pulsado para elegir varios</string>
+    <string name="action_date">Fecha</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_change_date">Cambiar fecha</string>
+    <string name="action_close_calendar">Cerrar calendario</string>
+    <plurals name="transactions_delete_title">
+        <item quantity="one">¿Eliminar %1$d movimiento?</item>
+        <item quantity="other">¿Eliminar %1$d movimientos?</item>
+    </plurals>
+    <string name="transactions_delete_body">Se borrarán de tu historial. Esta acción no se puede deshacer desde aquí.</string>
+    <string name="transactions_search_hint">Buscar por nota o categoría</string>
+    <string name="action_clear">Borrar</string>
+    <string name="semantics_selected">Seleccionado</string>
+    <string name="semantics_not_selected">No seleccionado</string>
+    <string name="transaction_fallback">Movimiento</string>
+    <string name="semantics_recurring">Movimiento recurrente</string>
+    <string name="transaction_scheduled">Programado</string>
+    <string name="category_uncategorized">Sin categoría</string>
+    <string name="month_previous">Mes anterior</string>
+    <string name="month_next">Mes siguiente</string>
 </resources>

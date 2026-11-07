@@ -27,12 +27,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.Account
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
@@ -81,7 +83,9 @@ fun TransactionRow(
         if (selectionMode) {
             Icon(
                 imageVector = if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
-                contentDescription = if (selected) "Seleccionado" else "No seleccionado",
+                contentDescription = stringResource(
+                    if (selected) R.string.semantics_selected else R.string.semantics_not_selected,
+                ),
                 tint = if (selected) colors.primary else colors.inkMuted,
                 modifier = Modifier.size(20.dp),
             )
@@ -92,7 +96,9 @@ fun TransactionRow(
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = transaction.note.ifBlank { category?.name ?: "Movimiento" },
+                    text = transaction.note.ifBlank {
+                        category?.name ?: stringResource(R.string.transaction_fallback)
+                    },
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.ink,
                     maxLines = 1,
@@ -103,7 +109,7 @@ fun TransactionRow(
                     Spacer(Modifier.width(5.dp))
                     Icon(
                         imageVector = Icons.Rounded.EventRepeat,
-                        contentDescription = "Movimiento recurrente",
+                        contentDescription = stringResource(R.string.semantics_recurring),
                         tint = colors.inkMuted,
                         modifier = Modifier.size(12.dp),
                     )
@@ -112,7 +118,7 @@ fun TransactionRow(
                     Spacer(Modifier.width(5.dp))
                     Icon(
                         imageVector = Icons.Rounded.Schedule,
-                        contentDescription = "Programado",
+                        contentDescription = stringResource(R.string.transaction_scheduled),
                         tint = colors.warning,
                         modifier = Modifier.size(12.dp),
                     )
@@ -120,7 +126,7 @@ fun TransactionRow(
             }
             Text(
                 text = buildString {
-                    append(category?.name ?: "Sin categoría")
+                    append(category?.name ?: stringResource(R.string.category_uncategorized))
                     if (account != null) {
                         append(" · ")
                         append(account.name)
@@ -147,7 +153,7 @@ fun TransactionRow(
             )
             if (isFuture) {
                 Text(
-                    text = "Programado",
+                    text = stringResource(R.string.transaction_scheduled),
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                     color = colors.warning,
                 )
