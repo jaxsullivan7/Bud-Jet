@@ -24,6 +24,20 @@ class DataResetTest {
     }
 
     @Test
+    fun `starting fresh clears per-account opening balances`() {
+        val demo = DemoData.build(LocalDate.of(2026, 10, 31))
+        val withBalance = demo.copy(
+            accounts = demo.accounts.mapIndexed { index, account ->
+                if (index == 1) account.copy(initialBalanceCents = 150_000) else account
+            },
+        )
+        val cleared = withBalance.clearedFinancialData()
+
+        assertTrue(cleared.accounts.all { it.initialBalanceCents == 0L })
+        assertEquals(0L, Finance.totalBalance(cleared))
+    }
+
+    @Test
     fun `starting fresh keeps categories accounts and preferences`() {
         val demo = DemoData.build(LocalDate.of(2026, 10, 31))
         val cleared = demo.clearedFinancialData()

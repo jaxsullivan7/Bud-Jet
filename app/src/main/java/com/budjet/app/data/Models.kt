@@ -260,6 +260,7 @@ fun AppData.clearedFinancialData(): AppData = copy(
     transfers = emptyList(),
     liabilities = emptyList(),
     liabilityPayments = emptyList(),
+    accounts = accounts.map { it.copy(initialBalanceCents = 0L) },
     settings = settings.copy(
         openingBalanceCents = 0L,
         lastMovementDateEpochDay = null,
