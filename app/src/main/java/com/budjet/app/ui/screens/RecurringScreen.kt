@@ -52,6 +52,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.budjet.app.R
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
@@ -101,14 +103,14 @@ fun RecurringScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onClose,
                     size = 38.dp,
                 )
-                Overline("AUTOMATIZACIÓN")
+                Overline(stringResource(R.string.recurring_overline))
                 SoftIconButton(
                     icon = Icons.Rounded.Add,
-                    contentDescription = "Nuevo movimiento recurrente",
+                    contentDescription = stringResource(R.string.action_new_recurring),
                     onClick = {
                         editor = RecurringDraft(
                             type = TxType.EXPENSE,
@@ -124,13 +126,13 @@ fun RecurringScreen(
             }
             Spacer(Modifier.height(22.dp))
             Text(
-                text = "Se repiten solos.",
+                text = stringResource(R.string.recurring_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.ink,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Nómina, alquiler o suscripciones: se apuntan automáticamente el día que toca, al abrir la app.",
+                text = stringResource(R.string.recurring_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -142,8 +144,8 @@ fun RecurringScreen(
                 BudCard {
                     EmptyState(
                         icon = Icons.Rounded.EventRepeat,
-                        title = "Nada repetido todavía",
-                        message = "Crea tu primera regla y olvídate de apuntar la nómina o el alquiler.",
+                        title = stringResource(R.string.recurring_empty_title),
+                        message = stringResource(R.string.recurring_empty_body),
                     )
                     Box(
                         modifier = Modifier
@@ -160,7 +162,7 @@ fun RecurringScreen(
                             },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("Crear regla", style = MaterialTheme.typography.titleSmall, color = colors.onPrimary)
+                        Text(stringResource(R.string.recurring_create), style = MaterialTheme.typography.titleSmall, color = colors.onPrimary)
                     }
                 }
             }
@@ -206,11 +208,11 @@ fun RecurringScreen(
                 ) {
                     Icon(Icons.Rounded.Add, contentDescription = null, tint = colors.primary, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(10.dp))
-                    Text("Nueva regla", style = MaterialTheme.typography.titleSmall, color = colors.ink)
+                    Text(stringResource(R.string.recurring_new), style = MaterialTheme.typography.titleSmall, color = colors.ink)
                 }
                 Spacer(Modifier.height(18.dp))
                 Text(
-                    text = "Los cargos ya generados no se borran si eliminas la regla.",
+                    text = stringResource(R.string.recurring_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -243,10 +245,10 @@ fun RecurringScreen(
             onDismissRequest = { deleting = null },
             containerColor = colors.surface,
             shape = MaterialTheme.shapes.large,
-            title = { Text("¿Eliminar la regla?", color = colors.ink) },
+            title = { Text(stringResource(R.string.recurring_delete_title), color = colors.ink) },
             text = {
                 Text(
-                    "Dejará de apuntarse cada mes. Los movimientos ya creados se mantienen.",
+                    stringResource(R.string.recurring_delete_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.inkMuted,
                 )
@@ -257,10 +259,10 @@ fun RecurringScreen(
                         onDelete(id)
                         deleting = null
                     },
-                ) { Text("Eliminar", color = colors.expense) }
+                ) { Text(stringResource(R.string.action_delete), color = colors.expense) }
             },
             dismissButton = {
-                TextButton(onClick = { deleting = null }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { deleting = null }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         )
     }
@@ -286,7 +288,9 @@ private fun RecurringCard(
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = rule.note.ifBlank { category?.name ?: "Recurrente" },
+                    text = rule.note.ifBlank {
+                    category?.name ?: stringResource(R.string.recurring_fallback)
+                },
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.ink,
                     maxLines = 1,
@@ -294,9 +298,9 @@ private fun RecurringCard(
                 )
                 Text(
                     text = buildString {
-                        append(category?.name ?: "Sin categoría")
-                        append(" · día ")
-                        append(rule.dayOfMonth)
+                        append(category?.name ?: stringResource(R.string.category_uncategorized))
+                        append(" · ")
+                        append(stringResource(R.string.recurring_day, rule.dayOfMonth))
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
@@ -323,7 +327,7 @@ private fun RecurringCard(
             )
             Spacer(Modifier.width(5.dp))
             Text(
-                text = account?.name ?: "Cuenta",
+                text = account?.name ?: stringResource(R.string.recurring_account_fallback),
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                 color = colors.inkMuted,
                 maxLines = 1,
@@ -332,7 +336,12 @@ private fun RecurringCard(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = if (!rule.active) "Pausado" else next?.let { "Próximo ${formatDayNumber(it)}" } ?: "Pausado",
+                text = if (!rule.active) {
+                    stringResource(R.string.recurring_paused)
+                } else {
+                    next?.let { stringResource(R.string.recurring_next, formatDayNumber(it)) }
+                        ?: stringResource(R.string.recurring_paused)
+                },
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                 color = if (rule.active) colors.inkMuted else colors.warning,
                 maxLines = 1,
@@ -374,10 +383,16 @@ private fun RecurringEditorDialog(
         shape = RoundedCornerShape(26.dp),
         title = {
             Column {
-                Overline(if (initial.id == null) "NUEVA REGLA" else "EDITAR REGLA")
+                Overline(
+                    stringResource(
+                        if (initial.id == null) R.string.recurring_new_overline else R.string.recurring_edit_overline,
+                    ),
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = if (initial.id == null) "Algo que se repite" else "Ajusta la regla",
+                    text = stringResource(
+                        if (initial.id == null) R.string.recurring_dialog_new else R.string.recurring_dialog_edit,
+                    ),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.ink,
                 )
@@ -396,11 +411,11 @@ private fun RecurringEditorDialog(
                         .background(colors.surfaceMuted)
                         .padding(3.dp),
                 ) {
-                    TypeChoice("Gasto", type == TxType.EXPENSE, Modifier.weight(1f)) {
+                    TypeChoice(stringResource(R.string.type_expense), type == TxType.EXPENSE, Modifier.weight(1f)) {
                         type = TxType.EXPENSE
                         filtered.let { if (it.none { c -> c.id == categoryId }) categoryId = it.firstOrNull()?.id ?: categoryId }
                     }
-                    TypeChoice("Ingreso", type == TxType.INCOME, Modifier.weight(1f)) {
+                    TypeChoice(stringResource(R.string.type_income), type == TxType.INCOME, Modifier.weight(1f)) {
                         type = TxType.INCOME
                         categories.filter { it.type == TxType.INCOME }.let {
                             if (it.none { c -> c.id == categoryId }) categoryId = it.firstOrNull()?.id ?: categoryId
@@ -414,7 +429,7 @@ private fun RecurringEditorDialog(
                         if (text.length <= 10 && text.all { it.isDigit() || it == ',' }) amount = text
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Importe") },
+                    label = { Text(stringResource(R.string.label_amount)) },
                     placeholder = { Text("0") },
                     suffix = { Text(currency.symbol, color = colors.inkMuted) },
                     singleLine = true,
@@ -423,7 +438,7 @@ private fun RecurringEditorDialog(
                     shape = RoundedCornerShape(14.dp),
                 )
                 Spacer(Modifier.height(12.dp))
-                Text("Categoría", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_category), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(filtered, key = { it.id }) { category ->
@@ -456,7 +471,7 @@ private fun RecurringEditorDialog(
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                Text("Cuenta", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_account), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     accounts.take(4).forEach { account ->
@@ -495,14 +510,14 @@ private fun RecurringEditorDialog(
                             }
                         },
                         modifier = Modifier.width(110.dp),
-                        label = { Text("Día") },
+                        label = { Text(stringResource(R.string.label_day)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(14.dp),
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = "de cada mes",
+                        text = stringResource(R.string.recurring_each_month),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -512,15 +527,15 @@ private fun RecurringEditorDialog(
                     value = note,
                     onValueChange = { note = it.take(40) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nota") },
-                    placeholder = { Text("Ej. Nómina") },
+                    label = { Text(stringResource(R.string.label_note)) },
+                    placeholder = { Text(stringResource(R.string.recurring_note_placeholder)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                 )
                 if (!dayValid) {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "El día debe estar entre 1 y 31.",
+                        text = stringResource(R.string.recurring_day_error),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.expense,
                     )
@@ -544,14 +559,19 @@ private fun RecurringEditorDialog(
                     )
                 },
                 enabled = cents > 0 && dayValid && selectedCategory != null,
-            ) { Text(if (initial.id == null) "Crear" else "Guardar", color = colors.primary) }
+            ) {
+                Text(
+                    stringResource(if (initial.id == null) R.string.action_create else R.string.action_save),
+                    color = colors.primary,
+                )
+            }
         },
         dismissButton = {
             Row {
                 if (onDelete != null) {
-                    TextButton(onClick = onDelete) { Text("Eliminar", color = colors.expense) }
+                    TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete), color = colors.expense) }
                 }
-                TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             }
         },
     )

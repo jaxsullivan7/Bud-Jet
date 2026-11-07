@@ -66,11 +66,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.BuildConfig
+import com.budjet.app.R
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
 import com.budjet.app.data.AutoBackupInfo
@@ -96,6 +100,7 @@ import com.budjet.app.ui.theme.CategoryPalette
 import com.budjet.app.ui.theme.NavyLight
 import com.budjet.app.ui.theme.PaperLight
 import com.budjet.app.util.centsToInput
+import com.budjet.app.util.filterAmountInput
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.formatShortDate
 import com.budjet.app.util.parseMoneyInput
@@ -155,6 +160,20 @@ fun SettingsScreen(
     var autoBackupsDialog by remember { mutableStateOf(false) }
     var rulesDialog by remember { mutableStateOf(false) }
     val currency = Currency.from(data.settings.currencyCode)
+    val errorOpenFile = stringResource(R.string.settings_error_open_file)
+    val errorFileTooLarge = stringResource(R.string.settings_error_file_too_large)
+    val errorReadFile = stringResource(R.string.settings_error_read_file)
+    val errorInvalidBackup = stringResource(R.string.settings_error_invalid_backup)
+    val errorSaveBackup = stringResource(R.string.settings_error_save_backup)
+    val errorSaveEncrypted = stringResource(R.string.settings_error_save_encrypted)
+    val errorOpenEncrypted = stringResource(R.string.settings_error_open_encrypted)
+    val errorOpenBackup = stringResource(R.string.settings_error_open_backup)
+    val notifyBackupSaved = stringResource(R.string.settings_backup_saved)
+    val notifyEncryptedSaved = stringResource(R.string.settings_encrypted_backup_saved)
+    val notifyAutoBackupCreated = stringResource(R.string.settings_auto_backup_created)
+    val notifyRestored = stringResource(R.string.settings_backup_restored)
+    val backupFilePrefix = stringResource(R.string.settings_backup_file_prefix)
+    val encryptedFilePrefix = stringResource(R.string.settings_encrypted_file_prefix)
 
     val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/json"),
@@ -163,11 +182,11 @@ fun SettingsScreen(
             runCatching {
                 context.contentResolver.openOutputStream(uri)?.use { stream ->
                     stream.write(onBuildBackup().toByteArray(Charsets.UTF_8))
-                } ?: error("No se pudo abrir el archivo.")
+                } ?: error(errorOpenFile)
             }.onSuccess {
-                onNotify("Copia de seguridad guardada")
+                onNotify(notifyBackupSaved)
             }.onFailure {
-                onNotify("No se pudo guardar la copia")
+                onNotify(errorSaveBackup)
             }
         }
     }
@@ -178,19 +197,19 @@ fun SettingsScreen(
         if (uri != null) {
             val text = runCatching {
                 val declaredSize = context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1L
-                if (declaredSize > Backup.MAX_BYTES) error("El archivo es demasiado grande.")
+                if (declaredSize > Backup.MAX_BYTES) error(errorFileTooLarge)
                 val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                    ?: error("No se pudo leer el archivo.")
-                if (bytes.size > Backup.MAX_BYTES) error("El archivo es demasiado grande.")
+                    ?: error(errorReadFile)
+                if (bytes.size > Backup.MAX_BYTES) error(errorFileTooLarge)
                 String(bytes, Charsets.UTF_8)
             }.getOrElse {
-                importError = it.message ?: "No se pudo leer el archivo."
+                importError = it.message ?: errorReadFile
                 null
             }
             if (text != null) {
                 onValidateBackup(text)
                     .onSuccess { pendingRestore = it }
-                    .onFailure { importError = it.message ?: "El archivo no es una copia válida." }
+                    .onFailure { importError = it.message ?: errorInvalidBackup }
             }
         }
     }
@@ -202,11 +221,11 @@ fun SettingsScreen(
             runCatching {
                 val bytes = onBuildEncryptedBackup(encryptedPassword)
                 context.contentResolver.openOutputStream(uri)?.use { it.write(bytes) }
-                    ?: error("No se pudo abrir el archivo.")
+                    ?: error(errorOpenFile)
             }.onSuccess {
-                onNotify("Copia cifrada guardada")
+                onNotify(notifyEncryptedSaved)
             }.onFailure {
-                onNotify("No se pudo guardar la copia cifrada")
+                onNotify(errorSaveEncrypted)
             }
             encryptedPassword = ""
         }
@@ -218,9 +237,9 @@ fun SettingsScreen(
         if (uri != null) {
             val bytes = runCatching {
                 context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                    ?: error("No se pudo leer el archivo.")
+                    ?: error(errorReadFile)
             }.getOrElse {
-                importError = it.message ?: "No se pudo leer el archivo."
+                importError = it.message ?: errorReadFile
                 null
             }
             if (bytes != null) {
@@ -244,22 +263,22 @@ fun SettingsScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onClose,
                     size = 38.dp,
                 )
-                Overline("AJUSTES")
+                Overline(stringResource(R.string.settings_overline))
                 Spacer(Modifier.size(38.dp))
             }
             Spacer(Modifier.height(22.dp))
             Text(
-                text = "Hazlo tuyo.",
+                text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.ink,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Preferencias y datos de tu Bud Jet.",
+                text = stringResource(R.string.settings_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -278,7 +297,7 @@ fun SettingsScreen(
                             color = colors.ink,
                         )
                         Text(
-                            text = "Perfil local · este dispositivo",
+                            text = stringResource(R.string.settings_profile_local),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )
@@ -295,26 +314,26 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Apariencia")
+            SectionHeader(title = stringResource(R.string.section_appearance))
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 6.dp) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     ThemeOption(
-                        label = "Claro",
+                        label = stringResource(R.string.theme_light),
                         icon = Icons.Rounded.LightMode,
                         selected = data.settings.themeMode == ThemeMode.LIGHT,
                         onClick = { onSetTheme(ThemeMode.LIGHT) },
                         modifier = Modifier.weight(1f),
                     )
                     ThemeOption(
-                        label = "Oscuro",
+                        label = stringResource(R.string.theme_dark),
                         icon = Icons.Rounded.DarkMode,
                         selected = data.settings.themeMode == ThemeMode.DARK,
                         onClick = { onSetTheme(ThemeMode.DARK) },
                         modifier = Modifier.weight(1f),
                     )
                     ThemeOption(
-                        label = "Sistema",
+                        label = stringResource(R.string.theme_system),
                         icon = Icons.Rounded.SettingsBrightness,
                         selected = data.settings.themeMode == ThemeMode.SYSTEM,
                         onClick = { onSetTheme(ThemeMode.SYSTEM) },
@@ -324,7 +343,7 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(8.dp))
             BudCard(padding = 14.dp) {
-                Overline("GAMA DE COLOR")
+                Overline(stringResource(R.string.overline_palette))
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ThemePalette.entries.forEach { palette ->
@@ -341,20 +360,20 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Preferencias")
+            SectionHeader(title = stringResource(R.string.section_preferences))
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 SettingsRow(
                     icon = Icons.Rounded.Euro,
-                    title = "Moneda",
+                    title = stringResource(R.string.label_currency),
                     subtitle = "${currency.symbol} · ${currency.code}",
                     onClick = { currencyDialog = true },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Download,
-                    title = "Exportar movimientos",
-                    subtitle = "Archivo CSV para hoja de cálculo",
+                    title = stringResource(R.string.settings_export_transactions),
+                    subtitle = stringResource(R.string.settings_export_transactions_sub),
                     onClick = onExport,
                 )
             }
@@ -362,13 +381,13 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Avisos")
+            SectionHeader(title = stringResource(R.string.section_notifications))
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 SwitchRow(
                     icon = Icons.Rounded.NotificationImportant,
-                    title = "Recordatorios",
-                    subtitle = "Presupuestos, cargos y revisión mensual",
+                    title = stringResource(R.string.settings_reminders),
+                    subtitle = stringResource(R.string.settings_reminders_sub),
                     checked = data.settings.notificationsEnabled,
                     onCheckedChange = onSetNotificationsEnabled,
                 )
@@ -376,32 +395,32 @@ fun SettingsScreen(
                     SettingsDivider()
                     SwitchRow(
                         icon = Icons.Rounded.NotificationImportant,
-                        title = "Presupuestos",
-                        subtitle = "Aviso al 80 % y al 100 %",
+                        title = stringResource(R.string.settings_budget_alerts),
+                        subtitle = stringResource(R.string.settings_budget_alerts_sub),
                         checked = data.settings.budgetAlerts,
                         onCheckedChange = onSetBudgetAlerts,
                     )
                     SettingsDivider()
                     SwitchRow(
                         icon = Icons.Rounded.EventRepeat,
-                        title = "Cargos recurrentes",
-                        subtitle = "Aviso el día anterior",
+                        title = stringResource(R.string.settings_recurring_alerts),
+                        subtitle = stringResource(R.string.settings_recurring_alerts_sub),
                         checked = data.settings.recurringAlerts,
                         onCheckedChange = onSetRecurringAlerts,
                     )
                     SettingsDivider()
                     SwitchRow(
                         icon = Icons.Rounded.History,
-                        title = "Revisión mensual",
-                        subtitle = "Un repaso el primer día del mes",
+                        title = stringResource(R.string.settings_monthly_review),
+                        subtitle = stringResource(R.string.settings_monthly_review_sub),
                         checked = data.settings.monthlyReviewAlerts,
                         onCheckedChange = onSetMonthlyReviewAlerts,
                     )
                     SettingsDivider()
                     SwitchRow(
                         icon = Icons.AutoMirrored.Rounded.TrendingUp,
-                        title = "Actualizar cartera",
-                        subtitle = "Cada 3 meses sin valoraciones",
+                        title = stringResource(R.string.settings_portfolio_alerts),
+                        subtitle = stringResource(R.string.settings_portfolio_alerts_sub),
                         checked = data.settings.valuationAlerts,
                         onCheckedChange = onSetValuationAlerts,
                     )
@@ -411,27 +430,36 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Ahorro y automatización")
+            SectionHeader(title = stringResource(R.string.section_savings_automation))
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 SettingsRow(
                     icon = Icons.Rounded.Savings,
-                    title = "Objetivos de ahorro",
+                    title = stringResource(R.string.settings_goals),
                     subtitle = if (data.savingsGoals.isEmpty()) {
-                        "Crea tu primer objetivo"
+                        stringResource(R.string.settings_goals_empty)
                     } else {
-                        "${data.savingsGoals.size} objetivos · ${formatMoney(data.savingsGoals.sumOf { it.savedCents }, currency)} apartados"
+                        pluralStringResource(
+                            R.plurals.settings_goals_count,
+                            data.savingsGoals.size,
+                            data.savingsGoals.size,
+                            formatMoney(data.savingsGoals.sumOf { it.savedCents }, currency),
+                        )
                     },
                     onClick = onOpenGoals,
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.EventRepeat,
-                    title = "Movimientos recurrentes",
+                    title = stringResource(R.string.settings_recurring),
                     subtitle = if (data.recurringRules.isEmpty()) {
-                        "Nómina, alquiler, suscripciones…"
+                        stringResource(R.string.settings_recurring_empty)
                     } else {
-                        "${data.recurringRules.count { it.active }} reglas activas"
+                        pluralStringResource(
+                            R.plurals.settings_recurring_active,
+                            data.recurringRules.count { it.active },
+                            data.recurringRules.count { it.active },
+                        )
                     },
                     onClick = onOpenRecurring,
                 )
@@ -440,7 +468,7 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Seguridad")
+            SectionHeader(title = stringResource(R.string.section_security))
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 Row(
@@ -467,12 +495,12 @@ fun SettingsScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            text = "Bloqueo biométrico",
+                            text = stringResource(R.string.settings_biometric),
                             style = MaterialTheme.typography.bodyLarge,
                             color = colors.ink,
                         )
                         Text(
-                            text = "Pide huella o PIN al abrir la app",
+                            text = stringResource(R.string.settings_biometric_sub),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )
@@ -486,8 +514,8 @@ fun SettingsScreen(
                     SettingsDivider()
                     SettingsRow(
                         icon = Icons.Rounded.Fingerprint,
-                        title = "Probar desbloqueo",
-                        subtitle = "Comprueba ahora la huella o el PIN",
+                        title = stringResource(R.string.settings_test_unlock),
+                        subtitle = stringResource(R.string.settings_test_unlock_sub),
                         onClick = onTestBiometric,
                     )
                 }
@@ -496,7 +524,7 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Categorías", trailing = null)
+            SectionHeader(title = stringResource(R.string.section_categories), trailing = null)
             Spacer(Modifier.height(10.dp))
             BudCard {
                 FlowRow(
@@ -522,7 +550,7 @@ fun SettingsScreen(
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            text = "Nueva",
+                            text = stringResource(R.string.action_new),
                             style = MaterialTheme.typography.labelMedium,
                             color = colors.primary,
                         )
@@ -533,7 +561,7 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Cuentas")
+            SectionHeader(title = stringResource(R.string.section_accounts))
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 data.accounts.forEachIndexed { index, account ->
@@ -545,63 +573,73 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Datos")
+            SectionHeader(title = stringResource(R.string.section_data))
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 SettingsRow(
                     icon = Icons.Rounded.FileOpen,
-                    title = "Importar extracto",
-                    subtitle = "CSV u OFX del banco, con vista previa",
+                    title = stringResource(R.string.settings_import_statement),
+                    subtitle = stringResource(R.string.settings_import_statement_sub),
                     onClick = onOpenImport,
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Lock,
-                    title = "Copia cifrada",
-                    subtitle = "Archivo .bjet protegido con contraseña",
+                    title = stringResource(R.string.settings_encrypted_backup),
+                    subtitle = stringResource(R.string.settings_encrypted_backup_sub),
                     onClick = { encryptedExportDialog = true },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Restore,
-                    title = "Restaurar cifrada",
-                    subtitle = "Abre un archivo .bjet y pide la contraseña",
+                    title = stringResource(R.string.settings_restore_encrypted),
+                    subtitle = stringResource(R.string.settings_restore_encrypted_sub),
                     onClick = { encryptedImportLauncher.launch(arrayOf("application/octet-stream", "application/*")) },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.History,
-                    title = "Copias automáticas",
-                    subtitle = if (data.settings.autoBackupEnabled) "Una al día, últimas 14" else "Desactivadas",
+                    title = stringResource(R.string.settings_auto_backups),
+                    subtitle = stringResource(
+                        if (data.settings.autoBackupEnabled) {
+                            R.string.settings_auto_backups_on
+                        } else {
+                            R.string.settings_auto_backups_off
+                        },
+                    ),
                     onClick = { autoBackupsDialog = true },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Rule,
-                    title = "Reglas de importación",
-                    subtitle = "${data.categoryRules.size} reglas por comercio o texto",
+                    title = stringResource(R.string.settings_rules),
+                    subtitle = pluralStringResource(
+                        R.plurals.settings_rules_count,
+                        data.categoryRules.size,
+                        data.categoryRules.size,
+                    ),
                     onClick = { rulesDialog = true },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.AccountBalance,
-                    title = "Saldo inicial",
-                    subtitle = "Punto de partida de tu economía",
+                    title = stringResource(R.string.settings_opening_balance),
+                    subtitle = stringResource(R.string.settings_opening_balance_sub),
                     trailing = formatMoney(data.settings.openingBalanceCents, currency),
                     onClick = { openingDialog = true },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Save,
-                    title = "Copia JSON (sin cifrar)",
-                    subtitle = "Guarda todos tus datos en un archivo legible",
-                    onClick = { exportLauncher.launch("budjet-copia-${LocalDate.now()}.json") },
+                    title = stringResource(R.string.settings_json_backup),
+                    subtitle = stringResource(R.string.settings_json_backup_sub),
+                    onClick = { exportLauncher.launch("$backupFilePrefix${LocalDate.now()}.json") },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Restore,
-                    title = "Restaurar JSON",
-                    subtitle = "Importa un archivo .json de Bud Jet",
+                    title = stringResource(R.string.settings_restore_json),
+                    subtitle = stringResource(R.string.settings_restore_json_sub),
                     onClick = {
                         importLauncher.launch(
                             arrayOf("application/json", "application/octet-stream", "text/plain"),
@@ -611,22 +649,22 @@ fun SettingsScreen(
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Refresh,
-                    title = "Cargar datos de ejemplo",
-                    subtitle = "Sustituye todo por la demostración",
+                    title = stringResource(R.string.settings_demo_data),
+                    subtitle = stringResource(R.string.settings_demo_data_sub),
                     onClick = { confirmReset = true },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.DeleteOutline,
-                    title = "Empezar de cero",
-                    subtitle = "Borra movimientos, presupuestos, objetivos y recurrentes",
+                    title = stringResource(R.string.settings_start_fresh),
+                    subtitle = stringResource(R.string.settings_start_fresh_sub),
                     destructive = true,
                     onClick = { confirmFresh = true },
                 )
             }
             Spacer(Modifier.height(10.dp))
             Text(
-                text = "La copia incluye movimientos, presupuestos, objetivos, recurrentes y ajustes. Por seguridad, el bloqueo biométrico no se restaura.",
+                text = stringResource(R.string.settings_backup_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )
@@ -651,7 +689,8 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Un lugar tranquilo para tu dinero. Versión 0.9.0 · boceto.",
+                            text = stringResource(R.string.settings_tagline) + " " +
+                                stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )
@@ -667,14 +706,14 @@ fun SettingsScreen(
             onDismissRequest = { nameDialog = false },
             containerColor = colors.surface,
             shape = RoundedCornerShape(26.dp),
-            title = { Text("¿Cómo te llamas?", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+            title = { Text(stringResource(R.string.settings_name_title), style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
             text = {
                 OutlinedTextField(
                     value = value,
                     onValueChange = { value = it.take(24) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    label = { Text("Nombre") },
+                    label = { Text(stringResource(R.string.label_name)) },
                     shape = RoundedCornerShape(14.dp),
                 )
             },
@@ -685,10 +724,10 @@ fun SettingsScreen(
                         nameDialog = false
                     },
                     enabled = value.isNotBlank(),
-                ) { Text("Guardar", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_save), color = colors.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { nameDialog = false }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { nameDialog = false }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         )
     }
@@ -698,7 +737,7 @@ fun SettingsScreen(
             onDismissRequest = { currencyDialog = false },
             containerColor = colors.surface,
             shape = RoundedCornerShape(26.dp),
-            title = { Text("Moneda", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+            title = { Text(stringResource(R.string.label_currency), style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
             text = {
                 Column {
                     Currency.entries.forEach { option ->
@@ -735,7 +774,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { currencyDialog = false }) { Text("Cerrar", color = colors.primary) }
+                TextButton(onClick = { currencyDialog = false }) { Text(stringResource(R.string.action_close), color = colors.primary) }
             },
         )
     }
@@ -752,9 +791,9 @@ fun SettingsScreen(
 
     if (confirmReset) {
         ConfirmDialog(
-            title = "¿Restaurar el ejemplo?",
-            message = "Se sustituirán todos tus movimientos y presupuestos por los datos de demostración.",
-            confirm = "Restaurar",
+            title = stringResource(R.string.settings_reset_title),
+            message = stringResource(R.string.settings_reset_message),
+            confirm = stringResource(R.string.action_restore),
             onDismiss = { confirmReset = false },
             onConfirm = {
                 onResetDemo()
@@ -765,9 +804,9 @@ fun SettingsScreen(
 
     if (confirmFresh) {
         ConfirmDialog(
-            title = "¿Empezar de cero?",
-            message = "Se borrarán movimientos, presupuestos, objetivos y recurrentes. El saldo inicial pasará a 0 €. Se mantienen categorías, cuentas, nombre y apariencia.",
-            confirm = "Empezar de cero",
+            title = stringResource(R.string.settings_fresh_title),
+            message = stringResource(R.string.settings_fresh_message),
+            confirm = stringResource(R.string.settings_fresh_confirm),
             onDismiss = { confirmFresh = false },
             onConfirm = {
                 onStartFresh()
@@ -785,7 +824,7 @@ fun SettingsScreen(
             shape = RoundedCornerShape(26.dp),
             title = {
                 Text(
-                    "Saldo inicial",
+                    stringResource(R.string.settings_opening_balance),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.ink,
                 )
@@ -793,20 +832,16 @@ fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        text = "Es el dinero que ya tenías antes de empezar a apuntar. Se suma a tus ingresos y se resta con tus gastos. Puede ser 0 €.",
+                        text = stringResource(R.string.settings_opening_message),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
                     Spacer(Modifier.height(12.dp))
                     OutlinedTextField(
                         value = openingText,
-                        onValueChange = { text ->
-                            if (text.length <= 10 && text.all { it.isDigit() || it == ',' }) {
-                                openingText = text
-                            }
-                        },
+                        onValueChange = { openingText = filterAmountInput(it, 10) },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Importe") },
+                        label = { Text(stringResource(R.string.label_amount)) },
                         placeholder = { Text("0") },
                         suffix = { Text(currency.symbol, color = colors.inkMuted) },
                         singleLine = true,
@@ -821,7 +856,7 @@ fun SettingsScreen(
                         onSetOpeningBalance(parsed)
                         openingDialog = false
                     },
-                ) { Text("Guardar", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_save), color = colors.primary) }
             },
             dismissButton = {
                 Row {
@@ -830,9 +865,9 @@ fun SettingsScreen(
                             onSetOpeningBalance(0L)
                             openingDialog = false
                         },
-                    ) { Text("Poner 0", color = colors.inkMuted) }
+                    ) { Text(stringResource(R.string.action_set_zero), color = colors.inkMuted) }
                     TextButton(onClick = { openingDialog = false }) {
-                        Text("Cancelar", color = colors.inkMuted)
+                        Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
                     }
                 }
             },
@@ -841,23 +876,23 @@ fun SettingsScreen(
 
     if (encryptedExportDialog) {
         PasswordDialog(
-            title = "Proteger la copia",
-            message = "Elige una contraseña. La copia se cifrará con AES-256 y no se podrá abrir sin ella.",
-            confirmLabel = "Guardar copia",
+            title = stringResource(R.string.settings_password_protect_title),
+            message = stringResource(R.string.settings_password_protect_message),
+            confirmLabel = stringResource(R.string.action_save_backup),
             onDismiss = { encryptedExportDialog = false },
             onConfirm = { password ->
                 encryptedPassword = password
                 encryptedExportDialog = false
-                encryptedExportLauncher.launch("budjet-cifrada-${LocalDate.now()}.bjet")
+                encryptedExportLauncher.launch("$encryptedFilePrefix${LocalDate.now()}.bjet")
             },
         )
     }
 
     if (encryptedImportDialog && pendingEncryptedBytes != null) {
         PasswordDialog(
-            title = "Abrir copia cifrada",
-            message = "Introduce la contraseña con la que protegiste el archivo.",
-            confirmLabel = "Abrir",
+            title = stringResource(R.string.settings_password_open_title),
+            message = stringResource(R.string.settings_password_open_message),
+            confirmLabel = stringResource(R.string.action_open),
             onDismiss = {
                 encryptedImportDialog = false
                 pendingEncryptedBytes = null
@@ -872,7 +907,7 @@ fun SettingsScreen(
                             pendingEncryptedBytes = null
                         }
                         .onFailure {
-                            importError = it.message ?: "No se pudo abrir la copia cifrada."
+                            importError = it.message ?: errorOpenEncrypted
                             encryptedImportDialog = false
                             pendingEncryptedBytes = null
                         }
@@ -887,13 +922,13 @@ fun SettingsScreen(
             onDismissRequest = { autoBackupsDialog = false },
             containerColor = colors.surface,
             shape = RoundedCornerShape(26.dp),
-            title = { Text("Copias automáticas", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+            title = { Text(stringResource(R.string.settings_auto_backups), style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
             text = {
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text("Copia diaria cifrada", style = MaterialTheme.typography.bodyLarge, color = colors.ink)
-                            Text("Se guarda en el almacenamiento privado de la app", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                            Text(stringResource(R.string.settings_daily_backup), style = MaterialTheme.typography.bodyLarge, color = colors.ink)
+                            Text(stringResource(R.string.settings_daily_backup_sub), style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
                         }
                         Switch(
                             checked = data.settings.autoBackupEnabled,
@@ -904,7 +939,7 @@ fun SettingsScreen(
                     Spacer(Modifier.height(10.dp))
                     if (backups.isEmpty()) {
                         Text(
-                            text = "Todavía no hay copias. Se creará una al abrir la app si la copia automática está activa.",
+                            text = stringResource(R.string.settings_no_backups),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )
@@ -919,7 +954,7 @@ fun SettingsScreen(
                                                 pendingRestore = it
                                                 autoBackupsDialog = false
                                             }
-                                            .onFailure { importError = it.message ?: "No se pudo abrir la copia." }
+                                            .onFailure { importError = it.message ?: errorOpenBackup }
                                     }
                                     .padding(vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -946,13 +981,13 @@ fun SettingsScreen(
                 TextButton(
                     onClick = {
                         onCreateAutoBackup()
-                        onNotify("Copia automática creada")
+                        onNotify(notifyAutoBackupCreated)
                         autoBackupsDialog = false
                     },
                     enabled = data.settings.autoBackupEnabled,
-                ) { Text("Crear ahora", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_create_now), color = colors.primary) }
             },
-            dismissButton = { TextButton(onClick = { autoBackupsDialog = false }) { Text("Cerrar", color = colors.inkMuted) } },
+            dismissButton = { TextButton(onClick = { autoBackupsDialog = false }) { Text(stringResource(R.string.action_close), color = colors.inkMuted) } },
         )
     }
 
@@ -973,7 +1008,7 @@ fun SettingsScreen(
             shape = RoundedCornerShape(26.dp),
             title = {
                 Text(
-                    "¿Restaurar esta copia?",
+                    stringResource(R.string.settings_restore_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.ink,
                 )
@@ -981,14 +1016,19 @@ fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        text = "${backup.transactions.size} movimientos · ${backup.budgets.size} presupuestos · " +
-                            "${backup.savingsGoals.size} objetivos · ${backup.recurringRules.size} recurrentes",
+                        text = stringResource(
+                            R.string.settings_restore_summary,
+                            backup.transactions.size,
+                            backup.budgets.size,
+                            backup.savingsGoals.size,
+                            backup.recurringRules.size,
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.ink,
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Se sustituirán todos los datos actuales. Por seguridad, el bloqueo biométrico se desactivará.",
+                        text = stringResource(R.string.settings_restore_warning),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -999,13 +1039,13 @@ fun SettingsScreen(
                     onClick = {
                         onRestoreBackup(backup)
                         pendingRestore = null
-                        onNotify("Copia restaurada")
+                        onNotify(notifyRestored)
                     },
-                ) { Text("Restaurar", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_restore), color = colors.primary) }
             },
             dismissButton = {
                 TextButton(onClick = { pendingRestore = null }) {
-                    Text("Cancelar", color = colors.inkMuted)
+                    Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
                 }
             },
         )
@@ -1018,7 +1058,7 @@ fun SettingsScreen(
             shape = RoundedCornerShape(26.dp),
             title = {
                 Text(
-                    "No se pudo importar",
+                    stringResource(R.string.settings_import_failed_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.ink,
                 )
@@ -1032,7 +1072,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { importError = null }) {
-                    Text("Entendido", color = colors.primary)
+                    Text(stringResource(R.string.action_understood), color = colors.primary)
                 }
             },
         )
@@ -1106,21 +1146,21 @@ private fun PasswordDialog(
                 value = password,
                 onValueChange = { password = it.take(64) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Contraseña") },
+                label = { Text(stringResource(R.string.label_password)) },
                 singleLine = true,
                 visualTransformation = transformation,
                 shape = RoundedCornerShape(14.dp),
             )
             if (password.isNotBlank() && password.length < 6) {
                 Spacer(Modifier.height(4.dp))
-                Text("Usa al menos 6 caracteres.", style = MaterialTheme.typography.bodySmall, color = colors.expense)
+                Text(stringResource(R.string.settings_password_min), style = MaterialTheme.typography.bodySmall, color = colors.expense)
             }
             Spacer(Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
             ) {
-                TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
                 TextButton(onClick = { onConfirm(password) }, enabled = valid) {
                     Text(confirmLabel, color = colors.primary)
                 }
@@ -1148,16 +1188,16 @@ private fun RuleListDialog(
         shape = RoundedCornerShape(26.dp),
         title = {
             Column {
-                Overline("IMPORTACIÓN")
+                Overline(stringResource(R.string.settings_rules_overline))
                 Spacer(Modifier.height(4.dp))
-                Text("Reglas de categorización", style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+                Text(stringResource(R.string.settings_rules_title), style = MaterialTheme.typography.headlineSmall, color = colors.ink)
             }
         },
         text = {
             Column {
                 if (!adding) {
                     Text(
-                        text = "Si el concepto contiene el texto, se asigna la categoría automáticamente al importar.",
+                        text = stringResource(R.string.settings_rules_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -1180,7 +1220,7 @@ private fun RuleListDialog(
                                 }
                                 SoftIconButton(
                                     icon = Icons.Rounded.DeleteOutline,
-                                    contentDescription = "Eliminar regla",
+                                    contentDescription = stringResource(R.string.action_delete_rule),
                                     onClick = { onDelete(rule.id) },
                                     size = 28.dp,
                                 )
@@ -1192,13 +1232,13 @@ private fun RuleListDialog(
                         value = pattern,
                         onValueChange = { pattern = it.take(32) },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Texto del concepto") },
-                        placeholder = { Text("Ej. mercadona") },
+                        label = { Text(stringResource(R.string.label_pattern)) },
+                        placeholder = { Text(stringResource(R.string.settings_pattern_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
                     )
                     Spacer(Modifier.height(10.dp))
-                    Text("Categoría", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                    Text(stringResource(R.string.label_category), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                     Spacer(Modifier.height(6.dp))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1236,14 +1276,24 @@ private fun RuleListDialog(
                     }
                 },
                 enabled = !adding || (pattern.isNotBlank() && categoryId.isNotBlank()),
-            ) { Text(if (adding) "Guardar regla" else "Añadir regla", color = colors.primary) }
+            ) {
+                Text(
+                    stringResource(if (adding) R.string.action_save_rule else R.string.action_add_rule),
+                    color = colors.primary,
+                )
+            }
         },
         dismissButton = {
             TextButton(
                 onClick = {
                     if (adding) adding = false else onDismiss()
                 },
-            ) { Text(if (adding) "Volver" else "Cerrar", color = colors.inkMuted) }
+            ) {
+                Text(
+                    stringResource(if (adding) R.string.action_back else R.string.action_close),
+                    color = colors.inkMuted,
+                )
+            }
         },
     )
 }
@@ -1489,9 +1539,9 @@ private fun AddCategoryDialog(
         shape = RoundedCornerShape(26.dp),
         title = {
             Column {
-                Overline("NUEVA CATEGORÍA")
+                Overline(stringResource(R.string.overline_new_category))
                 Spacer(Modifier.height(4.dp))
-                Text("Ponle nombre", style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+                Text(stringResource(R.string.settings_category_name_title), style = MaterialTheme.typography.headlineSmall, color = colors.ink)
             }
         },
         text = {
@@ -1500,17 +1550,17 @@ private fun AddCategoryDialog(
                     value = name,
                     onValueChange = { name = it.take(22) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nombre") },
+                    label = { Text(stringResource(R.string.label_name)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                 )
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TypeChoice("Gasto", type == TxType.EXPENSE) { type = TxType.EXPENSE }
-                    TypeChoice("Ingreso", type == TxType.INCOME) { type = TxType.INCOME }
+                    TypeChoice(stringResource(R.string.type_expense), type == TxType.EXPENSE) { type = TxType.EXPENSE }
+                    TypeChoice(stringResource(R.string.type_income), type == TxType.INCOME) { type = TxType.INCOME }
                 }
                 Spacer(Modifier.height(14.dp))
-                Text("Icono", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_icon), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1540,7 +1590,7 @@ private fun AddCategoryDialog(
                     }
                 }
                 Spacer(Modifier.height(14.dp))
-                Text("Color", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_color), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1567,10 +1617,15 @@ private fun AddCategoryDialog(
             TextButton(
                 onClick = { onSave(name, icon, color, type) },
                 enabled = name.isNotBlank(),
-            ) { Text("Crear", color = if (name.isNotBlank()) colors.primary else colors.inkMuted) }
+            ) {
+                Text(
+                    stringResource(R.string.action_create),
+                    color = if (name.isNotBlank()) colors.primary else colors.inkMuted,
+                )
+            }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
         },
     )
 }
@@ -1613,7 +1668,7 @@ private fun ConfirmDialog(
             TextButton(onClick = onConfirm) { Text(confirm, color = colors.expense) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
         },
     )
 }

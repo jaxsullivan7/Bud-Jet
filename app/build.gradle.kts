@@ -26,6 +26,10 @@ android {
         versionName = "0.9.0"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
             create("release") {

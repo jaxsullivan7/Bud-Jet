@@ -58,12 +58,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.budjet.app.R
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Category
@@ -98,6 +100,8 @@ fun TransactionEditorScreen(
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
     val haptic = LocalHapticFeedback.current
+    val reversalPrefix = stringResource(R.string.reversal_note_prefix)
+    val paymentFallback = stringResource(R.string.editor_payment)
 
     var amountCents by remember { mutableLongStateOf(initial.amountCents) }
     var type by remember { mutableStateOf(initial.type) }
@@ -163,15 +167,17 @@ fun TransactionEditorScreen(
         ) {
             SoftIconButton(
                 icon = Icons.Rounded.Close,
-                contentDescription = "Cerrar",
+                contentDescription = stringResource(R.string.action_close),
                 onClick = onClose,
                 size = 38.dp,
                 container = Color.Transparent,
             )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Overline(if (isEditing) "EDITANDO" else "NUEVO MOVIMIENTO")
+                Overline(
+                    stringResource(if (isEditing) R.string.editor_editing else R.string.editor_new),
+                )
                 Text(
-                    text = if (isEditing) "Editar" else "Añadir",
+                    text = stringResource(if (isEditing) R.string.editor_edit else R.string.action_add),
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.ink,
                 )
@@ -199,7 +205,7 @@ fun TransactionEditorScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Guardar",
+                    text = stringResource(R.string.action_save),
                     style = MaterialTheme.typography.labelLarge,
                     color = if (canSave) colors.onPrimary else colors.inkMuted,
                 )
@@ -220,13 +226,13 @@ fun TransactionEditorScreen(
                     .padding(4.dp),
             ) {
                 TypeButton(
-                    text = "Gasto",
+                    text = stringResource(R.string.type_expense),
                     selected = type == TxType.EXPENSE,
                     onClick = { switchType(TxType.EXPENSE) },
                     modifier = Modifier.weight(1f),
                 )
                 TypeButton(
-                    text = "Ingreso",
+                    text = stringResource(R.string.type_income),
                     selected = type == TxType.INCOME,
                     onClick = { switchType(TxType.INCOME) },
                     modifier = Modifier.weight(1f),
@@ -246,7 +252,9 @@ fun TransactionEditorScreen(
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = if (type == TxType.EXPENSE) "¿En qué se ha ido?" else "¿De dónde viene?",
+                text = stringResource(
+                    if (type == TxType.EXPENSE) R.string.editor_expense_question else R.string.editor_income_question,
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
@@ -254,7 +262,7 @@ fun TransactionEditorScreen(
             )
 
             Spacer(Modifier.height(22.dp))
-            Overline("Categoría")
+            Overline(stringResource(R.string.label_category))
             Spacer(Modifier.height(10.dp))
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -280,11 +288,11 @@ fun TransactionEditorScreen(
                 if (isReversal) {
                     DetailRow(
                         icon = Icons.Rounded.Block,
-                        label = "Pago",
+                        label = stringResource(R.string.editor_payment),
                         value = reversalPayment?.let { payment ->
-                            val paymentCategory = data.category(payment.categoryId)?.name ?: "Gasto"
+                            val paymentCategory = data.category(payment.categoryId)?.name ?: stringResource(R.string.type_expense)
                             "${payment.note.ifBlank { paymentCategory }} · ${formatMoney(payment.amountCents, currency)}"
-                        } ?: "Buscar pago a anular",
+                        } ?: stringResource(R.string.editor_search_payment),
                         muted = reversalPayment == null,
                         onClick = { showReversalPicker = true },
                     )
@@ -298,8 +306,8 @@ fun TransactionEditorScreen(
                 }
                 DetailRow(
                     icon = if (type == TxType.INCOME) Icons.Rounded.AccountBalance else Icons.Rounded.AccountBalance,
-                    label = "Cuenta",
-                    value = selectedAccount?.name ?: "Elige una cuenta",
+                    label = stringResource(R.string.label_account),
+                    value = selectedAccount?.name ?: stringResource(R.string.editor_choose_account),
                     onClick = { showAccounts = true },
                 )
                 Box(
@@ -311,8 +319,12 @@ fun TransactionEditorScreen(
                 )
                 DetailRow(
                     icon = Icons.Rounded.CalendarToday,
-                    label = "Fecha",
-                    value = if (date == LocalDate.now()) "Hoy, ${formatShortDate(date)}" else formatFullDate(date),
+                    label = stringResource(R.string.action_date),
+                    value = if (date == LocalDate.now()) {
+                        stringResource(R.string.today_prefix, formatShortDate(date))
+                    } else {
+                        formatFullDate(date)
+                    },
                     onClick = { showDatePicker = true },
                 )
                 Box(
@@ -324,8 +336,8 @@ fun TransactionEditorScreen(
                 )
                 DetailRow(
                     icon = Icons.Rounded.EditNote,
-                    label = "Nota",
-                    value = note.ifBlank { "Añadir una nota" },
+                    label = stringResource(R.string.label_note),
+                    value = note.ifBlank { stringResource(R.string.editor_add_note) },
                     muted = note.isBlank(),
                     onClick = { showNote = true },
                 )
@@ -334,7 +346,7 @@ fun TransactionEditorScreen(
             if (isReversal && reversalPayment == null) {
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "Elige el pago que quieres anular para poder guardar.",
+                    text = stringResource(R.string.editor_reversal_required),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.warning,
                 )
@@ -358,7 +370,7 @@ fun TransactionEditorScreen(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "Programado: no contará en tu saldo hasta el ${formatShortDate(date)}.",
+                        text = stringResource(R.string.editor_scheduled_note, formatShortDate(date)),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.warning,
                     )
@@ -384,7 +396,7 @@ fun TransactionEditorScreen(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "Eliminar movimiento",
+                        text = stringResource(R.string.action_delete_transaction),
                         style = MaterialTheme.typography.labelLarge,
                         color = colors.expense,
                     )
@@ -416,7 +428,7 @@ fun TransactionEditorScreen(
             onDismissRequest = { showAccounts = false },
             containerColor = colors.surface,
             shape = RoundedCornerShape(26.dp),
-            title = { Text("Cuenta", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+            title = { Text(stringResource(R.string.label_account), style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
             text = {
                 Column {
                     data.accounts.forEach { account ->
@@ -432,7 +444,7 @@ fun TransactionEditorScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showAccounts = false }) { Text("Cerrar", color = colors.primary) }
+                TextButton(onClick = { showAccounts = false }) { Text(stringResource(R.string.action_close), color = colors.primary) }
             },
         )
     }
@@ -451,10 +463,10 @@ fun TransactionEditorScreen(
                         }
                         showDatePicker = false
                     },
-                ) { Text("Listo", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_done), color = colors.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         ) {
             DatePicker(state = state, showModeToggle = false)
@@ -467,13 +479,13 @@ fun TransactionEditorScreen(
             onDismissRequest = { showNote = false },
             containerColor = colors.surface,
             shape = RoundedCornerShape(26.dp),
-            title = { Text("Nota", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+            title = { Text(stringResource(R.string.label_note), style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
             text = {
                 OutlinedTextField(
                     value = noteValue,
                     onValueChange = { noteValue = it.take(60) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Ej. Cena con amigos") },
+                    placeholder = { Text(stringResource(R.string.editor_note_placeholder)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     keyboardOptions = KeyboardOptions.Default,
@@ -485,10 +497,10 @@ fun TransactionEditorScreen(
                         note = noteValue.trim()
                         showNote = false
                     },
-                ) { Text("Guardar", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_save), color = colors.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showNote = false }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { showNote = false }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         )
     }
@@ -505,9 +517,9 @@ fun TransactionEditorScreen(
                 reversalId = payment.id
                 amountCents = payment.amountCents
                 accountId = payment.accountId
-                if (note.isBlank() || note.startsWith("Anulación ·")) {
-                    note = "Anulación · " +
-                        payment.note.ifBlank { data.category(payment.categoryId)?.name ?: "Pago" }
+                if (note.isBlank() || note.startsWith(reversalPrefix)) {
+                    note = reversalPrefix +
+                        payment.note.ifBlank { data.category(payment.categoryId)?.name ?: paymentFallback }
                 }
                 showReversalPicker = false
             },
@@ -519,10 +531,16 @@ fun TransactionEditorScreen(
             onDismissRequest = { confirmDelete = false },
             containerColor = colors.surface,
             shape = RoundedCornerShape(26.dp),
-            title = { Text("¿Eliminar movimiento?", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+            title = {
+                Text(
+                    stringResource(R.string.editor_delete_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.ink,
+                )
+            },
             text = {
                 Text(
-                    "Podrás deshacerlo justo después desde el aviso.",
+                    stringResource(R.string.editor_delete_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.inkMuted,
                 )
@@ -533,10 +551,10 @@ fun TransactionEditorScreen(
                         confirmDelete = false
                         onDelete?.invoke(initial.id)
                     },
-                ) { Text("Eliminar", color = colors.expense) }
+                ) { Text(stringResource(R.string.action_delete), color = colors.expense) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         )
     }
@@ -590,16 +608,16 @@ private fun ReversalPickerDialog(
             color = colors.surface,
         ) {
             Column(Modifier.padding(20.dp)) {
-                Overline("ANULACIÓN")
+                Overline(stringResource(R.string.reversal_overline))
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "Busca el pago a anular",
+                    stringResource(R.string.reversal_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.ink,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Elige el gasto. Se creará un ingreso por el mismo importe, vinculado a ese pago.",
+                    text = stringResource(R.string.reversal_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -608,7 +626,7 @@ private fun ReversalPickerDialog(
                     value = query,
                     onValueChange = { query = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Buscar por nota, categoría o importe") },
+                    placeholder = { Text(stringResource(R.string.reversal_search_hint)) },
                     leadingIcon = {
                         Icon(
                             Icons.Rounded.Search,
@@ -624,7 +642,7 @@ private fun ReversalPickerDialog(
                 if (candidates.isEmpty()) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "No hay pagos que coincidan.",
+                            text = stringResource(R.string.reversal_no_results),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colors.inkMuted,
                         )
@@ -651,7 +669,7 @@ private fun ReversalPickerDialog(
                     horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancelar", color = colors.inkMuted)
+                        Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
                     }
                 }
             }
@@ -886,7 +904,7 @@ private fun Keypad(
                             if (key == "⌫") {
                                 Icon(
                                     Icons.Rounded.KeyboardBackspace,
-                                    contentDescription = "Borrar",
+                                    contentDescription = stringResource(R.string.action_clear),
                                     tint = colors.inkMuted,
                                     modifier = Modifier.size(21.dp),
                                 )

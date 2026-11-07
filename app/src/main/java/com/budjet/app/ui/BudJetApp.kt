@@ -40,7 +40,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.budjet.app.R
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,6 +83,28 @@ fun BudJetApp(
     data: AppData,
 ) {
     val colors = BudTheme.colors
+    val msgNotifOn = stringResource(R.string.snackbar_notifications_on)
+    val msgNotifAndroid = stringResource(R.string.snackbar_notifications_android)
+    val unlockTitle = stringResource(R.string.unlock_title)
+    val unlockSubtitle = stringResource(R.string.unlock_subtitle)
+    val msgMovementDeleted = stringResource(R.string.snackbar_movement_deleted)
+    val labelUndo = stringResource(R.string.action_undo)
+    val msgAuthFailed = stringResource(R.string.snackbar_auth_open_failed)
+    val biometricTitle = stringResource(R.string.biometric_enable_title)
+    val biometricSubtitle = stringResource(R.string.biometric_subtitle)
+    val msgBiometricEnabled = stringResource(R.string.snackbar_biometric_enabled)
+    val testUnlockTitle = stringResource(R.string.settings_test_unlock)
+    val msgUnlockVerified = stringResource(R.string.snackbar_unlock_verified)
+    val msgAutoBackupCreated = stringResource(R.string.settings_auto_backup_created)
+    val msgBackupFailed = stringResource(R.string.snackbar_backup_failed)
+    val exportTitle = stringResource(R.string.settings_export_transactions)
+    val msgFileFailed = stringResource(R.string.snackbar_file_failed)
+    val msgDemoRestored = stringResource(R.string.snackbar_demo_restored)
+    val msgFreshStarted = stringResource(R.string.snackbar_fresh_started)
+    val msgGoalAdded = stringResource(R.string.snackbar_goal_added)
+    val msgGoalWithdrawn = stringResource(R.string.snackbar_goal_withdrawn)
+    val msgMovementAdded = stringResource(R.string.snackbar_movement_added)
+    val msgMovementUpdated = stringResource(R.string.snackbar_movement_updated)
     val month by viewModel.month.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(AppTab.HOME) }
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
@@ -109,7 +133,7 @@ fun BudJetApp(
     ) { granted ->
         scope.launch {
             snackbar.showSnackbar(
-                if (granted) "Avisos activados" else "Puedes activar los avisos desde los ajustes de Android",
+                if (granted) msgNotifOn else msgNotifAndroid,
             )
         }
     }
@@ -147,8 +171,8 @@ fun BudJetApp(
         authenticating = true
         BiometricAuth.request(
             activity = host,
-            title = "Desbloquear Bud Jet",
-            subtitle = "Confirma tu identidad para ver tus cuentas",
+            title = unlockTitle,
+            subtitle = unlockSubtitle,
             onSuccess = {
                 authenticating = false
                 locked = false
@@ -251,8 +275,8 @@ fun BudJetApp(
         editorVisible = false
         scope.launch {
             val result = snackbar.showSnackbar(
-                message = "Movimiento eliminado",
-                actionLabel = "Deshacer",
+                message = msgMovementDeleted,
+                actionLabel = labelUndo,
                 duration = SnackbarDuration.Long,
             )
             if (result == SnackbarResult.ActionPerformed) {
@@ -389,7 +413,7 @@ fun BudJetApp(
                             val host = activity
                             when {
                                 host == null -> scope.launch {
-                                    snackbar.showSnackbar("No se pudo abrir la autenticación")
+                                    snackbar.showSnackbar(msgAuthFailed)
                                 }
                                 !BiometricAuth.canAuthenticate(host) -> scope.launch {
                                     snackbar.showSnackbar(BiometricAuth.unavailableReason(host))
@@ -398,13 +422,13 @@ fun BudJetApp(
                                     authenticating = true
                                     BiometricAuth.request(
                                         activity = host,
-                                        title = "Activar bloqueo",
-                                        subtitle = "Confirma tu huella o el PIN del dispositivo",
+                                        title = biometricTitle,
+                                        subtitle = biometricSubtitle,
                                         onSuccess = {
                                             authenticating = false
                                             viewModel.setBiometricLock(true)
                                             backgroundedAt = android.os.SystemClock.elapsedRealtime()
-                                            scope.launch { snackbar.showSnackbar("Bloqueo biométrico activado") }
+                                            scope.launch { snackbar.showSnackbar(msgBiometricEnabled) }
                                         },
                                         onError = { message ->
                                             authenticating = false
@@ -419,7 +443,7 @@ fun BudJetApp(
                         val host = activity
                         when {
                             host == null -> scope.launch {
-                                snackbar.showSnackbar("No se pudo abrir la autenticación")
+                                snackbar.showSnackbar(msgAuthFailed)
                             }
                             !BiometricAuth.canAuthenticate(host) -> scope.launch {
                                 snackbar.showSnackbar(BiometricAuth.unavailableReason(host))
@@ -428,11 +452,11 @@ fun BudJetApp(
                                 authenticating = true
                                 BiometricAuth.request(
                                     activity = host,
-                                    title = "Probar desbloqueo",
-                                    subtitle = "Confirma tu huella o el PIN del dispositivo",
+                                    title = testUnlockTitle,
+                                    subtitle = biometricSubtitle,
                                     onSuccess = {
                                         authenticating = false
-                                        scope.launch { snackbar.showSnackbar("Desbloqueo verificado") }
+                                        scope.launch { snackbar.showSnackbar(msgUnlockVerified) }
                                     },
                                     onError = { message ->
                                         authenticating = false
@@ -457,7 +481,7 @@ fun BudJetApp(
                         val result = viewModel.createAutoBackupNow(context)
                         scope.launch {
                             snackbar.showSnackbar(
-                                if (result.isSuccess) "Copia automática creada" else "No se pudo crear la copia",
+                                if (result.isSuccess) msgAutoBackupCreated else msgBackupFailed,
                             )
                         }
                     },
@@ -476,19 +500,19 @@ fun BudJetApp(
                     onExport = {
                         val intent = viewModel.buildExport(context, data)
                         if (intent != null) {
-                            context.startActivity(Intent.createChooser(intent, "Exportar movimientos"))
+                            context.startActivity(Intent.createChooser(intent, exportTitle))
                         } else {
-                            scope.launch { snackbar.showSnackbar("No se pudo crear el archivo") }
+                            scope.launch { snackbar.showSnackbar(msgFileFailed) }
                         }
                     },
                     onResetDemo = {
                         viewModel.resetDemoData()
                         tab = AppTab.HOME
-                        scope.launch { snackbar.showSnackbar("Datos de ejemplo restaurados") }
+                        scope.launch { snackbar.showSnackbar(msgDemoRestored) }
                     },
                     onStartFresh = {
                         viewModel.startFresh()
-                        scope.launch { snackbar.showSnackbar("Todo a cero. Empiezas de cero.") }
+                        scope.launch { snackbar.showSnackbar(msgFreshStarted) }
                     },
                 )
             }
@@ -538,7 +562,7 @@ fun BudJetApp(
                         viewModel.adjustGoal(id, delta)
                         scope.launch {
                             snackbar.showSnackbar(
-                                if (delta > 0) "Aportación añadida" else "Retirada realizada",
+                                if (delta > 0) msgGoalAdded else msgGoalWithdrawn,
                             )
                         }
                     },
@@ -631,7 +655,13 @@ fun BudJetApp(
                     onClose = { importOpen = false },
                     onImport = { rows, accountId ->
                         viewModel.importTransactions(rows, accountId)
-                        scope.launch { snackbar.showSnackbar("${rows.size} movimientos importados") }
+                        scope.launch { snackbar.showSnackbar(
+                            context.resources.getQuantityString(
+                                R.plurals.snackbar_imported,
+                                rows.size,
+                                rows.size,
+                            ),
+                        ) }
                     },
                 )
             }
@@ -657,7 +687,7 @@ fun BudJetApp(
                         onSave = { updated ->
                             viewModel.saveTransaction(updated)
                             editorVisible = false
-                            scope.launch { snackbar.showSnackbar(if (updated.id == null) "Movimiento añadido" else "Movimiento actualizado") }
+                            scope.launch { snackbar.showSnackbar(if (updated.id == null) msgMovementAdded else msgMovementUpdated) }
                         },
                         onDelete = { id -> deleteTransaction(id) },
                     )

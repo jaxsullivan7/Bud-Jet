@@ -88,4 +88,44 @@ class EnglishScreenshotTest {
         compose.onNodeWithTag("debt-plan-button").performClick()
         capture("11-debt-plan")
     }
+
+    @Test
+    fun captureSettingsInEnglish() {
+        openSettings()
+        capture("12-settings")
+    }
+
+    @Test
+    fun captureTransactionEditorInEnglish() {
+        compose.onNodeWithContentDescription("Add transaction").performClick()
+        capture("13-editor")
+    }
+
+    @Test
+    fun captureGoalsInEnglish() {
+        openSettings()
+        compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Savings goals"))
+        compose.onNodeWithText("Savings goals").performClick()
+        capture("14-goals")
+    }
+
+    @Test
+    fun captureRecurringInEnglish() {
+        openSettings()
+        compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Recurring transactions"))
+        compose.onNodeWithText("Recurring transactions").performClick()
+        capture("15-recurring")
+    }
+
+    @Test
+    fun captureImportInEnglish() {
+        openSettings()
+        compose.onNodeWithTag("settings-list").performScrollToNode(hasText("Import statement"))
+        compose.onNodeWithText("Import statement").performClick()
+        capture("16-import")
+    }
+
+    private fun openSettings() {
+        compose.onNodeWithContentDescription("Settings").performClick()
+    }
 }

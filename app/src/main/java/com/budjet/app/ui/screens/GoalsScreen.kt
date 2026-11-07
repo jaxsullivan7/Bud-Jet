@@ -57,6 +57,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.budjet.app.R
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
@@ -76,6 +79,7 @@ import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.ui.theme.CategoryPalette
 import com.budjet.app.util.capitalizeEs
 import com.budjet.app.util.centsToInput
+import com.budjet.app.util.filterAmountInput
 import com.budjet.app.util.formatMonth
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.formatShortDate
@@ -121,14 +125,14 @@ fun GoalsScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onClose,
                     size = 38.dp,
                 )
-                Overline("AHORRO")
+                Overline(stringResource(R.string.goals_overline))
                 SoftIconButton(
                     icon = Icons.Rounded.Add,
-                    contentDescription = "Nuevo objetivo",
+                    contentDescription = stringResource(R.string.action_new_goal),
                     onClick = { editor = GoalDraft() },
                     size = 38.dp,
                     container = colors.primarySoft,
@@ -137,13 +141,13 @@ fun GoalsScreen(
             }
             Spacer(Modifier.height(22.dp))
             Text(
-                text = "Objetivos.",
+                text = stringResource(R.string.goals_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.ink,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Dinero apartado con un propósito. No mueve tu saldo, solo lo organiza.",
+                text = stringResource(R.string.goals_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -155,8 +159,8 @@ fun GoalsScreen(
                 BudCard {
                     EmptyState(
                         icon = Icons.Rounded.Savings,
-                        title = "Tu primer objetivo",
-                        message = "Un viaje, un colchón de emergencia o ese capricho que te rondaba.",
+                        title = stringResource(R.string.goals_empty_title),
+                        message = stringResource(R.string.goals_empty_body),
                     )
                     Box(
                         modifier = Modifier
@@ -167,7 +171,7 @@ fun GoalsScreen(
                             .clickable { editor = GoalDraft() },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("Crear objetivo", style = MaterialTheme.typography.titleSmall, color = colors.onPrimary)
+                        Text(stringResource(R.string.goals_create), style = MaterialTheme.typography.titleSmall, color = colors.onPrimary)
                     }
                 }
             }
@@ -180,23 +184,31 @@ fun GoalsScreen(
                         verticalAlignment = Alignment.Bottom,
                     ) {
                         Column {
-                            Overline("EN MARCHA")
+                            Overline(stringResource(R.string.overline_in_progress))
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                text = "${goals.size} ${if (goals.size == 1) "objetivo" else "objetivos"}",
+                                text = pluralStringResource(R.plurals.goals_count, goals.size, goals.size),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = colors.ink,
                             )
                         }
                         Pill(
-                            text = if (overallProgress >= 1f) "Completado" else percentText(overallProgress),
+                            text = if (overallProgress >= 1f) {
+                            stringResource(R.string.goals_completed)
+                        } else {
+                            percentText(overallProgress)
+                        },
                             container = colors.primarySoft,
                             content = colors.primary,
                         )
                     }
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "${formatMoney(totalSaved, currency)} de ${formatMoney(totalTarget, currency)}",
+                        text = stringResource(
+                        R.string.goals_progress,
+                        formatMoney(totalSaved, currency),
+                        formatMoney(totalTarget, currency),
+                    ),
                         style = BudTheme.type.moneyMedium,
                         color = colors.ink,
                     )
@@ -237,7 +249,7 @@ fun GoalsScreen(
                 ) {
                     Icon(Icons.Rounded.Add, contentDescription = null, tint = colors.primary, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(10.dp))
-                    Text("Nuevo objetivo", style = MaterialTheme.typography.titleSmall, color = colors.ink)
+                    Text(stringResource(R.string.goals_new), style = MaterialTheme.typography.titleSmall, color = colors.ink)
                 }
             }
         }
@@ -278,10 +290,10 @@ fun GoalsScreen(
             onDismissRequest = { deleting = null },
             containerColor = colors.surface,
             shape = MaterialTheme.shapes.large,
-            title = { Text("¿Eliminar objetivo?", color = colors.ink) },
+            title = { Text(stringResource(R.string.goals_delete_title), color = colors.ink) },
             text = {
                 Text(
-                    "Se borrará el objetivo y su progreso. Los movimientos de tu cuenta no cambian.",
+                    stringResource(R.string.goals_delete_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.inkMuted,
                 )
@@ -292,10 +304,10 @@ fun GoalsScreen(
                         onDeleteGoal(id)
                         deleting = null
                     },
-                ) { Text("Eliminar", color = colors.expense) }
+                ) { Text(stringResource(R.string.action_delete), color = colors.expense) }
             },
             dismissButton = {
-                TextButton(onClick = { deleting = null }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { deleting = null }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         )
     }
@@ -350,11 +362,15 @@ private fun GoalCard(
                 }
                 Text(
                     text = buildString {
-                        append(deadline?.let { "Para ${formatShortDate(it)}" } ?: "Sin fecha límite")
+                        append(
+                            deadline?.let {
+                                stringResource(R.string.goals_deadline, formatShortDate(it))
+                            } ?: stringResource(R.string.goals_no_deadline),
+                        )
                         if (!complete && suggestion > 0) {
                             append(" · ≈ ")
                             append(formatMoney(suggestion, currency))
-                            append("/mes")
+                            append(stringResource(R.string.goals_per_month))
                         }
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -379,7 +395,10 @@ private fun GoalCard(
             )
             Spacer(Modifier.width(6.dp))
             Text(
-                text = "de ${formatMoney(goal.targetCents, currency)}",
+                text = stringResource(
+                    R.string.home_goal_of,
+                    formatMoney(goal.targetCents, currency),
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
                 modifier = Modifier.padding(bottom = 4.dp),
@@ -396,7 +415,11 @@ private fun GoalCard(
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = if (complete) "Objetivo conseguido. ¡Bien hecho!" else "Faltan ${formatMoney(remaining, currency)}",
+                text = if (complete) {
+                    stringResource(R.string.goals_done)
+                } else {
+                    stringResource(R.string.goals_remaining, formatMoney(remaining, currency))
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
                 modifier = Modifier.weight(1f),
@@ -417,7 +440,7 @@ private fun GoalCard(
                 )
                 Spacer(Modifier.width(4.dp))
                 Text(
-                    text = "Aportar",
+                    text = stringResource(R.string.action_contribute),
                     style = MaterialTheme.typography.labelMedium,
                     color = colors.primary,
                 )
@@ -450,10 +473,16 @@ private fun GoalEditorDialog(
         shape = RoundedCornerShape(26.dp),
         title = {
             Column {
-                Overline(if (initial.id == null) "NUEVO OBJETIVO" else "EDITAR OBJETIVO")
+                Overline(
+                    stringResource(
+                        if (initial.id == null) R.string.goals_new_overline else R.string.goals_edit_overline,
+                    ),
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = if (initial.id == null) "¿Qué quieres conseguir?" else "Ajusta tu objetivo",
+                    text = stringResource(
+                        if (initial.id == null) R.string.goals_dialog_new else R.string.goals_dialog_edit,
+                    ),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.ink,
                 )
@@ -469,19 +498,17 @@ private fun GoalEditorDialog(
                     value = name,
                     onValueChange = { name = it.take(28) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nombre") },
-                    placeholder = { Text("Ej. Viaje a Japón") },
+                    label = { Text(stringResource(R.string.label_name)) },
+                    placeholder = { Text(stringResource(R.string.goals_name_placeholder)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                 )
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = target,
-                    onValueChange = { text ->
-                        if (text.length <= 10 && text.all { it.isDigit() || it == ',' }) target = text
-                    },
+                    onValueChange = { target = filterAmountInput(it, 10) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Meta") },
+                    label = { Text(stringResource(R.string.label_goal)) },
                     placeholder = { Text("0") },
                     suffix = { Text(currency.symbol, color = colors.inkMuted) },
                     singleLine = true,
@@ -507,14 +534,16 @@ private fun GoalEditorDialog(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = deadline?.let { "Para ${formatShortDate(it)}" } ?: "Sin fecha límite",
+                        text = deadline?.let {
+                            stringResource(R.string.goals_deadline, formatShortDate(it))
+                        } ?: stringResource(R.string.goals_no_deadline),
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (deadline == null) colors.inkMuted else colors.ink,
                         modifier = Modifier.weight(1f),
                     )
                     if (deadline != null) {
                         Text(
-                            text = "Quitar",
+                            text = stringResource(R.string.action_remove),
                             style = MaterialTheme.typography.labelMedium,
                             color = colors.primary,
                             modifier = Modifier
@@ -525,7 +554,7 @@ private fun GoalEditorDialog(
                     }
                 }
                 Spacer(Modifier.height(14.dp))
-                Text("Icono", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_icon), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -551,7 +580,7 @@ private fun GoalEditorDialog(
                     }
                 }
                 Spacer(Modifier.height(14.dp))
-                Text("Color", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.label_color), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -590,15 +619,18 @@ private fun GoalEditorDialog(
                 },
                 enabled = name.isNotBlank() && parsedTarget > 0,
             ) {
-                Text(if (initial.id == null) "Crear" else "Guardar", color = colors.primary)
+                Text(
+                    stringResource(if (initial.id == null) R.string.action_create else R.string.action_save),
+                    color = colors.primary,
+                )
             }
         },
         dismissButton = {
             Row {
                 if (onDelete != null) {
-                    TextButton(onClick = onDelete) { Text("Eliminar", color = colors.expense) }
+                    TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete), color = colors.expense) }
                 }
-                TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             }
         },
     )
@@ -617,10 +649,10 @@ private fun GoalEditorDialog(
                         }
                         showDatePicker = false
                     },
-                ) { Text("Listo", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_done), color = colors.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar", color = colors.inkMuted) }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
             },
         ) {
             DatePicker(state = state, showModeToggle = false)
@@ -647,7 +679,11 @@ private fun GoalAmountDialog(
         shape = RoundedCornerShape(26.dp),
         title = {
             Column {
-                Overline(if (withdraw) "RETIRAR DEL OBJETIVO" else "APORTAR AL OBJETIVO")
+                Overline(
+                    stringResource(
+                        if (withdraw) R.string.goals_withdraw_overline else R.string.goals_contribute_overline,
+                    ),
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(goal.name, style = MaterialTheme.typography.headlineSmall, color = colors.ink)
             }
@@ -661,23 +697,31 @@ private fun GoalAmountDialog(
                         .background(colors.surfaceMuted)
                         .padding(3.dp),
                 ) {
-                    AmountMode("Aportar", !withdraw, Modifier.weight(1f)) { withdraw = false }
-                    AmountMode("Retirar", withdraw, Modifier.weight(1f)) { withdraw = true }
+                    AmountMode(stringResource(R.string.action_contribute), !withdraw, Modifier.weight(1f)) { withdraw = false }
+                    AmountMode(stringResource(R.string.action_withdraw), withdraw, Modifier.weight(1f)) { withdraw = true }
                 }
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = "Tienes ${formatMoney(goal.savedCents, currency)} de ${formatMoney(goal.targetCents, currency)}",
+                    text = stringResource(
+                    R.string.goals_saved_progress,
+                    formatMoney(goal.savedCents, currency),
+                    formatMoney(goal.targetCents, currency),
+                ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { text ->
-                        if (text.length <= 10 && text.all { it.isDigit() || it == ',' }) amount = text
-                    },
+                    onValueChange = { amount = filterAmountInput(it, 10) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(if (withdraw) "Importe a retirar" else "Importe a aportar") },
+                    label = {
+                        Text(
+                            stringResource(
+                                if (withdraw) R.string.goals_amount_withdraw else R.string.goals_amount_contribute,
+                            ),
+                        )
+                    },
                     placeholder = { Text("0") },
                     suffix = { Text(currency.symbol, color = colors.inkMuted) },
                     singleLine = true,
@@ -707,7 +751,11 @@ private fun GoalAmountDialog(
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = if (parsed > 0) "Quedará en ${formatMoney(resulting, currency)}" else " ",
+                    text = if (parsed > 0) {
+                    stringResource(R.string.goals_result, formatMoney(resulting, currency))
+                } else {
+                    " "
+                },
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -718,11 +766,14 @@ private fun GoalAmountDialog(
                 onClick = { onConfirm(if (withdraw) -parsed else parsed) },
                 enabled = parsed > 0,
             ) {
-                Text(if (withdraw) "Retirar" else "Aportar", color = if (withdraw) colors.expense else colors.primary)
+                Text(
+                stringResource(if (withdraw) R.string.action_withdraw else R.string.action_contribute),
+                color = if (withdraw) colors.expense else colors.primary,
+            )
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
         },
     )
 }

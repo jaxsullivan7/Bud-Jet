@@ -24,7 +24,8 @@
   - [x] Bloque 2: Movimientos, orden, búsqueda y selección múltiple.
   - [x] Bloque 3: Presupuestos y Análisis.
   - [x] Bloque 4: Patrimonio, deudas, plan de deudas, cartera y calculadora.
-  - [ ] Bloque 5: Ajustes, formularios, importación y avisos.
+  - [x] Bloque 5: Ajustes, editor, importación, recurrentes y objetivos.
+  - [ ] Traducir los mensajes internos de validación de copias (capa de datos).
   - [ ] Bloque 6: widget, notificaciones y accesibilidad.
   - [ ] Bloque 7: categorías, cuentas y datos de ejemplo por ID.
 - [ ] QA en dispositivos reales.
@@ -43,7 +44,7 @@
 
 ## Siguiente tarea
 
-1. Bloque 5 de localización: Ajustes, formularios, importación y avisos.
+1. Bloque 6 de localización: widget, notificaciones, pantalla de bloqueo y accesibilidad.
 2. Mantener el español como idioma base y el inglés en `values-en`.
 3. QA de la build release en dispositivo real.
 4. Política de privacidad, términos y ficha de tienda.

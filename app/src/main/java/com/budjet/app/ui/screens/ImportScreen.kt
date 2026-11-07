@@ -45,8 +45,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.budjet.app.R
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Category
 import com.budjet.app.data.CsvMapping
@@ -73,6 +76,9 @@ fun ImportScreen(
     val colors = BudTheme.colors
     val context = LocalContext.current
     val currency = Currency.from(data.settings.currencyCode)
+    val errorReadFile = stringResource(R.string.settings_error_read_file)
+    val errorFileTooLarge = stringResource(R.string.settings_error_file_too_large)
+    val errorColumns = stringResource(R.string.import_error_columns)
     val fallback = data.categories.firstOrNull { it.type == TxType.EXPENSE && !it.archived }?.id ?: ""
     var accountId by remember { mutableStateOf(data.accounts.firstOrNull()?.id ?: "") }
     var rawText by remember { mutableStateOf<String?>(null) }
@@ -107,9 +113,9 @@ fun ImportScreen(
                 parsed = ParsedStatement(emptyList(), headers, null, isOfx = false)
                 rows = emptyList()
                 selected = emptySet()
-                error = "No se han detectado las columnas. Elige fecha, concepto e importe."
+                error = errorColumns
             } else {
-                error = it.message ?: "No se pudo leer el archivo."
+                error = it.message ?: errorReadFile
                 parsed = null
                 rows = emptyList()
             }
@@ -120,11 +126,11 @@ fun ImportScreen(
         if (uri == null) return@rememberLauncherForActivityResult
         val text = runCatching {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: error("No se pudo leer el archivo.")
-            if (bytes.size > 10 * 1024 * 1024) error("El archivo es demasiado grande.")
+                ?: error(errorReadFile)
+            if (bytes.size > 10 * 1024 * 1024) error(errorFileTooLarge)
             String(bytes, Charsets.UTF_8)
         }.getOrElse {
-            error = it.message ?: "No se pudo leer el archivo."
+            error = it.message ?: errorReadFile
             null
         }
         if (text != null) {
@@ -145,22 +151,22 @@ fun ImportScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onClose,
                     size = 38.dp,
                 )
-                Overline("DATOS · IMPORTAR")
+                Overline(stringResource(R.string.import_overline))
                 Spacer(Modifier.size(38.dp))
             }
             Spacer(Modifier.height(22.dp))
             Text(
-                text = "Trae tu extracto.",
+                text = stringResource(R.string.import_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.ink,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "CSV u OFX de tu banco. Se procesa en el dispositivo; no se envía nada a ningún servidor.",
+                text = stringResource(R.string.import_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -169,7 +175,7 @@ fun ImportScreen(
 
         item {
             BudCard(padding = 14.dp) {
-                Text("Cuenta de destino", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+                Text(stringResource(R.string.import_destination), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
                 Spacer(Modifier.height(6.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     itemsIndexed(data.accounts) { _, account ->
@@ -193,7 +199,9 @@ fun ImportScreen(
                 }
                 Spacer(Modifier.height(12.dp))
                 PrimaryButton(
-                    text = if (parsed == null) "Elegir archivo" else "Elegir otro archivo",
+                    text = stringResource(
+                        if (parsed == null) R.string.import_choose_file else R.string.import_choose_another,
+                    ),
                     onClick = { launcher.launch(arrayOf("text/*", "application/*", "application/octet-stream")) },
                     icon = Icons.Rounded.FileOpen,
                 )
@@ -214,12 +222,20 @@ fun ImportScreen(
                 ) {
                     Column {
                         Text(
-                            text = "${preview.rows.size} movimientos detectados",
+                            text = pluralStringResource(
+                            R.plurals.import_detected,
+                            preview.rows.size,
+                            preview.rows.size,
+                        ),
                             style = MaterialTheme.typography.titleMedium,
                             color = colors.ink,
                         )
                         Text(
-                            text = "${preview.rows.count { it.duplicate }} duplicados ya están en Bud Jet",
+                            text = pluralStringResource(
+                            R.plurals.import_duplicates,
+                            preview.rows.count { it.duplicate },
+                            preview.rows.count { it.duplicate },
+                        ),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )
@@ -234,13 +250,13 @@ fun ImportScreen(
                         ) {
                             Icon(Icons.Rounded.Tune, contentDescription = null, tint = colors.primary, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Columnas", style = MaterialTheme.typography.labelMedium, color = colors.primary)
+                            Text(stringResource(R.string.label_columns), style = MaterialTheme.typography.labelMedium, color = colors.primary)
                         }
                     }
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Revisa la categoría de cada movimiento antes de importar.",
+                    text = stringResource(R.string.import_review_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -276,7 +292,11 @@ fun ImportScreen(
             item {
                 Spacer(Modifier.height(12.dp))
                 PrimaryButton(
-                    text = "Importar ${selected.size} movimientos",
+                    text = pluralStringResource(
+                        R.plurals.import_action,
+                        selected.size,
+                        selected.size,
+                    ),
                     onClick = {
                         onImport(rows.filterIndexed { index, _ -> index in selected }, accountId)
                         onClose()
@@ -286,7 +306,7 @@ fun ImportScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Los duplicados detectados no se importan dos veces. Puedes cambiar la categoría de cada fila.",
+                    text = stringResource(R.string.import_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -298,7 +318,7 @@ fun ImportScreen(
                 Spacer(Modifier.height(18.dp))
                 BudCard(color = colors.primarySoft, border = false) {
                     Text(
-                        text = "Consejo: si tu banco exporta un CSV con columnas raras, podrás elegir cuál es la fecha, el concepto y el importe después de abrirlo.",
+                        text = stringResource(R.string.import_tip),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.ink,
                     )
@@ -383,7 +403,7 @@ private fun ImportRowCard(
                     )
                     if (row.duplicate) {
                         Spacer(Modifier.width(6.dp))
-                        Text("Duplicado", style = MaterialTheme.typography.bodySmall, color = colors.expense)
+                        Text(stringResource(R.string.import_duplicate), style = MaterialTheme.typography.bodySmall, color = colors.expense)
                     }
                 }
             }
@@ -401,7 +421,9 @@ private fun ImportRowCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = if (row.type == TxType.INCOME) "Ingreso" else "Gasto",
+                        text = stringResource(
+                        if (row.type == TxType.INCOME) R.string.type_income else R.string.type_expense,
+                    ),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -446,21 +468,27 @@ private fun MappingDialog(
         onDismissRequest = onDismiss,
         containerColor = colors.surface,
         shape = RoundedCornerShape(26.dp),
-        title = { Text("Columnas del CSV", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+        title = {
+            Text(
+                stringResource(R.string.import_mapping_title),
+                style = MaterialTheme.typography.headlineSmall,
+                color = colors.ink,
+            )
+        },
         text = {
             Column {
                 Text(
-                    text = "Indica qué columna contiene cada dato. El importe puede ser una columna única o separarse en cargo y abono.",
+                    text = stringResource(R.string.import_mapping_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
                 Spacer(Modifier.height(10.dp))
-                MappingPicker("Fecha", headers, date) { date = it }
-                MappingPicker("Concepto", headers, description) { description = it }
-                MappingPicker("Importe", headers, amount, nullable = true) { amount = it }
-                MappingPicker("Cargo (gasto)", headers, debit, nullable = true) { debit = it }
-                MappingPicker("Abono (ingreso)", headers, credit, nullable = true) { credit = it }
-                MappingPicker("Tipo", headers, type, nullable = true) { type = it }
+                MappingPicker(stringResource(R.string.action_date), headers, date) { date = it }
+                MappingPicker(stringResource(R.string.import_col_description), headers, description) { description = it }
+                MappingPicker(stringResource(R.string.label_amount), headers, amount, nullable = true) { amount = it }
+                MappingPicker(stringResource(R.string.import_col_debit), headers, debit, nullable = true) { debit = it }
+                MappingPicker(stringResource(R.string.import_col_credit), headers, credit, nullable = true) { credit = it }
+                MappingPicker(stringResource(R.string.import_col_type), headers, type, nullable = true) { type = it }
             }
         },
         confirmButton = {
@@ -478,9 +506,9 @@ private fun MappingDialog(
                     )
                 },
                 enabled = (amount != null || (debit != null && credit != null)),
-            ) { Text("Aplicar", color = colors.primary) }
+            ) { Text(stringResource(R.string.action_apply), color = colors.primary) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = colors.inkMuted) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) } },
     )
 }
 
@@ -514,7 +542,7 @@ private fun MappingPicker(
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             if (nullable) {
                 DropdownMenuItem(
-                    text = { Text("— Sin columna —") },
+                    text = { Text(stringResource(R.string.import_no_column)) },
                     onClick = { onSelect(null); expanded = false },
                 )
             }
@@ -540,7 +568,13 @@ private fun CategoryPickerDialog(
         onDismissRequest = onDismiss,
         containerColor = colors.surface,
         shape = RoundedCornerShape(26.dp),
-        title = { Text("Categoría", style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
+        title = {
+            Text(
+                stringResource(R.string.label_category),
+                style = MaterialTheme.typography.headlineSmall,
+                color = colors.ink,
+            )
+        },
         text = {
             LazyColumn {
                 itemsIndexed(categories) { _, category ->
@@ -565,6 +599,6 @@ private fun CategoryPickerDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Cerrar", color = colors.primary) } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close), color = colors.primary) } },
     )
 }

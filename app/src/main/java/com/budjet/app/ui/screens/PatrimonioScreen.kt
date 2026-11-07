@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -354,8 +355,9 @@ fun PatrimonioScreen(
                     if (data.investments.size > 4) {
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            text = stringResource(
-                                R.string.patrimonio_more_products,
+                            text = pluralStringResource(
+                                R.plurals.patrimonio_more_products,
+                                data.investments.size - 4,
                                 data.investments.size - 4,
                             ),
                             style = MaterialTheme.typography.bodySmall,
