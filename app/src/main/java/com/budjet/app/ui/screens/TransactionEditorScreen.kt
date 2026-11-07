@@ -437,7 +437,11 @@ fun TransactionEditorScreen(
             shape = RoundedCornerShape(26.dp),
             title = { Text(stringResource(R.string.label_account), style = MaterialTheme.typography.headlineSmall, color = colors.ink) },
             text = {
-                Column {
+                Column(
+                    Modifier
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState()),
+                ) {
                     data.accounts.forEach { account ->
                         AccountChoice(
                             account = account,

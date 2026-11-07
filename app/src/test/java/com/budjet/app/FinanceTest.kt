@@ -1,6 +1,7 @@
 package com.budjet.app
 
 import com.budjet.app.data.AppData
+import com.budjet.app.data.Account
 import com.budjet.app.data.Finance
 import com.budjet.app.data.Settings
 import com.budjet.app.data.Transaction
@@ -22,12 +23,13 @@ class FinanceTest {
         type: TxType,
         date: LocalDate = today,
         category: String = "food",
+        account: String = "main",
     ) = Transaction(
         id = id,
         amountCents = amount,
         type = type,
         categoryId = category,
-        accountId = "main",
+        accountId = account,
         dateEpochDay = date.toEpochDay(),
     )
 
@@ -59,6 +61,42 @@ class FinanceTest {
             ),
         )
         assertEquals(1_380_00L, Finance.totalBalance(app, today))
+    }
+
+    @Test
+    fun `additional accounts count in the total and keep their own balance`() {
+        val bank = Account(
+            id = "a_bank",
+            name = "Bank",
+            icon = "bank",
+            colorHex = "#4E6E81",
+            initialBalanceCents = 75_000,
+            customName = true,
+        )
+        val app = data(
+            listOf(
+                tx("1", 500_00, TxType.INCOME),
+                tx("2", 120_00, TxType.EXPENSE),
+            ),
+        ).copy(
+            accounts = listOf(
+                Account("main", "Main", "bank", "#4E6E81"),
+                bank,
+            ),
+        )
+        assertEquals(2_130_00L, Finance.totalBalance(app, today))
+        assertEquals(750_00L, Finance.accountBalance(app, "a_bank", today))
+
+        val withBankExpense = app.copy(
+            transactions = app.transactions + tx(
+                "3",
+                100_00,
+                TxType.EXPENSE,
+                account = "a_bank",
+            ),
+        )
+        assertEquals(2_030_00L, Finance.totalBalance(withBankExpense, today))
+        assertEquals(650_00L, Finance.accountBalance(withBankExpense, "a_bank", today))
     }
 
     @Test

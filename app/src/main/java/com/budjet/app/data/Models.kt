@@ -32,6 +32,8 @@ data class Category(
     val colorHex: String,
     val type: TxType,
     val archived: Boolean = false,
+    /** True once the user has edited the name, so built-in translations don't override it. */
+    val customName: Boolean = false,
 )
 
 @Serializable
@@ -40,6 +42,10 @@ data class Account(
     val name: String,
     val icon: String,
     val colorHex: String,
+    /** Money the account already had before tracking started. */
+    val initialBalanceCents: Long = 0L,
+    /** True for accounts created or renamed by the user. */
+    val customName: Boolean = false,
 )
 
 @Serializable
@@ -73,6 +79,7 @@ data class SavingsGoal(
     val deadlineEpochDay: Long? = null,
     val icon: String = "savings",
     val colorHex: String = "#2F6B54",
+    val customName: Boolean = false,
 )
 
 @Serializable
@@ -105,6 +112,7 @@ data class Investment(
     val name: String,
     val kind: InvestmentKind = InvestmentKind.INDEX_FUND,
     val createdAtEpochDay: Long = 0,
+    val customName: Boolean = false,
 )
 
 @Serializable
@@ -141,6 +149,7 @@ data class Liability(
     val annualRatePercent: Double = 0.0,
     val minimumPaymentCents: Long = 0L,
     val createdAtEpochDay: Long = 0,
+    val customName: Boolean = false,
 )
 
 @Serializable

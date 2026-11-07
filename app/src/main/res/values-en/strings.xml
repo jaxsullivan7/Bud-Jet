@@ -867,4 +867,20 @@
     <string name="generated_recurring_fallback">Recurring transaction</string>
     <string name="generated_default_name">You</string>
     <string name="export_csv_header">Date;Type;Category;Account;Amount;Note</string>
+
+    <!-- Custom accounts -->
+    <string name="settings_add_account">Add account</string>
+    <string name="account_new_overline">NEW ACCOUNT</string>
+    <string name="account_edit_overline">EDIT ACCOUNT</string>
+    <string name="account_dialog_new">What account are you adding?</string>
+    <string name="account_dialog_edit">Adjust the account</string>
+    <string name="account_name_placeholder">e.g. Chase</string>
+    <string name="account_initial_balance">Account opening balance</string>
+    <string name="account_initial_balance_hint">The money you already have in this account. It is added to your total balance.</string>
+    <string name="account_first_balance_note">The first account\'s opening balance is edited in “Opening balance”.</string>
+    <string name="action_delete_account">Delete account</string>
+    <string name="account_delete_title">Delete account?</string>
+    <string name="account_delete_body">“%1$s” will be deleted. This is only possible if it has no linked transactions.</string>
+    <string name="account_delete_in_use">You cannot delete an account with linked transactions, transfers or payments.</string>
+    <string name="account_delete_first">You cannot delete the main account while it is first in the list.</string>
 </resources>

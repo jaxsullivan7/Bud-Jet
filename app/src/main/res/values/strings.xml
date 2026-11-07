@@ -867,4 +867,20 @@
     <string name="generated_recurring_fallback">Movimiento recurrente</string>
     <string name="generated_default_name">Tú</string>
     <string name="export_csv_header">Fecha;Tipo;Categoría;Cuenta;Importe;Nota</string>
+
+    <!-- Cuentas personalizadas -->
+    <string name="settings_add_account">Añadir cuenta</string>
+    <string name="account_new_overline">NUEVA CUENTA</string>
+    <string name="account_edit_overline">EDITAR CUENTA</string>
+    <string name="account_dialog_new">¿Qué cuenta añades?</string>
+    <string name="account_dialog_edit">Ajusta la cuenta</string>
+    <string name="account_name_placeholder">Ej. Banco Santander</string>
+    <string name="account_initial_balance">Saldo inicial de la cuenta</string>
+    <string name="account_initial_balance_hint">El dinero que ya tienes en esta cuenta. Se suma a tu saldo total.</string>
+    <string name="account_first_balance_note">El saldo inicial de la primera cuenta se edita en «Saldo inicial».</string>
+    <string name="action_delete_account">Eliminar cuenta</string>
+    <string name="account_delete_title">¿Eliminar cuenta?</string>
+    <string name="account_delete_body">Se borrará «%1$s». Solo es posible si no tiene movimientos asociados.</string>
+    <string name="account_delete_in_use">No puedes eliminar una cuenta con movimientos, transferencias o pagos asociados.</string>
+    <string name="account_delete_first">No puedes eliminar la cuenta principal mientras sea la primera de la lista.</string>
 </resources>

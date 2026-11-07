@@ -122,6 +122,15 @@ fun SettingsScreen(
     onOpenRecurring: () -> Unit,
     onSetBiometric: (Boolean) -> Unit,
     onTestBiometric: () -> Unit,
+    onAddAccount: (name: String, icon: String, colorHex: String, initialBalanceCents: Long) -> Unit,
+    onUpdateAccount: (
+        id: String,
+        name: String,
+        icon: String,
+        colorHex: String,
+        initialBalanceCents: Long,
+    ) -> Unit,
+    onDeleteAccount: (String) -> Unit,
     onBuildBackup: () -> String,
     onValidateBackup: (String) -> Result<AppData>,
     onRestoreBackup: (AppData) -> Unit,
@@ -161,7 +170,11 @@ fun SettingsScreen(
     var pendingEncryptedBytes by remember { mutableStateOf<ByteArray?>(null) }
     var autoBackupsDialog by remember { mutableStateOf(false) }
     var rulesDialog by remember { mutableStateOf(false) }
+    var accountEditorOpen by remember { mutableStateOf(false) }
+    var accountEditor by remember { mutableStateOf<Account?>(null) }
+    var deleteAccountTarget by remember { mutableStateOf<Account?>(null) }
     val currency = Currency.from(data.settings.currencyCode)
+    val accountDeleteInUseMessage = stringResource(R.string.account_delete_in_use)
     val errorOpenFile = stringResource(R.string.settings_error_open_file)
     val errorFileTooLarge = stringResource(R.string.settings_error_file_too_large)
     val errorReadFile = stringResource(R.string.settings_error_read_file)
@@ -563,11 +576,24 @@ fun SettingsScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = stringResource(R.string.section_accounts))
+            SectionHeader(
+                title = stringResource(R.string.section_accounts),
+                trailing = stringResource(R.string.settings_add_account),
+                onTrailingClick = {
+                    accountEditor = null
+                    accountEditorOpen = true
+                },
+            )
             Spacer(Modifier.height(10.dp))
             BudCard(padding = 0.dp) {
                 data.accounts.forEachIndexed { index, account ->
-                    AccountRow(account)
+                    AccountRow(
+                        account = account,
+                        onClick = {
+                            accountEditor = account
+                            accountEditorOpen = true
+                        },
+                    )
                     if (index != data.accounts.lastIndex) SettingsDivider()
                 }
             }
@@ -871,6 +897,70 @@ fun SettingsScreen(
                     TextButton(onClick = { openingDialog = false }) {
                         Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
                     }
+                }
+            },
+        )
+    }
+
+    if (accountEditorOpen) {
+        val editing = accountEditor
+        val isFirst = editing != null && data.accounts.firstOrNull()?.id == editing.id
+        AccountEditorDialog(
+            initial = editing,
+            isFirst = isFirst,
+            currency = currency,
+            onDismiss = { accountEditorOpen = false },
+            onSave = { name, icon, color, initialCents ->
+                if (editing == null) {
+                    onAddAccount(name, icon, color, initialCents)
+                } else {
+                    onUpdateAccount(editing.id, name, icon, color, initialCents)
+                }
+                accountEditorOpen = false
+            },
+            onDelete = editing?.takeIf { !isFirst }?.let { account ->
+                {
+                    val inUse = data.transactions.any { it.accountId == account.id } ||
+                        data.transfers.any {
+                            it.fromAccountId == account.id || it.toAccountId == account.id
+                        } ||
+                        data.recurringRules.any { it.accountId == account.id } ||
+                        data.liabilityPayments.any { it.accountId == account.id }
+                    if (inUse) {
+                        onNotify(accountDeleteInUseMessage)
+                    } else {
+                        deleteAccountTarget = account
+                        accountEditorOpen = false
+                    }
+                }
+            },
+        )
+    }
+
+    deleteAccountTarget?.let { account ->
+        AlertDialog(
+            onDismissRequest = { deleteAccountTarget = null },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(26.dp),
+            title = { Text(stringResource(R.string.account_delete_title), color = colors.ink) },
+            text = {
+                Text(
+                    stringResource(R.string.account_delete_body, account.displayName()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.inkMuted,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteAccount(account.id)
+                        deleteAccountTarget = null
+                    },
+                ) { Text(stringResource(R.string.action_delete), color = colors.expense) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteAccountTarget = null }) {
+                    Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
                 }
             },
         )
@@ -1492,12 +1582,13 @@ private fun CategoryChip(category: Category) {
 }
 
 @Composable
-private fun AccountRow(account: Account) {
+private fun AccountRow(account: Account, onClick: () -> Unit) {
     val colors = BudTheme.colors
     val color = categoryColor(account.colorHex, colors.isDark)
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1520,6 +1611,13 @@ private fun AccountRow(account: Account) {
             text = account.displayName(),
             style = MaterialTheme.typography.bodyLarge,
             color = colors.ink,
+        )
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            Icons.Rounded.ChevronRight,
+            contentDescription = null,
+            tint = colors.inkMuted.copy(alpha = 0.6f),
+            modifier = Modifier.size(16.dp),
         )
     }
 }
@@ -1629,6 +1727,123 @@ private fun AddCategoryDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = colors.inkMuted) }
+        },
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AccountEditorDialog(
+    initial: Account?,
+    isFirst: Boolean,
+    currency: Currency,
+    onDismiss: () -> Unit,
+    onSave: (name: String, icon: String, colorHex: String, initialBalanceCents: Long) -> Unit,
+    onDelete: (() -> Unit)?,
+) {
+    val colors = BudTheme.colors
+    var name by remember { mutableStateOf(initial?.name.orEmpty()) }
+    val icon = initial?.icon ?: "bank"
+    val color = initial?.colorHex ?: "#4E6E81"
+    var balance by remember {
+        mutableStateOf(
+            if (initial != null && initial.initialBalanceCents > 0L) {
+                centsToInput(initial.initialBalanceCents)
+            } else {
+                ""
+            },
+        )
+    }
+    val parsed = parseMoneyInput(balance)
+    val effectiveBalance = if (isFirst) initial?.initialBalanceCents ?: 0L else parsed
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        shape = RoundedCornerShape(26.dp),
+        title = {
+            Column {
+                Overline(
+                    stringResource(
+                        if (initial == null) R.string.account_new_overline else R.string.account_edit_overline,
+                    ),
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(
+                        if (initial == null) R.string.account_dialog_new else R.string.account_dialog_edit,
+                    ),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.ink,
+                )
+            }
+        },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it.take(32) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("account-name"),
+                    label = { Text(stringResource(R.string.label_name)) },
+                    placeholder = { Text(stringResource(R.string.account_name_placeholder)) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                )
+                if (isFirst) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = stringResource(R.string.account_first_balance_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
+                } else {
+                    Spacer(Modifier.height(14.dp))
+                    OutlinedTextField(
+                        value = balance,
+                        onValueChange = { balance = filterAmountInput(it, 12) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("account-balance"),
+                        label = { Text(stringResource(R.string.account_initial_balance)) },
+                        placeholder = { Text("0") },
+                        suffix = { Text(currency.symbol, color = colors.inkMuted) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(14.dp),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.account_initial_balance_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(name, icon, color, effectiveBalance) },
+                enabled = name.isNotBlank(),
+            ) {
+                Text(
+                    text = stringResource(if (initial == null) R.string.action_add else R.string.action_save),
+                    color = if (name.isNotBlank()) colors.primary else colors.inkMuted,
+                )
+            }
+        },
+        dismissButton = {
+            Row {
+                if (onDelete != null) {
+                    TextButton(onClick = onDelete) {
+                        Text(stringResource(R.string.action_delete_account), color = colors.expense)
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
+                }
+            }
         },
     )
 }

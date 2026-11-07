@@ -113,19 +113,19 @@ fun builtInNoteRes(note: String): Int? = when (note) {
 }
 
 fun Category.localizedName(context: Context): String =
-    builtInCategoryNameRes(id)?.let(context::getString) ?: name
+    if (customName) name else builtInCategoryNameRes(id)?.let(context::getString) ?: name
 
 fun Account.localizedName(context: Context): String =
-    builtInAccountNameRes(id)?.let(context::getString) ?: name
+    if (customName) name else builtInAccountNameRes(id)?.let(context::getString) ?: name
 
 fun Investment.localizedName(context: Context): String =
-    builtInInvestmentNameRes(id)?.let(context::getString) ?: name
+    if (customName) name else builtInInvestmentNameRes(id)?.let(context::getString) ?: name
 
 fun SavingsGoal.localizedName(context: Context): String =
-    builtInGoalNameRes(id)?.let(context::getString) ?: name
+    if (customName) name else builtInGoalNameRes(id)?.let(context::getString) ?: name
 
 fun Liability.localizedName(context: Context): String =
-    builtInLiabilityNameRes(id)?.let(context::getString) ?: name
+    if (customName) name else builtInLiabilityNameRes(id)?.let(context::getString) ?: name
 
 fun String.localizedNote(context: Context): String =
     builtInNoteRes(this)?.let(context::getString) ?: this

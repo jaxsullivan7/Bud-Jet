@@ -85,6 +85,7 @@ object Finance {
     fun totalBalance(data: AppData, today: LocalDate = LocalDate.now()): Long {
         val limit = today.toEpochDay()
         return data.settings.openingBalanceCents +
+            data.accounts.sumOf { it.initialBalanceCents } +
             data.transactions.filter { it.dateEpochDay <= limit }.sumOf {
                 if (it.type == TxType.INCOME) it.amountCents else -it.amountCents
             } +
@@ -95,6 +96,7 @@ object Finance {
     fun balanceAt(data: AppData, date: LocalDate): Long {
         val end = date.toEpochDay()
         return data.settings.openingBalanceCents +
+            data.accounts.sumOf { it.initialBalanceCents } +
             data.transactions.filter { it.dateEpochDay <= end }.sumOf {
                 if (it.type == TxType.INCOME) it.amountCents else -it.amountCents
             } +
@@ -112,7 +114,8 @@ object Finance {
 
     fun accountBalanceAt(data: AppData, accountId: String, date: LocalDate): Long {
         val limit = date.toEpochDay()
-        val opening = if (data.accounts.firstOrNull()?.id == accountId) data.settings.openingBalanceCents else 0L
+        val opening = (if (data.accounts.firstOrNull()?.id == accountId) data.settings.openingBalanceCents else 0L) +
+            (data.account(accountId)?.initialBalanceCents ?: 0L)
         val fromTransactions = data.transactions
             .filter { it.accountId == accountId && it.dateEpochDay <= limit }
             .sumOf { if (it.type == TxType.INCOME) it.amountCents else -it.amountCents }

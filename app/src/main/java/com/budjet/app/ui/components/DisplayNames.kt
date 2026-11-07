@@ -16,23 +16,23 @@ import com.budjet.app.util.builtInNoteRes
 
 @Composable
 fun Category.displayName(): String =
-    builtInCategoryNameRes(id)?.let { stringResource(it) } ?: name
+    if (customName) name else builtInCategoryNameRes(id)?.let { stringResource(it) } ?: name
 
 @Composable
 fun Account.displayName(): String =
-    builtInAccountNameRes(id)?.let { stringResource(it) } ?: name
+    if (customName) name else builtInAccountNameRes(id)?.let { stringResource(it) } ?: name
 
 @Composable
 fun Investment.displayName(): String =
-    builtInInvestmentNameRes(id)?.let { stringResource(it) } ?: name
+    if (customName) name else builtInInvestmentNameRes(id)?.let { stringResource(it) } ?: name
 
 @Composable
 fun SavingsGoal.displayName(): String =
-    builtInGoalNameRes(id)?.let { stringResource(it) } ?: name
+    if (customName) name else builtInGoalNameRes(id)?.let { stringResource(it) } ?: name
 
 @Composable
 fun Liability.displayName(): String =
-    builtInLiabilityNameRes(id)?.let { stringResource(it) } ?: name
+    if (customName) name else builtInLiabilityNameRes(id)?.let { stringResource(it) } ?: name
 
 @Composable
 fun String.displayNote(): String =

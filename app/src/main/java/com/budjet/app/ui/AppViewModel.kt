@@ -300,6 +300,9 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     deadlineEpochDay = draft.deadline?.toEpochDay(),
                     icon = draft.icon,
                     colorHex = draft.colorHex,
+                    customName = existing?.let {
+                        it.customName || it.name != draft.name.trim()
+                    } ?: true,
                 )
                 val list = if (existing == null) {
                     current.savingsGoals + goal
@@ -346,6 +349,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                         name = clean,
                         kind = kind,
                         createdAtEpochDay = LocalDate.now().toEpochDay(),
+                        customName = true,
                     ),
                 )
             }
@@ -359,7 +363,15 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
             repository.update { current ->
                 current.copy(
                     investments = current.investments.map {
-                        if (it.id == id) it.copy(name = clean, kind = kind) else it
+                        if (it.id == id) {
+                            it.copy(
+                                name = clean,
+                                kind = kind,
+                                customName = it.customName || it.name != clean,
+                            )
+                        } else {
+                            it
+                        }
                     },
                 )
             }
@@ -541,6 +553,9 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     annualRatePercent = draft.annualRatePercent.coerceIn(0.0, 100.0),
                     minimumPaymentCents = draft.minimumPaymentCents.coerceAtLeast(0L),
                     createdAtEpochDay = existing?.createdAtEpochDay ?: LocalDate.now().toEpochDay(),
+                    customName = existing?.let {
+                        it.customName || it.name != draft.name.trim()
+                    } ?: true,
                 )
                 current.copy(
                     liabilities = if (existing == null) {
@@ -710,13 +725,14 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     icon = icon,
                     colorHex = colorHex,
                     type = type,
+                    customName = true,
                 )
                 current.copy(categories = current.categories + category)
             }
         }
     }
 
-    fun addAccount(name: String, icon: String, colorHex: String) {
+    fun addAccount(name: String, icon: String, colorHex: String, initialBalanceCents: Long) {
         val clean = name.trim()
         if (clean.isEmpty()) return
         viewModelScope.launch {
@@ -726,8 +742,57 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     name = clean,
                     icon = icon,
                     colorHex = colorHex,
+                    initialBalanceCents = initialBalanceCents.coerceAtLeast(0L),
+                    customName = true,
                 )
                 current.copy(accounts = current.accounts + account)
+            }
+        }
+    }
+
+    fun updateAccount(
+        id: String,
+        name: String,
+        icon: String,
+        colorHex: String,
+        initialBalanceCents: Long,
+    ) {
+        val clean = name.trim()
+        if (clean.isEmpty()) return
+        viewModelScope.launch {
+            repository.update { current ->
+                current.copy(
+                    accounts = current.accounts.map {
+                        if (it.id == id) {
+                            it.copy(
+                                name = clean,
+                                icon = icon,
+                                colorHex = colorHex,
+                                initialBalanceCents = initialBalanceCents.coerceAtLeast(0L),
+                                customName = it.customName || clean != it.name,
+                            )
+                        } else {
+                            it
+                        }
+                    },
+                )
+            }
+        }
+    }
+
+    fun deleteAccount(id: String) {
+        viewModelScope.launch {
+            repository.update { current ->
+                val first = current.accounts.firstOrNull()?.id
+                val inUse = current.transactions.any { it.accountId == id } ||
+                    current.transfers.any { it.fromAccountId == id || it.toAccountId == id } ||
+                    current.recurringRules.any { it.accountId == id } ||
+                    current.liabilityPayments.any { it.accountId == id }
+                if (id == first || inUse) {
+                    current
+                } else {
+                    current.copy(accounts = current.accounts.filterNot { it.id == id })
+                }
             }
         }
     }

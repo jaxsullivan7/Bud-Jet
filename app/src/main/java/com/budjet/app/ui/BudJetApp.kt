@@ -404,6 +404,9 @@ fun BudJetApp(
                     onSetTheme = viewModel::setTheme,
                     onSetPalette = viewModel::setPalette,
                     onAddCategory = viewModel::addCategory,
+                    onAddAccount = viewModel::addAccount,
+                    onUpdateAccount = viewModel::updateAccount,
+                    onDeleteAccount = viewModel::deleteAccount,
                     onOpenGoals = { goalsOpen = true },
                     onOpenRecurring = { recurringOpen = true },
                     onSetBiometric = { enabled ->
