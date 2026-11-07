@@ -15,6 +15,10 @@ import java.io.File
 class BudRepository(context: Context) {
 
     private val appContext = context.applicationContext
+
+    /** Application context, used by the view model for localized generated content. */
+    val context: Context get() = appContext
+
     private val file = File(appContext.filesDir, "budjet.json")
     private val json = Json {
         ignoreUnknownKeys = true
@@ -28,7 +32,7 @@ class BudRepository(context: Context) {
 
     private fun load(): AppData {
         if (!file.exists()) {
-            val demo = DemoData.build()
+            val demo = DemoData.build(context = appContext)
             runCatching { file.writeText(json.encodeToString(AppData.serializer(), demo)) }
             return demo
         }
@@ -39,7 +43,7 @@ class BudRepository(context: Context) {
                 runCatching { file.writeText(json.encodeToString(AppData.serializer(), migrated)) }
             }
             migrated
-        }.getOrElse { DemoData.build() }
+        }.getOrElse { DemoData.build(context = appContext) }
     }
 
     suspend fun update(transform: (AppData) -> AppData) {

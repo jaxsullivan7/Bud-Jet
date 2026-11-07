@@ -1,5 +1,8 @@
 package com.budjet.app.data
 
+import android.content.Context
+import com.budjet.app.util.localizedName
+import com.budjet.app.util.localizedNote
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.random.Random
@@ -70,7 +73,7 @@ object DemoData {
         Budget("b_subs", "subs", 4_500),
     )
 
-    fun build(today: LocalDate = LocalDate.now()): AppData {
+    fun build(today: LocalDate = LocalDate.now(), context: Context? = null): AppData {
         val transactions = mutableListOf<Transaction>()
         var counter = 0
 
@@ -297,7 +300,7 @@ object DemoData {
             LiabilityPayment("lp1", "l_car", "main", 50_000, monthsAgo(1), "Pago parcial"),
         )
 
-        return AppData(
+        val data = AppData(
             version = 9,
             settings = Settings(openingBalanceCents = 1_345_000),
             categories = categories,
@@ -312,6 +315,23 @@ object DemoData {
             liabilities = liabilities,
             liabilityPayments = liabilityPayments,
             categoryRules = categoryRules,
+        )
+        if (context == null) return data
+        return data.copy(
+            categories = data.categories.map { it.copy(name = it.localizedName(context)) },
+            accounts = data.accounts.map { it.copy(name = it.localizedName(context)) },
+            transactions = data.transactions.map { it.copy(note = it.note.localizedNote(context)) },
+            recurringRules = data.recurringRules.map { it.copy(note = it.note.localizedNote(context)) },
+            savingsGoals = data.savingsGoals.map { it.copy(name = it.localizedName(context)) },
+            investments = data.investments.map { it.copy(name = it.localizedName(context)) },
+            investmentEntries = data.investmentEntries.map {
+                it.copy(note = it.note.localizedNote(context))
+            },
+            transfers = data.transfers.map { it.copy(note = it.note.localizedNote(context)) },
+            liabilities = data.liabilities.map { it.copy(name = it.localizedName(context)) },
+            liabilityPayments = data.liabilityPayments.map {
+                it.copy(note = it.note.localizedNote(context))
+            },
         )
     }
 }

@@ -88,6 +88,8 @@ import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.components.ThinDivider
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.displayName
+import com.budjet.app.ui.components.displayNote
 import com.budjet.app.ui.components.localizedLabel
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.formatMonthShort
@@ -345,7 +347,7 @@ fun PortfolioScreen(
             title = { Text(stringResource(R.string.portfolio_delete_title), color = colors.ink) },
             text = {
                 Text(
-                    text = stringResource(R.string.portfolio_delete_body, product.name),
+                    text = stringResource(R.string.portfolio_delete_body, product.displayName()),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.inkMuted,
                 )
@@ -473,7 +475,7 @@ private fun AllocationCard(summary: PortfolioSummary, currency: Currency) {
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = product.investment.name,
+                            text = product.investment.displayName(),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                             modifier = Modifier.weight(1f),
@@ -507,7 +509,7 @@ private fun ProductCard(summary: ProductSummary, currency: Currency, onClick: ()
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = summary.investment.name,
+                    text = summary.investment.displayName(),
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.ink,
                     maxLines = 1,
@@ -605,7 +607,7 @@ private fun ProductDetail(
                 Spacer(Modifier.width(14.dp))
                 Column {
                     Text(
-                        text = product.name,
+                        text = product.displayName(),
                         style = MaterialTheme.typography.headlineLarge,
                         color = colors.ink,
                     )
@@ -844,7 +846,7 @@ private fun InvestmentEntryRow(entry: InvestmentEntry, currency: Currency) {
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                text = entry.note.ifBlank { entry.kind.localizedLabel() },
+                text = entry.note.displayNote().ifBlank { entry.kind.localizedLabel() },
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.ink,
                 maxLines = 1,
@@ -1043,7 +1045,7 @@ private fun InvestmentEntryDialog(
         shape = RoundedCornerShape(26.dp),
         title = {
             Column {
-                Overline(product.name.uppercase())
+                Overline(product.displayName().uppercase())
                 Spacer(Modifier.height(4.dp))
                 Text(title, style = MaterialTheme.typography.headlineSmall, color = colors.ink)
             }
@@ -1142,7 +1144,7 @@ private fun InvestmentEntryDialog(
                         }
                         items(data.accounts, key = { it.id }) { account ->
                             AccountChip(
-                                label = account.name,
+                                label = account.displayName(),
                                 selected = useAccount && accountId == account.id,
                                 onClick = {
                                     useAccount = true

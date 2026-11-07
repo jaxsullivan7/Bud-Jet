@@ -58,6 +58,7 @@ import com.budjet.app.data.Finance
 import com.budjet.app.data.TxType
 import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.CategoryBadge
+import com.budjet.app.ui.components.displayName
 import com.budjet.app.ui.components.EmptyState
 import com.budjet.app.ui.components.LinearProgressBar
 import com.budjet.app.ui.components.MonthSelector
@@ -373,7 +374,7 @@ private fun BudgetCategoryCard(
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = category.name,
+                    text = category.displayName(),
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.ink,
                 )
@@ -485,7 +486,7 @@ private fun BudgetEditorDialog(
                         }
                         items(categories) { category ->
                             CategoryChoice(
-                                label = category.name,
+                                label = category.displayName(),
                                 category = category,
                                 selected = selected == category.id,
                                 onClick = { selected = category.id },

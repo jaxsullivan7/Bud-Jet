@@ -61,10 +61,12 @@ import com.budjet.app.data.TxType
 import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.Overline
 import com.budjet.app.ui.components.PrimaryButton
+import com.budjet.app.ui.components.displayName
 import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.formatShortDate
+import com.budjet.app.util.localizedImportMessage
 import java.time.LocalDate
 
 @Composable
@@ -79,6 +81,7 @@ fun ImportScreen(
     val errorReadFile = stringResource(R.string.settings_error_read_file)
     val errorFileTooLarge = stringResource(R.string.settings_error_file_too_large)
     val errorColumns = stringResource(R.string.import_error_columns)
+    val defaultNote = stringResource(R.string.import_default_note)
     val fallback = data.categories.firstOrNull { it.type == TxType.EXPENSE && !it.archived }?.id ?: ""
     var accountId by remember { mutableStateOf(data.accounts.firstOrNull()?.id ?: "") }
     var rawText by remember { mutableStateOf<String?>(null) }
@@ -102,6 +105,7 @@ fun ImportScreen(
             rules = data.categoryRules,
             existingHashes = data.transactions.mapNotNull { it.importHash }.toSet(),
             mapping = mapping,
+            defaultNote = defaultNote,
         )
         result.onSuccess {
             parsed = it
@@ -115,7 +119,7 @@ fun ImportScreen(
                 selected = emptySet()
                 error = errorColumns
             } else {
-                error = it.message ?: errorReadFile
+                error = localizedImportMessage(context, it.message) ?: errorReadFile
                 parsed = null
                 rows = emptyList()
             }
@@ -190,7 +194,7 @@ fun ImportScreen(
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
                         ) {
                             Text(
-                                text = account.name,
+                                text = account.displayName(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (accountId == account.id) colors.primary else colors.inkMuted,
                             )
@@ -437,7 +441,7 @@ private fun ImportRowCard(
                 ) {
                     if (category != null) {
                         Text(
-                            text = category.name,
+                            text = category.displayName(),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.primary,
                             maxLines = 1,
@@ -587,7 +591,7 @@ private fun CategoryPickerDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = category.name,
+                            text = category.displayName(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colors.ink,
                             modifier = Modifier.weight(1f),

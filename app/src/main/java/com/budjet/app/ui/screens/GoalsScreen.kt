@@ -73,6 +73,7 @@ import com.budjet.app.ui.components.Pill
 import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.displayName
 import com.budjet.app.ui.components.iconChoices
 import com.budjet.app.ui.components.parseHex
 import com.budjet.app.ui.theme.BudTheme
@@ -348,7 +349,7 @@ private fun GoalCard(
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = goal.name,
+                        text = goal.displayName(),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.ink,
                         maxLines = 1,
@@ -685,7 +686,7 @@ private fun GoalAmountDialog(
                     ),
                 )
                 Spacer(Modifier.height(4.dp))
-                Text(goal.name, style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+                Text(goal.displayName(), style = MaterialTheme.typography.headlineSmall, color = colors.ink)
             }
         },
         text = {

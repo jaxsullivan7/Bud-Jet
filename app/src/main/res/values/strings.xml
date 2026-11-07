@@ -548,6 +548,17 @@
     <string name="settings_encrypted_backup_saved">Copia cifrada guardada</string>
     <string name="settings_auto_backup_created">Copia automática creada</string>
     <string name="settings_backup_restored">Copia restaurada</string>
+    <string name="backup_error_too_large">El archivo es demasiado grande para ser una copia.</string>
+    <string name="backup_error_not_backup">El archivo no es una copia de BudJet.</string>
+    <string name="backup_error_format">La copia usa un formato que esta versión no puede leer.</string>
+    <string name="backup_error_newer">La copia es de una versión más nueva. Actualiza la app antes de restaurarla.</string>
+    <string name="backup_error_corrupt">La copia está incompleta o dañada.</string>
+    <string name="backup_error_currency">La moneda de la copia no es compatible.</string>
+    <string name="backup_error_no_profile">La copia no contiene un nombre de perfil.</string>
+    <string name="backup_error_auto_disabled">Las copias automáticas están desactivadas.</string>
+    <string name="backup_error_not_found">La copia no existe o ya no está disponible.</string>
+    <string name="backup_error_invalid_data">La copia contiene datos no válidos o duplicados.</string>
+    <string name="backup_error_generic">No se pudo leer la copia.</string>
     <string name="settings_backup_file_prefix">budjet-copia-</string>
     <string name="settings_encrypted_file_prefix">budjet-cifrada-</string>
 
@@ -607,6 +618,14 @@
     <string name="import_col_type">Tipo</string>
     <string name="import_no_column">— Sin columna —</string>
     <string name="import_error_columns">No se han detectado las columnas. Elige fecha, concepto e importe.</string>
+    <string name="import_default_note">Movimiento importado</string>
+    <string name="import_error_empty">El archivo está vacío.</string>
+    <string name="import_error_need_rows">El CSV necesita cabecera y al menos una fila.</string>
+    <string name="import_error_no_amount">No se ha encontrado una columna de importe, cargo o abono.</string>
+    <string name="import_error_no_rows_csv">No se ha podido leer ningún movimiento del CSV.</string>
+    <string name="import_error_no_rows_ofx">El OFX no contiene movimientos.</string>
+    <string name="import_error_no_rows_ofx_read">No se ha podido leer ningún movimiento del OFX.</string>
+    <string name="import_error_generic">No se pudo leer el extracto.</string>
 
     <!-- Movimientos recurrentes -->
     <string name="recurring_overline">AUTOMATIZACIÓN</string>
@@ -761,4 +780,91 @@
     <string name="category_no_movements">Sin movimientos</string>
     <string name="category_no_expenses_month">No hay gastos de %1$s en este mes.</string>
     <string name="category_color_meaning">Este color representa %1$s en tus análisis.</string>
+
+    <!-- Nombres integrados -->
+    <string name="category_food">Alimentación</string>
+    <string name="category_dining">Restaurantes</string>
+    <string name="category_transport">Transporte</string>
+    <string name="category_home">Hogar</string>
+    <string name="category_bills">Facturas</string>
+    <string name="category_leisure">Ocio</string>
+    <string name="category_shopping">Compras</string>
+    <string name="category_health">Salud</string>
+    <string name="category_beauty">Belleza</string>
+    <string name="category_subs">Suscripciones</string>
+    <string name="category_travel">Viajes</string>
+    <string name="category_education">Educación</string>
+    <string name="category_other">Otros</string>
+    <string name="category_salary">Nómina</string>
+    <string name="category_freelance">Freelance</string>
+    <string name="category_invest">Inversiones</string>
+    <string name="category_gifts">Regalos</string>
+    <string name="category_refund">Devolución</string>
+    <string name="category_reversal">Anulación</string>
+    <string name="account_main">Cuenta principal</string>
+    <string name="account_savings">Ahorro</string>
+    <string name="account_cash">Efectivo</string>
+    <string name="account_card">Tarjeta</string>
+    <string name="demo_goal_emergency">Fondo de emergencia</string>
+    <string name="demo_goal_japan">Viaje a Japón</string>
+    <string name="demo_goal_laptop">Portátil nuevo</string>
+    <string name="demo_inv_index">Fondo indexado global</string>
+    <string name="demo_inv_btc">Bitcoin</string>
+    <string name="demo_inv_pension">Plan de pensiones</string>
+    <string name="demo_inv_tech">Acciones tecnológicas</string>
+    <string name="demo_liability_car">Préstamo coche</string>
+    <string name="demo_liability_card">Tarjeta</string>
+
+    <!-- Notas de ejemplo -->
+    <string name="demo_note_salary">Nómina</string>
+    <string name="demo_note_rent">Alquiler</string>
+    <string name="demo_note_utilities">Luz y agua</string>
+    <string name="demo_note_spotify">Spotify</string>
+    <string name="demo_note_icloud">iCloud+</string>
+    <string name="demo_note_internet">Internet</string>
+    <string name="demo_note_mercadona">Mercadona</string>
+    <string name="demo_note_greengrocer">Frutería del barrio</string>
+    <string name="demo_note_carrefour">Carrefour</string>
+    <string name="demo_note_market">Mercado central</string>
+    <string name="demo_note_coffee">Café</string>
+    <string name="demo_note_la_pepita">La Pepita</string>
+    <string name="demo_note_sushi_ono">Sushi Ono</string>
+    <string name="demo_note_bar_manolo">Bar Manolo</string>
+    <string name="demo_note_casa_rafa">Casa Rafa</string>
+    <string name="demo_note_pizzeria">Pizzería Roma</string>
+    <string name="demo_note_transport_pass">Abono transporte</string>
+    <string name="demo_note_fuel">Gasolina</string>
+    <string name="demo_note_taxi">Taxi</string>
+    <string name="demo_note_cinema">Cine</string>
+    <string name="demo_note_concert">Concierto</string>
+    <string name="demo_note_pharmacy">Farmacia</string>
+    <string name="demo_note_zara">Zara</string>
+    <string name="demo_note_sneakers">Zapatillas</string>
+    <string name="demo_note_bakery">Panadería</string>
+    <string name="demo_note_lisbon">Escapada a Lisboa</string>
+    <string name="demo_note_photo_course">Curso de fotografía</string>
+    <string name="demo_note_web_project">Proyecto web</string>
+    <string name="demo_note_dinner">Cena con amigos</string>
+    <string name="demo_note_latte">Café con leche</string>
+    <string name="demo_note_supermarket">Supermercado</string>
+    <string name="demo_note_gym">Gimnasio</string>
+    <string name="demo_note_initial">Aportación inicial</string>
+    <string name="demo_note_periodic">Aportación periódica</string>
+    <string name="demo_note_value_update">Actualización de valor</string>
+    <string name="demo_note_purchase">Compra</string>
+    <string name="demo_note_return">Rentabilidad</string>
+    <string name="demo_note_market_correction">Corrección de mercado</string>
+    <string name="demo_note_cash_refill">Reposición de efectivo</string>
+    <string name="demo_note_card_payment">Pago de tarjeta</string>
+    <string name="demo_note_partial_payment">Pago parcial</string>
+
+    <!-- Notas generadas -->
+    <string name="generated_investment_contribution">Aportación a %1$s</string>
+    <string name="generated_investment_withdrawal">Retirada de %1$s</string>
+    <string name="generated_investment_fallback">inversión</string>
+    <string name="generated_transfer_from_cash">Transferencia desde efectivo</string>
+    <string name="generated_transfer_to_cash">Transferencia a efectivo</string>
+    <string name="generated_recurring_fallback">Movimiento recurrente</string>
+    <string name="generated_default_name">Tú</string>
+    <string name="export_csv_header">Fecha;Tipo;Categoría;Cuenta;Importe;Nota</string>
 </resources>

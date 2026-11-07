@@ -56,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -81,10 +82,14 @@ import com.budjet.app.ui.components.ThinDivider
 import com.budjet.app.ui.components.TransactionRow
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.displayName
+import com.budjet.app.ui.components.displayNote
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.formatFullDate
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.formatShortDate
+import com.budjet.app.util.localizedName
+import com.budjet.app.util.localizedNote
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -100,6 +105,7 @@ fun TransactionEditorScreen(
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     val reversalPrefix = stringResource(R.string.reversal_note_prefix)
     val paymentFallback = stringResource(R.string.editor_payment)
 
@@ -290,8 +296,9 @@ fun TransactionEditorScreen(
                         icon = Icons.Rounded.Block,
                         label = stringResource(R.string.editor_payment),
                         value = reversalPayment?.let { payment ->
-                            val paymentCategory = data.category(payment.categoryId)?.name ?: stringResource(R.string.type_expense)
-                            "${payment.note.ifBlank { paymentCategory }} · ${formatMoney(payment.amountCents, currency)}"
+                            val paymentCategory = data.category(payment.categoryId)?.displayName()
+                                ?: stringResource(R.string.type_expense)
+                            "${payment.note.displayNote().ifBlank { paymentCategory }} · ${formatMoney(payment.amountCents, currency)}"
                         } ?: stringResource(R.string.editor_search_payment),
                         muted = reversalPayment == null,
                         onClick = { showReversalPicker = true },
@@ -307,7 +314,7 @@ fun TransactionEditorScreen(
                 DetailRow(
                     icon = if (type == TxType.INCOME) Icons.Rounded.AccountBalance else Icons.Rounded.AccountBalance,
                     label = stringResource(R.string.label_account),
-                    value = selectedAccount?.name ?: stringResource(R.string.editor_choose_account),
+                    value = selectedAccount?.displayName() ?: stringResource(R.string.editor_choose_account),
                     onClick = { showAccounts = true },
                 )
                 Box(
@@ -519,7 +526,9 @@ fun TransactionEditorScreen(
                 accountId = payment.accountId
                 if (note.isBlank() || note.startsWith(reversalPrefix)) {
                     note = reversalPrefix +
-                        payment.note.ifBlank { data.category(payment.categoryId)?.name ?: paymentFallback }
+                        payment.note.localizedNote(context).ifBlank {
+                            data.category(payment.categoryId)?.localizedName(context) ?: paymentFallback
+                        }
                 }
                 showReversalPicker = false
             },
@@ -569,6 +578,7 @@ private fun ReversalPickerDialog(
     onSelect: (Transaction) -> Unit,
 ) {
     val colors = BudTheme.colors
+    val context = LocalContext.current
     var query by remember { mutableStateOf("") }
     val today = remember { LocalDate.now() }
     val alreadyReversed = remember(data.transactions, excludeTransactionId) {
@@ -577,7 +587,7 @@ private fun ReversalPickerDialog(
             .mapNotNull { it.reversalOfId }
             .toSet()
     }
-    val candidates = remember(data.transactions, alreadyReversed, query, today) {
+    val candidates = remember(data.transactions, alreadyReversed, query, today, context) {
         data.transactions
             .filter {
                 it.type == TxType.EXPENSE &&
@@ -585,9 +595,11 @@ private fun ReversalPickerDialog(
                     it.id !in alreadyReversed
             }
             .filter { tx ->
-                val category = data.category(tx.categoryId)?.name.orEmpty()
-                val account = data.account(tx.accountId)?.name.orEmpty()
+                val category = data.category(tx.categoryId)?.localizedName(context).orEmpty()
+                val account = data.account(tx.accountId)?.localizedName(context).orEmpty()
+                val note = tx.note.localizedNote(context)
                 query.isBlank() ||
+                    note.contains(query, ignoreCase = true) ||
                     tx.note.contains(query, ignoreCase = true) ||
                     category.contains(query, ignoreCase = true) ||
                     account.contains(query, ignoreCase = true) ||
@@ -743,7 +755,7 @@ private fun CategoryOption(
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            text = category.name,
+            text = category.displayName(),
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
             color = if (selected) colors.ink else colors.inkMuted,
             maxLines = 1,
@@ -822,7 +834,7 @@ private fun AccountChoice(account: Account, selected: Boolean, onClick: () -> Un
         }
         Spacer(Modifier.width(10.dp))
         Text(
-            account.name,
+            account.displayName(),
             style = MaterialTheme.typography.bodyLarge,
             color = colors.ink,
             modifier = Modifier.weight(1f),

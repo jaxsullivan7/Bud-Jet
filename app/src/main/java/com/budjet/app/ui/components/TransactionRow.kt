@@ -96,8 +96,8 @@ fun TransactionRow(
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = transaction.note.ifBlank {
-                        category?.name ?: stringResource(R.string.transaction_fallback)
+                    text = transaction.note.displayNote().ifBlank {
+                        category?.displayName() ?: stringResource(R.string.transaction_fallback)
                     },
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.ink,
@@ -126,10 +126,10 @@ fun TransactionRow(
             }
             Text(
                 text = buildString {
-                    append(category?.name ?: stringResource(R.string.category_uncategorized))
+                    append(category?.displayName() ?: stringResource(R.string.category_uncategorized))
                     if (account != null) {
                         append(" · ")
-                        append(account.name)
+                        append(account.displayName())
                     }
                 },
                 style = MaterialTheme.typography.bodySmall,

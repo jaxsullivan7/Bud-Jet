@@ -55,13 +55,22 @@ object StatementImport {
         rules: List<CategoryRule>,
         existingHashes: Set<String>,
         mapping: CsvMapping? = null,
+        defaultNote: String = "Movimiento importado",
     ): Result<ParsedStatement> = runCatching {
         val trimmed = text.trim()
         require(trimmed.isNotEmpty()) { "El archivo está vacío." }
         if (looksLikeOfx(trimmed)) {
-            parseOfx(trimmed, accountId, fallbackCategoryId, rules, existingHashes)
+            parseOfx(trimmed, accountId, fallbackCategoryId, rules, existingHashes, defaultNote)
         } else {
-            parseCsv(trimmed, accountId, fallbackCategoryId, rules, existingHashes, mapping)
+            parseCsv(
+                trimmed,
+                accountId,
+                fallbackCategoryId,
+                rules,
+                existingHashes,
+                mapping,
+                defaultNote,
+            )
         }
     }
 
@@ -84,6 +93,7 @@ object StatementImport {
         rules: List<CategoryRule>,
         existingHashes: Set<String>,
         supplied: CsvMapping?,
+        defaultNote: String,
     ): ParsedStatement {
         val delimiter = detectDelimiter(text)
         val lines = text.lineSequence().filter { it.isNotBlank() }.toList()
@@ -100,7 +110,7 @@ object StatementImport {
             val cells = splitCsvLine(line, delimiter)
             fun cell(index: Int?): String = index?.let { cells.getOrNull(it)?.trim().orEmpty() }.orEmpty()
             val date = parseDate(cell(mapping.dateIndex)) ?: return@mapNotNull null
-            val note = cell(mapping.descriptionIndex).ifBlank { "Movimiento importado" }
+            val note = cell(mapping.descriptionIndex).ifBlank { defaultNote }
             val rawAmount = mapping.amountIndex?.let { cell(it) }.orEmpty()
             val debit = mapping.debitIndex?.let { cell(it) }.orEmpty()
             val credit = mapping.creditIndex?.let { cell(it) }.orEmpty()
@@ -139,6 +149,7 @@ object StatementImport {
         fallbackCategoryId: String,
         rules: List<CategoryRule>,
         existingHashes: Set<String>,
+        defaultNote: String,
     ): ParsedStatement {
         val blocks = Regex("<STMTTRN>(.*?)</STMTTRN>", RegexOption.DOT_MATCHES_ALL)
             .findAll(text)
@@ -152,7 +163,7 @@ object StatementImport {
             val signed = parseAmountCents(tag("TRNAMT")) ?: return@mapNotNull null
             if (signed == 0L) return@mapNotNull null
             val note = listOf(tag("NAME"), tag("MEMO")).filter { it.isNotBlank() }.joinToString(" · ")
-                .ifBlank { "Movimiento importado" }
+                .ifBlank { defaultNote }
             val type = if (signed > 0L && tag("TRNTYPE").uppercase(Locale.US) in setOf("CREDIT", "DEP", "DIRECTDEP")) {
                 TxType.INCOME
             } else {

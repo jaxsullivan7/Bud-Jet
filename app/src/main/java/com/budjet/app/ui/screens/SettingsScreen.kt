@@ -92,6 +92,7 @@ import com.budjet.app.ui.components.SectionHeader
 import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.displayName
 import com.budjet.app.ui.components.iconChoices
 import com.budjet.app.ui.components.parseHex
 import com.budjet.app.ui.theme.BudTheme
@@ -103,6 +104,7 @@ import com.budjet.app.util.centsToInput
 import com.budjet.app.util.filterAmountInput
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.formatShortDate
+import com.budjet.app.util.localizedBackupMessage
 import com.budjet.app.util.parseMoneyInput
 import java.time.LocalDate
 
@@ -203,13 +205,13 @@ fun SettingsScreen(
                 if (bytes.size > Backup.MAX_BYTES) error(errorFileTooLarge)
                 String(bytes, Charsets.UTF_8)
             }.getOrElse {
-                importError = it.message ?: errorReadFile
+                importError = localizedBackupMessage(context, it.message) ?: errorReadFile
                 null
             }
             if (text != null) {
                 onValidateBackup(text)
                     .onSuccess { pendingRestore = it }
-                    .onFailure { importError = it.message ?: errorInvalidBackup }
+                    .onFailure { importError = localizedBackupMessage(context, it.message) ?: errorInvalidBackup }
             }
         }
     }
@@ -239,7 +241,7 @@ fun SettingsScreen(
                 context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                     ?: error(errorReadFile)
             }.getOrElse {
-                importError = it.message ?: errorReadFile
+                importError = localizedBackupMessage(context, it.message) ?: errorReadFile
                 null
             }
             if (bytes != null) {
@@ -907,7 +909,7 @@ fun SettingsScreen(
                             pendingEncryptedBytes = null
                         }
                         .onFailure {
-                            importError = it.message ?: errorOpenEncrypted
+                            importError = localizedBackupMessage(context, it.message) ?: errorOpenEncrypted
                             encryptedImportDialog = false
                             pendingEncryptedBytes = null
                         }
@@ -954,7 +956,7 @@ fun SettingsScreen(
                                                 pendingRestore = it
                                                 autoBackupsDialog = false
                                             }
-                                            .onFailure { importError = it.message ?: errorOpenBackup }
+                                            .onFailure { importError = localizedBackupMessage(context, it.message) ?: errorOpenBackup }
                                     }
                                     .padding(vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1213,7 +1215,8 @@ private fun RuleListDialog(
                                 Column(Modifier.weight(1f)) {
                                     Text("«${rule.pattern}»", style = MaterialTheme.typography.bodyMedium, color = colors.ink)
                                     Text(
-                                        categories.firstOrNull { it.id == rule.categoryId }?.name ?: rule.categoryId,
+                                        categories.firstOrNull { it.id == rule.categoryId }
+                                            ?.displayName() ?: rule.categoryId,
                                         style = MaterialTheme.typography.bodySmall,
                                         color = colors.inkMuted,
                                     )
@@ -1254,7 +1257,7 @@ private fun RuleListDialog(
                                     .padding(horizontal = 8.dp, vertical = 5.dp),
                             ) {
                                 Text(
-                                    category.name,
+                                    category.displayName(),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (categoryId == category.id) colors.primary else colors.inkMuted,
                                 )
@@ -1480,7 +1483,7 @@ private fun CategoryChip(category: Category) {
         Box(Modifier.size(6.dp).background(color, CircleShape))
         Spacer(Modifier.width(5.dp))
         Text(
-            text = category.name,
+            text = category.displayName(),
             style = MaterialTheme.typography.labelMedium,
             color = colors.ink,
             maxLines = 1,
@@ -1514,7 +1517,7 @@ private fun AccountRow(account: Account) {
         }
         Spacer(Modifier.width(12.dp))
         Text(
-            text = account.name,
+            text = account.displayName(),
             style = MaterialTheme.typography.bodyLarge,
             color = colors.ink,
         )

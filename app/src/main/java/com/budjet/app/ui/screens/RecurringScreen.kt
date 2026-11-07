@@ -69,6 +69,8 @@ import com.budjet.app.ui.components.Overline
 import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.displayName
+import com.budjet.app.ui.components.displayNote
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.centsToInput
 import com.budjet.app.util.formatDayNumber
@@ -288,9 +290,9 @@ private fun RecurringCard(
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = rule.note.ifBlank {
-                    category?.name ?: stringResource(R.string.recurring_fallback)
-                },
+                    text = rule.note.displayNote().ifBlank {
+                        category?.displayName() ?: stringResource(R.string.recurring_fallback)
+                    },
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.ink,
                     maxLines = 1,
@@ -298,7 +300,7 @@ private fun RecurringCard(
                 )
                 Text(
                     text = buildString {
-                        append(category?.name ?: stringResource(R.string.category_uncategorized))
+                        append(category?.displayName() ?: stringResource(R.string.category_uncategorized))
                         append(" · ")
                         append(stringResource(R.string.recurring_day, rule.dayOfMonth))
                     },
@@ -327,7 +329,7 @@ private fun RecurringCard(
             )
             Spacer(Modifier.width(5.dp))
             Text(
-                text = account?.name ?: stringResource(R.string.recurring_account_fallback),
+                text = account?.displayName() ?: stringResource(R.string.recurring_account_fallback),
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                 color = colors.inkMuted,
                 maxLines = 1,
@@ -462,7 +464,7 @@ private fun RecurringEditorDialog(
                             )
                             Spacer(Modifier.width(5.dp))
                             Text(
-                                text = category.name,
+                                text = category.displayName(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (selectedCategory?.id == category.id) colors.primary else colors.inkMuted,
                                 maxLines = 1,
@@ -492,7 +494,7 @@ private fun RecurringEditorDialog(
                             )
                             Spacer(Modifier.width(4.dp))
                             Text(
-                                text = account.name,
+                                text = account.displayName(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (accountId == account.id) colors.primary else colors.inkMuted,
                                 maxLines = 1,

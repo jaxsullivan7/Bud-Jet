@@ -55,6 +55,7 @@ import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.components.ThinDivider
 import com.budjet.app.ui.components.TransactionRow
 import com.budjet.app.ui.components.categoryColor
+import com.budjet.app.ui.components.displayName
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.capitalizeEs
 import com.budjet.app.util.formatDayNumber
@@ -75,8 +76,9 @@ fun CategoryDetailScreen(
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
     val locale = LocalConfiguration.current.locales[0]
-    val categoryNameLower = remember(category.name, locale) {
-        category.name.lowercase(locale)
+    val categoryDisplayName = category.displayName()
+    val categoryNameLower = remember(categoryDisplayName, locale) {
+        categoryDisplayName.lowercase(locale)
     }
     val color = categoryColor(category.colorHex, colors.isDark)
     val startDate = data.settings.analysisStartEpochDay?.let(java.time.LocalDate::ofEpochDay)
@@ -129,7 +131,7 @@ fun CategoryDetailScreen(
                 Spacer(Modifier.width(14.dp))
                 Column {
                     Text(
-                        text = category.name,
+                        text = categoryDisplayName,
                         style = MaterialTheme.typography.headlineLarge,
                         color = colors.ink,
                     )

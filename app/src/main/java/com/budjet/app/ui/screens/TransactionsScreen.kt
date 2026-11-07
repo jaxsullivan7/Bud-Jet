@@ -56,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -80,6 +81,8 @@ import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.formatDayLabel
 import com.budjet.app.util.formatDayNumber
 import com.budjet.app.util.formatMoney
+import com.budjet.app.util.localizedName
+import com.budjet.app.util.localizedNote
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -112,6 +115,7 @@ fun TransactionsScreen(
     onDeleteTransactions: (Set<String>) -> Unit,
 ) {
     val colors = BudTheme.colors
+    val context = LocalContext.current
     val currency = Currency.from(data.settings.currencyCode)
     var filter by rememberSaveable { mutableStateOf(TxFilter.ALL) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
@@ -133,16 +137,18 @@ fun TransactionsScreen(
         Finance.postedTransactionsOfMonth(data, month)
     }
     val futureCount = allMonthTx.size - postedMonthTx.size
-    val filtered = remember(allMonthTx, filter, query) {
+    val filtered = remember(allMonthTx, filter, query, context) {
         allMonthTx.filter { tx ->
             val matchesType = when (filter) {
                 TxFilter.ALL -> true
                 TxFilter.EXPENSE -> tx.type == TxType.EXPENSE
                 TxFilter.INCOME -> tx.type == TxType.INCOME
             }
-            val categoryName = data.category(tx.categoryId)?.name.orEmpty()
-            val accountName = data.account(tx.accountId)?.name.orEmpty()
+            val categoryName = data.category(tx.categoryId)?.localizedName(context).orEmpty()
+            val accountName = data.account(tx.accountId)?.localizedName(context).orEmpty()
+            val note = tx.note.localizedNote(context)
             val matchesQuery = query.isBlank() ||
+                note.contains(query, ignoreCase = true) ||
                 tx.note.contains(query, ignoreCase = true) ||
                 categoryName.contains(query, ignoreCase = true) ||
                 accountName.contains(query, ignoreCase = true)

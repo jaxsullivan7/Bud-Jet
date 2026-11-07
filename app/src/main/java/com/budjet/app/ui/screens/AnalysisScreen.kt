@@ -70,6 +70,8 @@ import com.budjet.app.ui.components.Pill
 import com.budjet.app.ui.components.ScreenTitle
 import com.budjet.app.ui.components.SectionHeader
 import com.budjet.app.ui.components.categoryColor
+import com.budjet.app.ui.components.displayName
+import com.budjet.app.ui.components.displayNote
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.formatMonthLower
 import com.budjet.app.util.formatMoney
@@ -397,7 +399,7 @@ fun AnalysisScreen(
                 StatCard(
                     label = stringResource(R.string.analysis_biggest_expense),
                     value = biggestExpense?.let { formatMoney(it.amountCents, currency) } ?: "—",
-                    hint = biggestExpense?.note?.ifBlank {
+                    hint = biggestExpense?.note?.displayNote()?.ifBlank {
                         stringResource(R.string.analysis_no_data)
                     } ?: stringResource(R.string.analysis_no_data),
                     modifier = Modifier.weight(1f),
@@ -493,8 +495,8 @@ fun AnalysisScreen(
                                 text = stringResource(
                                     R.string.analysis_biggest_expense_note,
                                     formatShortDate(LocalDate.ofEpochDay(biggestExpense.dateEpochDay)),
-                                    biggestExpense.note.ifBlank {
-                                        data.category(biggestExpense.categoryId)?.name
+                                    biggestExpense.note.displayNote().ifBlank {
+                                        data.category(biggestExpense.categoryId)?.displayName()
                                             ?: stringResource(R.string.analysis_an_expense)
                                     },
                                 ),
@@ -853,7 +855,7 @@ private fun LegendRow(
         )
         Spacer(Modifier.width(7.dp))
         Text(
-            text = item.category.name,
+            text = item.category.displayName(),
             style = MaterialTheme.typography.bodySmall,
             color = colors.inkMuted,
             modifier = Modifier.weight(1f),

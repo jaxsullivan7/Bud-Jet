@@ -85,6 +85,7 @@ import com.budjet.app.ui.components.SoftIconButton
 import com.budjet.app.ui.components.Sparkline
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.displayName
 import com.budjet.app.ui.components.localizedLabel
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.centsToInput
@@ -337,7 +338,7 @@ fun PatrimonioScreen(
                             }
                             Spacer(Modifier.width(9.dp))
                             Text(
-                                text = investment.name,
+                                text = investment.displayName(),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = colors.ink,
                                 modifier = Modifier.weight(1f),
@@ -477,7 +478,7 @@ fun PatrimonioScreen(
             title = { Text(stringResource(R.string.patrimonio_delete_title), color = colors.ink) },
             text = {
                 Text(
-                    text = stringResource(R.string.patrimonio_delete_body, liability.name),
+                    text = stringResource(R.string.patrimonio_delete_body, liability.displayName()),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.inkMuted,
                 )
@@ -555,7 +556,7 @@ private fun AccountBalanceRow(account: Account, balance: Long, currency: Currenc
         }
         Spacer(Modifier.width(10.dp))
         Text(
-            text = account.name,
+            text = account.displayName(),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.ink,
             modifier = Modifier.weight(1f),
@@ -601,7 +602,7 @@ private fun LiabilityRow(
         }
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            Text(liability.name, style = MaterialTheme.typography.bodyMedium, color = colors.ink)
+            Text(liability.displayName(), style = MaterialTheme.typography.bodyMedium, color = colors.ink)
             Text(
                 text = if (paidCents > 0L) {
                     stringResource(
@@ -726,13 +727,13 @@ private fun TransferFormScreen(
                 Spacer(Modifier.height(6.dp))
                 if (fromType == 0) {
                     ChoiceList(
-                        items = data.accounts.map { it.id to it.name },
+                        items = data.accounts.map { it.id to it.displayName() },
                         selected = fromAccount,
                         onSelect = { fromAccount = it },
                     )
                 } else {
                     ChoiceList(
-                        items = data.investments.map { it.id to it.name },
+                        items = data.investments.map { it.id to it.displayName() },
                         selected = fromInvestment,
                         onSelect = { fromInvestment = it },
                     )
@@ -750,13 +751,13 @@ private fun TransferFormScreen(
                 Spacer(Modifier.height(6.dp))
                 if (toType == 0) {
                     ChoiceList(
-                        items = data.accounts.map { it.id to it.name },
+                        items = data.accounts.map { it.id to it.displayName() },
                         selected = toAccount,
                         onSelect = { toAccount = it },
                     )
                 } else {
                     ChoiceList(
-                        items = data.investments.map { it.id to it.name },
+                        items = data.investments.map { it.id to it.displayName() },
                         selected = toInvestment,
                         onSelect = { toInvestment = it },
                     )
@@ -1071,7 +1072,11 @@ private fun DebtPlanScreen(
                         }
                         Spacer(Modifier.width(9.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(item.name, style = MaterialTheme.typography.bodyMedium, color = colors.ink)
+                            Text(
+                                data.liability(item.debtId)?.displayName() ?: item.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.ink,
+                            )
                             Text(
                                 text = if (item.payoffMonth > 0) {
                                     stringResource(R.string.debt_plan_free_month, item.payoffMonth)
@@ -1181,7 +1186,7 @@ private fun LiabilityPaymentScreen(
             Text(stringResource(R.string.debt_payment_title), style = MaterialTheme.typography.headlineLarge, color = colors.ink)
             Spacer(Modifier.height(4.dp))
             Text(
-                text = stringResource(R.string.debt_payment_subtitle, liability.name),
+                text = stringResource(R.string.debt_payment_subtitle, liability.displayName()),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
             )
@@ -1225,7 +1230,7 @@ private fun LiabilityPaymentScreen(
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
                         ) {
                             Text(
-                                text = account.name,
+                                text = account.displayName(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (accountId == account.id) colors.primary else colors.inkMuted,
                             )

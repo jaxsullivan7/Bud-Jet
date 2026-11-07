@@ -64,6 +64,7 @@ import com.budjet.app.ui.components.BudCard
 import com.budjet.app.ui.components.Overline
 import com.budjet.app.ui.components.PrimaryButton
 import com.budjet.app.ui.components.SoftIconButton
+import com.budjet.app.ui.components.displayName
 import com.budjet.app.ui.theme.BudJetTheme
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.BiometricAuth
@@ -301,7 +302,7 @@ private fun QuickAddContent(
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                     ) {
                         Text(
-                            text = category.name,
+                            text = category.displayName(),
                             style = MaterialTheme.typography.labelMedium,
                             color = if (categoryId == category.id) colors.primary else colors.inkMuted,
                             maxLines = 1,
@@ -323,7 +324,7 @@ private fun QuickAddContent(
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                     ) {
                         Text(
-                            text = account.name,
+                            text = account.displayName(),
                             style = MaterialTheme.typography.labelMedium,
                             color = if (accountId == account.id) colors.primary else colors.inkMuted,
                             maxLines = 1,

@@ -19,15 +19,15 @@
 - [x] APK de release firmada (`app/build/outputs/apk/release/app-release.apk`).
 - [x] Nombre visible de la app: BudJet.
 - [x] Cuenta de Google Play creada y verificada.
-- [ ] Inglés completo de la interfaz.
+- [x] Inglés completo de la interfaz.
   - [x] Bloque 1: navegación, Inicio, fechas y formato de importes.
   - [x] Bloque 2: Movimientos, orden, búsqueda y selección múltiple.
   - [x] Bloque 3: Presupuestos y Análisis.
   - [x] Bloque 4: Patrimonio, deudas, plan de deudas, cartera y calculadora.
   - [x] Bloque 5: Ajustes, editor, importación, recurrentes y objetivos.
   - [x] Bloque 6: widget, notificaciones, captura rápida, bloqueo y accesibilidad.
-  - [ ] Bloque 7: categorías, cuentas y datos de ejemplo por ID.
-  - [ ] Traducir notas generadas, CSV y mensajes internos de validación de copias.
+  - [x] Bloque 7: categorías, cuentas y datos de ejemplo por ID.
+  - [x] Notas generadas, CSV y mensajes internos de validación de copias.
 - [ ] QA en dispositivos reales.
 - [ ] Política de privacidad y términos publicados.
 - [ ] Ficha de tienda (icono, capturas, textos).
@@ -44,7 +44,8 @@
 
 ## Siguiente tarea
 
-1. Bloque 7 de localización: categorías, cuentas y datos de ejemplo por ID.
-2. Mantener el español como idioma base y el inglés en `values-en`.
-3. QA de la build release en dispositivo real.
+1. QA de la build release en dispositivo real.
+2. Política de privacidad, términos y descargo financiero.
+3. Ficha de tienda, capturas e iconos.
+4. Build 1.0.0 y subida a Internal testing.
 4. Política de privacidad, términos y ficha de tienda.

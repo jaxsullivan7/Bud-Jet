@@ -69,6 +69,7 @@ import com.budjet.app.ui.components.ThinDivider
 import com.budjet.app.ui.components.TransactionRow
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.components.categoryIcon
+import com.budjet.app.ui.components.displayName
 import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.percentText
@@ -557,7 +558,7 @@ private fun HomeGoalCard(
             }
             Spacer(Modifier.width(9.dp))
             Text(
-                text = goal.name,
+                text = goal.displayName(),
                 style = MaterialTheme.typography.titleSmall,
                 color = colors.ink,
                 maxLines = 1,

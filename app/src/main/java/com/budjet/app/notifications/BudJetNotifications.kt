@@ -27,6 +27,8 @@ import com.budjet.app.data.Finance
 import com.budjet.app.data.InvestmentEntryKind
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.formatMonthLower
+import com.budjet.app.util.localizedName
+import com.budjet.app.util.localizedNote
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Duration
@@ -122,7 +124,7 @@ object BudJetNotifications {
                 if (level == 0) return@forEach
                 val key = "budget_${budget.id}_${month}_$level"
                 if (prefs.getBoolean(key, false)) return@forEach
-                val name = budget.categoryId?.let { data.category(it)?.name }
+                val name = budget.categoryId?.let { data.category(it)?.localizedName(context) }
                     ?: context.getString(R.string.notif_budget_general)
                 val title = if (level == 100) {
                     context.getString(R.string.notif_budget_exceeded_title, name)
@@ -152,8 +154,8 @@ object BudJetNotifications {
             data.recurringRules.filter { it.active && it.dayOfMonth == tomorrow.dayOfMonth }.forEach { rule ->
                 val key = "recurring_${rule.id}_${month}"
                 if (prefs.getBoolean(key, false)) return@forEach
-                val name = rule.note.ifBlank {
-                    data.category(rule.categoryId)?.name
+                val name = rule.note.localizedNote(context).ifBlank {
+                    data.category(rule.categoryId)?.localizedName(context)
                         ?: context.getString(R.string.notif_recurring_fallback)
                 }
                 notify(

@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.budjet.app.R
 import com.budjet.app.data.Account
 import com.budjet.app.data.AppData
 import com.budjet.app.data.AutoBackup
@@ -37,6 +38,8 @@ import com.budjet.app.data.Transfer
 import com.budjet.app.data.TxType
 import com.budjet.app.data.clearedFinancialData
 import com.budjet.app.util.formatShortDate
+import com.budjet.app.util.localizedName
+import com.budjet.app.util.localizedNote
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +49,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
+import java.util.Locale
 import java.util.UUID
 
 data class EditorDraft(
@@ -262,8 +266,9 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                             categoryId = rule.categoryId,
                             accountId = rule.accountId,
                             dateEpochDay = due.toEpochDay(),
-                            note = rule.note.ifBlank {
-                                current.category(rule.categoryId)?.name ?: "Movimiento recurrente"
+                            note = rule.note.localizedNote(repository.context).ifBlank {
+                                current.category(rule.categoryId)?.localizedName(repository.context)
+                                    ?: repository.context.getString(R.string.generated_recurring_fallback)
                             },
                             recurringId = rule.id,
                             createdAtEpochMillis = System.currentTimeMillis(),
@@ -415,7 +420,13 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                             dateEpochDay = draft.date.toEpochDay(),
                             fromAccountId = accountId,
                             toInvestmentId = draft.investmentId,
-                            note = draft.note.trim().ifBlank { "Aportación a ${current.investment(draft.investmentId)?.name ?: "inversión"}" },
+                            note = draft.note.trim().ifBlank {
+                                repository.context.getString(
+                                    R.string.generated_investment_contribution,
+                                    current.investment(draft.investmentId)?.localizedName(repository.context)
+                                        ?: repository.context.getString(R.string.generated_investment_fallback),
+                                )
+                            },
                         )
                         InvestmentEntryKind.WITHDRAWAL -> Transfer(
                             id = "tr_" + UUID.randomUUID().toString().take(8),
@@ -423,7 +434,13 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                             dateEpochDay = draft.date.toEpochDay(),
                             fromInvestmentId = draft.investmentId,
                             toAccountId = accountId,
-                            note = draft.note.trim().ifBlank { "Retirada de ${current.investment(draft.investmentId)?.name ?: "inversión"}" },
+                            note = draft.note.trim().ifBlank {
+                                repository.context.getString(
+                                    R.string.generated_investment_withdrawal,
+                                    current.investment(draft.investmentId)?.localizedName(repository.context)
+                                        ?: repository.context.getString(R.string.generated_investment_fallback),
+                                )
+                            },
                         )
                         else -> null
                     }
@@ -481,7 +498,9 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                         kind = InvestmentEntryKind.CONTRIBUTION,
                         amountCents = amount,
                         dateEpochDay = draft.date.toEpochDay(),
-                        note = draft.note.trim().ifBlank { "Transferencia desde efectivo" },
+                        note = draft.note.trim().ifBlank {
+                            repository.context.getString(R.string.generated_transfer_from_cash)
+                        },
                         transferId = transferId,
                     )
                     draft.fromInvestmentId != null && draft.toAccountId != null -> InvestmentEntry(
@@ -490,7 +509,9 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                         kind = InvestmentEntryKind.WITHDRAWAL,
                         amountCents = amount,
                         dateEpochDay = draft.date.toEpochDay(),
-                        note = draft.note.trim().ifBlank { "Transferencia a efectivo" },
+                        note = draft.note.trim().ifBlank {
+                            repository.context.getString(R.string.generated_transfer_to_cash)
+                        },
                         transferId = transferId,
                     )
                     else -> null
@@ -668,7 +689,9 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
         }
     }
 
-    fun setName(name: String) = updateSettings { it.copy(name = name.ifBlank { "Tú" }) }
+    fun setName(name: String) = updateSettings {
+        it.copy(name = name.ifBlank { repository.context.getString(R.string.generated_default_name) })
+    }
     fun setCurrency(code: String) = updateSettings { it.copy(currencyCode = code) }
     fun setTheme(mode: ThemeMode) = updateSettings { it.copy(themeMode = mode) }
     fun setPalette(palette: ThemePalette) = updateSettings { it.copy(palette = palette) }
@@ -711,7 +734,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
 
     fun resetDemoData() {
         viewModelScope.launch {
-            repository.replaceAll(DemoData.build())
+            repository.replaceAll(DemoData.build(context = repository.context))
             _month.value = YearMonth.now()
             processRecurring()
         }
@@ -768,15 +791,15 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
         return runCatching {
             val folder = File(context.cacheDir, "exports").apply { mkdirs() }
             val file = File(folder, "budjet-${LocalDate.now()}.csv")
-            val header = "Fecha;Tipo;Categoría;Cuenta;Importe;Nota\n"
+            val header = context.getString(R.string.export_csv_header) + "\n"
             val rows = data.transactions.sortedBy { it.dateEpochDay }.joinToString("\n") { tx ->
-                val category = data.category(tx.categoryId)?.name ?: ""
-                val account = data.account(tx.accountId)?.name ?: ""
+                val category = data.category(tx.categoryId)?.localizedName(context) ?: ""
+                val account = data.account(tx.accountId)?.localizedName(context) ?: ""
                 val amount = (if (tx.type == TxType.INCOME) "" else "-") +
-                    (tx.amountCents / 100) + "," + (tx.amountCents % 100).toString().padStart(2, '0')
-                val note = tx.note.replace(";", ",")
+                    String.format(Locale.getDefault(), "%.2f", tx.amountCents / 100.0)
+                val note = tx.note.localizedNote(context).replace(";", ",")
                 "${formatShortDate(LocalDate.ofEpochDay(tx.dateEpochDay))};" +
-                    "${if (tx.type == TxType.INCOME) "Ingreso" else "Gasto"};" +
+                    "${context.getString(if (tx.type == TxType.INCOME) R.string.type_income else R.string.type_expense)};" +
                     "$category;$account;$amount;$note"
             }
             file.writeText(header + rows)

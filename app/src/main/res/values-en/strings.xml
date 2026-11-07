@@ -548,6 +548,17 @@
     <string name="settings_encrypted_backup_saved">Encrypted backup saved</string>
     <string name="settings_auto_backup_created">Automatic backup created</string>
     <string name="settings_backup_restored">Backup restored</string>
+    <string name="backup_error_too_large">The file is too large to be a backup.</string>
+    <string name="backup_error_not_backup">The file is not a BudJet backup.</string>
+    <string name="backup_error_format">The backup uses a format this version cannot read.</string>
+    <string name="backup_error_newer">The backup is from a newer version. Update the app before restoring it.</string>
+    <string name="backup_error_corrupt">The backup is incomplete or damaged.</string>
+    <string name="backup_error_currency">The backup currency is not supported.</string>
+    <string name="backup_error_no_profile">The backup does not contain a profile name.</string>
+    <string name="backup_error_auto_disabled">Automatic backups are disabled.</string>
+    <string name="backup_error_not_found">The backup does not exist or is no longer available.</string>
+    <string name="backup_error_invalid_data">The backup contains invalid or duplicate data.</string>
+    <string name="backup_error_generic">Could not read the backup.</string>
     <string name="settings_backup_file_prefix">budjet-backup-</string>
     <string name="settings_encrypted_file_prefix">budjet-encrypted-</string>
 
@@ -607,6 +618,14 @@
     <string name="import_col_type">Type</string>
     <string name="import_no_column">— No column —</string>
     <string name="import_error_columns">No columns detected. Choose date, description and amount.</string>
+    <string name="import_default_note">Imported transaction</string>
+    <string name="import_error_empty">The file is empty.</string>
+    <string name="import_error_need_rows">The CSV needs a header and at least one row.</string>
+    <string name="import_error_no_amount">No amount, debit or credit column was found.</string>
+    <string name="import_error_no_rows_csv">Could not read any transactions from the CSV.</string>
+    <string name="import_error_no_rows_ofx">The OFX file contains no transactions.</string>
+    <string name="import_error_no_rows_ofx_read">Could not read any transactions from the OFX file.</string>
+    <string name="import_error_generic">Could not read the statement.</string>
 
     <!-- Recurring transactions -->
     <string name="recurring_overline">AUTOMATION</string>
@@ -761,4 +780,91 @@
     <string name="category_no_movements">No transactions</string>
     <string name="category_no_expenses_month">No %1$s expenses this month.</string>
     <string name="category_color_meaning">This color represents %1$s in your analysis.</string>
+
+    <!-- Built-in names -->
+    <string name="category_food">Food</string>
+    <string name="category_dining">Dining</string>
+    <string name="category_transport">Transport</string>
+    <string name="category_home">Home</string>
+    <string name="category_bills">Bills</string>
+    <string name="category_leisure">Leisure</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_health">Health</string>
+    <string name="category_beauty">Beauty</string>
+    <string name="category_subs">Subscriptions</string>
+    <string name="category_travel">Travel</string>
+    <string name="category_education">Education</string>
+    <string name="category_other">Other</string>
+    <string name="category_salary">Salary</string>
+    <string name="category_freelance">Freelance</string>
+    <string name="category_invest">Investments</string>
+    <string name="category_gifts">Gifts</string>
+    <string name="category_refund">Refund</string>
+    <string name="category_reversal">Reversal</string>
+    <string name="account_main">Main account</string>
+    <string name="account_savings">Savings</string>
+    <string name="account_cash">Cash</string>
+    <string name="account_card">Card</string>
+    <string name="demo_goal_emergency">Emergency fund</string>
+    <string name="demo_goal_japan">Trip to Japan</string>
+    <string name="demo_goal_laptop">New laptop</string>
+    <string name="demo_inv_index">Global index fund</string>
+    <string name="demo_inv_btc">Bitcoin</string>
+    <string name="demo_inv_pension">Pension plan</string>
+    <string name="demo_inv_tech">Tech stocks</string>
+    <string name="demo_liability_car">Car loan</string>
+    <string name="demo_liability_card">Card</string>
+
+    <!-- Sample notes -->
+    <string name="demo_note_salary">Salary</string>
+    <string name="demo_note_rent">Rent</string>
+    <string name="demo_note_utilities">Utilities</string>
+    <string name="demo_note_spotify">Spotify</string>
+    <string name="demo_note_icloud">iCloud+</string>
+    <string name="demo_note_internet">Internet</string>
+    <string name="demo_note_mercadona">Mercadona</string>
+    <string name="demo_note_greengrocer">Local greengrocer</string>
+    <string name="demo_note_carrefour">Carrefour</string>
+    <string name="demo_note_market">Central market</string>
+    <string name="demo_note_coffee">Coffee</string>
+    <string name="demo_note_la_pepita">La Pepita</string>
+    <string name="demo_note_sushi_ono">Sushi Ono</string>
+    <string name="demo_note_bar_manolo">Bar Manolo</string>
+    <string name="demo_note_casa_rafa">Casa Rafa</string>
+    <string name="demo_note_pizzeria">Roma Pizza</string>
+    <string name="demo_note_transport_pass">Transit pass</string>
+    <string name="demo_note_fuel">Fuel</string>
+    <string name="demo_note_taxi">Taxi</string>
+    <string name="demo_note_cinema">Cinema</string>
+    <string name="demo_note_concert">Concert</string>
+    <string name="demo_note_pharmacy">Pharmacy</string>
+    <string name="demo_note_zara">Zara</string>
+    <string name="demo_note_sneakers">Sneakers</string>
+    <string name="demo_note_bakery">Bakery</string>
+    <string name="demo_note_lisbon">Trip to Lisbon</string>
+    <string name="demo_note_photo_course">Photography course</string>
+    <string name="demo_note_web_project">Web project</string>
+    <string name="demo_note_dinner">Dinner with friends</string>
+    <string name="demo_note_latte">Latte</string>
+    <string name="demo_note_supermarket">Supermarket</string>
+    <string name="demo_note_gym">Gym</string>
+    <string name="demo_note_initial">Initial contribution</string>
+    <string name="demo_note_periodic">Regular contribution</string>
+    <string name="demo_note_value_update">Value update</string>
+    <string name="demo_note_purchase">Purchase</string>
+    <string name="demo_note_return">Return</string>
+    <string name="demo_note_market_correction">Market correction</string>
+    <string name="demo_note_cash_refill">Cash refill</string>
+    <string name="demo_note_card_payment">Card payment</string>
+    <string name="demo_note_partial_payment">Partial payment</string>
+
+    <!-- Generated notes -->
+    <string name="generated_investment_contribution">Contribution to %1$s</string>
+    <string name="generated_investment_withdrawal">Withdrawal from %1$s</string>
+    <string name="generated_investment_fallback">investment</string>
+    <string name="generated_transfer_from_cash">Transfer from cash</string>
+    <string name="generated_transfer_to_cash">Transfer to cash</string>
+    <string name="generated_recurring_fallback">Recurring transaction</string>
+    <string name="generated_default_name">You</string>
+    <string name="export_csv_header">Date;Type;Category;Account;Amount;Note</string>
 </resources>
