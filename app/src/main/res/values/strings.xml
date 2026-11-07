@@ -651,6 +651,11 @@
     <string name="recurring_dialog_edit">Ajusta la regla</string>
     <string name="label_day">Día</string>
     <string name="recurring_each_month">de cada mes</string>
+    <string name="recurring_each_year">de cada año</string>
+    <string name="recurring_frequency">Frecuencia</string>
+    <string name="recurring_frequency_monthly">Mensual</string>
+    <string name="recurring_frequency_yearly">Anual</string>
+    <string name="recurring_month">Mes</string>
     <string name="recurring_note_placeholder">Ej. Nómina</string>
     <string name="recurring_day_error">El día debe estar entre 1 y 31.</string>
 

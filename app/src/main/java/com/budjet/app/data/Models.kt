@@ -10,6 +10,9 @@ enum class TxType { EXPENSE, INCOME }
 enum class PayrollKind { MONTHLY, EXTRA, OTHER }
 
 @Serializable
+enum class RecurringFrequency { MONTHLY, YEARLY }
+
+@Serializable
 data class Payslip(
     val id: String,
     val dateEpochDay: Long,
@@ -86,9 +89,12 @@ data class RecurringRule(
     val categoryId: String,
     val accountId: String,
     val dayOfMonth: Int = 1,
+    /** Month 1-12 used only by yearly rules. */
+    val monthOfYear: Int = 1,
+    val frequency: RecurringFrequency = RecurringFrequency.MONTHLY,
     val note: String = "",
     val startEpochDay: Long = 0,
-    /** YearMonth (2026-10) of the last automatic post, to avoid duplicates. */
+    /** Period key of the last automatic post: "2026-10" monthly, "2026" yearly. */
     val lastPostedMonth: String? = null,
     val active: Boolean = true,
 )

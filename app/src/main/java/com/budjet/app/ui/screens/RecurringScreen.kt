@@ -58,6 +58,7 @@ import com.budjet.app.data.AppData
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
 import com.budjet.app.data.Recurring
+import com.budjet.app.data.RecurringFrequency
 import com.budjet.app.data.RecurringRule
 import com.budjet.app.data.TxType
 import com.budjet.app.ui.RecurringDraft
@@ -75,8 +76,10 @@ import com.budjet.app.ui.theme.BudTheme
 import com.budjet.app.util.centsToInput
 import com.budjet.app.util.formatDayNumber
 import com.budjet.app.util.formatMoney
+import com.budjet.app.util.formatMonthShort
 import com.budjet.app.util.parseMoneyInput
 import java.time.LocalDate
+import java.time.YearMonth
 
 @Composable
 fun RecurringScreen(
@@ -119,6 +122,7 @@ fun RecurringScreen(
                             categoryId = data.categories.firstOrNull { it.type == TxType.EXPENSE }?.id ?: "home",
                             accountId = data.accounts.firstOrNull()?.id ?: "main",
                             dayOfMonth = today.dayOfMonth,
+                            monthOfYear = today.monthValue,
                         )
                     },
                     size = 38.dp,
@@ -184,6 +188,8 @@ fun RecurringScreen(
                             categoryId = rule.categoryId,
                             accountId = rule.accountId,
                             dayOfMonth = rule.dayOfMonth,
+                            monthOfYear = rule.monthOfYear,
+                            frequency = rule.frequency,
                             note = rule.note,
                             active = rule.active,
                         )
@@ -203,6 +209,7 @@ fun RecurringScreen(
                                 categoryId = data.categories.firstOrNull { it.type == TxType.EXPENSE }?.id ?: "home",
                                 accountId = data.accounts.firstOrNull()?.id ?: "main",
                                 dayOfMonth = today.dayOfMonth,
+                                monthOfYear = today.monthValue,
                             )
                         }
                         .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -302,7 +309,13 @@ private fun RecurringCard(
                     text = buildString {
                         append(category?.displayName() ?: stringResource(R.string.category_uncategorized))
                         append(" · ")
-                        append(stringResource(R.string.recurring_day, rule.dayOfMonth))
+                        if (rule.frequency == RecurringFrequency.YEARLY) {
+                            append(formatMonthShort(YearMonth.of(2000, rule.monthOfYear)))
+                            append(" ")
+                            append(rule.dayOfMonth)
+                        } else {
+                            append(stringResource(R.string.recurring_day, rule.dayOfMonth))
+                        }
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
@@ -373,6 +386,8 @@ private fun RecurringEditorDialog(
     var categoryId by remember { mutableStateOf(initial.categoryId) }
     var accountId by remember { mutableStateOf(initial.accountId) }
     var day by remember { mutableIntStateOf(initial.dayOfMonth) }
+    var month by remember { mutableIntStateOf(initial.monthOfYear) }
+    var frequency by remember { mutableStateOf(initial.frequency) }
     var note by remember { mutableStateOf(initial.note) }
     val filtered = categories.filter { it.type == type }
     val selectedCategory = filtered.firstOrNull { it.id == categoryId } ?: filtered.firstOrNull()
@@ -503,6 +518,62 @@ private fun RecurringEditorDialog(
                     }
                 }
                 Spacer(Modifier.height(12.dp))
+                Text(
+                    stringResource(R.string.recurring_frequency),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.inkMuted,
+                )
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(colors.surfaceMuted)
+                        .padding(3.dp),
+                ) {
+                    TypeChoice(
+                        stringResource(R.string.recurring_frequency_monthly),
+                        frequency == RecurringFrequency.MONTHLY,
+                        Modifier.weight(1f),
+                    ) { frequency = RecurringFrequency.MONTHLY }
+                    TypeChoice(
+                        stringResource(R.string.recurring_frequency_yearly),
+                        frequency == RecurringFrequency.YEARLY,
+                        Modifier.weight(1f),
+                    ) { frequency = RecurringFrequency.YEARLY }
+                }
+                if (frequency == RecurringFrequency.YEARLY) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        stringResource(R.string.recurring_month),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.inkMuted,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items((1..12).toList()) { value ->
+                            Row(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(if (month == value) colors.primarySoft else Color.Transparent)
+                                    .border(
+                                        1.dp,
+                                        if (month == value) colors.primary else colors.line,
+                                        CircleShape,
+                                    )
+                                    .clickable { month = value }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                            ) {
+                                Text(
+                                    text = formatMonthShort(YearMonth.of(2000, value)),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (month == value) colors.primary else colors.inkMuted,
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = day.toString(),
@@ -519,7 +590,13 @@ private fun RecurringEditorDialog(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = stringResource(R.string.recurring_each_month),
+                        text = stringResource(
+                            if (frequency == RecurringFrequency.YEARLY) {
+                                R.string.recurring_each_year
+                            } else {
+                                R.string.recurring_each_month
+                            },
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.inkMuted,
                     )
@@ -555,6 +632,8 @@ private fun RecurringEditorDialog(
                             categoryId = selectedCategory?.id ?: categoryId,
                             accountId = accountId,
                             dayOfMonth = day,
+                            monthOfYear = month,
+                            frequency = frequency,
                             note = note,
                             active = initial.active,
                         ),

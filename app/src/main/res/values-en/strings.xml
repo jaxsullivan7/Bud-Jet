@@ -651,6 +651,11 @@
     <string name="recurring_dialog_edit">Adjust the rule</string>
     <string name="label_day">Day</string>
     <string name="recurring_each_month">of each month</string>
+    <string name="recurring_each_year">of each year</string>
+    <string name="recurring_frequency">Frequency</string>
+    <string name="recurring_frequency_monthly">Monthly</string>
+    <string name="recurring_frequency_yearly">Yearly</string>
+    <string name="recurring_month">Month</string>
     <string name="recurring_note_placeholder">e.g. Salary</string>
     <string name="recurring_day_error">The day must be between 1 and 31.</string>
 

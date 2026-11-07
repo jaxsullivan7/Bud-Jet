@@ -32,6 +32,7 @@ import com.budjet.app.data.PayrollKind
 import com.budjet.app.data.Payslip
 import com.budjet.app.data.Recurring
 import com.budjet.app.data.RecurringRule
+import com.budjet.app.data.RecurringFrequency
 import com.budjet.app.data.SavingsGoal
 import com.budjet.app.data.Settings
 import com.budjet.app.data.ThemeMode
@@ -73,6 +74,8 @@ data class RecurringDraft(
     val categoryId: String = "home",
     val accountId: String = "main",
     val dayOfMonth: Int = 1,
+    val monthOfYear: Int = 1,
+    val frequency: RecurringFrequency = RecurringFrequency.MONTHLY,
     val note: String = "",
     val active: Boolean = true,
 )
@@ -230,6 +233,8 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                     categoryId = draft.categoryId,
                     accountId = draft.accountId,
                     dayOfMonth = draft.dayOfMonth.coerceIn(1, 31),
+                    monthOfYear = draft.monthOfYear.coerceIn(1, 12),
+                    frequency = draft.frequency,
                     note = draft.note.trim(),
                     startEpochDay = existing?.startEpochDay ?: LocalDate.now().toEpochDay(),
                     lastPostedMonth = existing?.lastPostedMonth,
@@ -275,7 +280,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                 val generated = mutableListOf<Transaction>()
                 val updatedRules = current.recurringRules.map { rule ->
                     val due = Recurring.dueToday(rule, today) ?: return@map rule
-                    val key = YearMonth.from(due)
+                    val key = Recurring.periodKey(due, rule.frequency)
                     val txId = "rec-${rule.id}-$key"
                     if (current.transactions.none { it.id == txId }) {
                         generated += Transaction(
@@ -293,7 +298,7 @@ class AppViewModel(private val repository: BudRepository) : ViewModel() {
                             createdAtEpochMillis = System.currentTimeMillis(),
                         )
                     }
-                    rule.copy(lastPostedMonth = key.toString())
+                    rule.copy(lastPostedMonth = key)
                 }
                 if (generated.isEmpty()) current
                 else current.copy(
