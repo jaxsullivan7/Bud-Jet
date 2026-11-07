@@ -43,9 +43,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.AppData
 import com.budjet.app.data.CategorySpend
 import com.budjet.app.data.Currency
@@ -68,7 +71,7 @@ import com.budjet.app.ui.components.ScreenTitle
 import com.budjet.app.ui.components.SectionHeader
 import com.budjet.app.ui.components.categoryColor
 import com.budjet.app.ui.theme.BudTheme
-import com.budjet.app.util.formatMonth
+import com.budjet.app.util.formatMonthLower
 import com.budjet.app.util.formatMoney
 import com.budjet.app.util.percentText
 import com.budjet.app.util.formatShortDate
@@ -92,6 +95,7 @@ fun AnalysisScreen(
 ) {
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
+    val othersLabel = stringResource(R.string.analysis_others)
     val today = remember { LocalDate.now() }
     val startDate = remember(data.settings.analysisStartEpochDay) {
         data.settings.analysisStartEpochDay?.let(LocalDate::ofEpochDay)
@@ -120,14 +124,14 @@ fun AnalysisScreen(
     val average = remember(scopedData, month) { Finance.monthlyAverageExpense(scopedData, month, 3) }
     val deltaVsAverage = Finance.monthDelta(totals.expense, average)
 
-    val shown = remember(spends) {
+    val shown = remember(spends, othersLabel) {
         if (spends.size <= 5) spends else {
             val head = spends.take(4)
             val rest = spends.drop(4)
             head + CategorySpend(
                 category = rest.first().category.copy(
                     id = "others",
-                    name = "Otros",
+                    name = othersLabel,
                     colorHex = "#8C8C84",
                 ),
                 spent = rest.sumOf { it.spent },
@@ -166,7 +170,10 @@ fun AnalysisScreen(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 150.dp),
     ) {
         item {
-            ScreenTitle(overline = "ANÁLISIS", title = "Tu dinero")
+            ScreenTitle(
+                overline = stringResource(R.string.analysis_overline),
+                title = stringResource(R.string.analysis_title),
+            )
             Spacer(Modifier.height(18.dp))
             MonthSelector(
                 month = month,
@@ -192,7 +199,9 @@ fun AnalysisScreen(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = startDate?.let { "Histórico desde ${formatShortDate(it)}" } ?: "Todo el historial",
+                    text = startDate?.let {
+                        stringResource(R.string.analysis_history_since, formatShortDate(it))
+                    } ?: stringResource(R.string.analysis_all_history),
                     style = MaterialTheme.typography.labelMedium,
                     color = colors.primary,
                     modifier = Modifier.weight(1f),
@@ -244,28 +253,40 @@ fun AnalysisScreen(
                     verticalAlignment = Alignment.Top,
                 ) {
                     Column {
-                        Overline("EN QUÉ SE VA")
+                        Overline(stringResource(R.string.analysis_where_it_goes))
                         Spacer(Modifier.height(3.dp))
                         Text(
-                            text = "Gastos de ${formatMonth(month).lowercase()}",
+                            text = stringResource(
+                                R.string.analysis_expenses_in_month,
+                                formatMonthLower(month),
+                            ),
                             style = MaterialTheme.typography.titleMedium,
                             color = colors.ink,
                         )
                     }
                     if (totals.income > 0) {
-                        Pill(text = "${percentText(totals.expense.toFloat() / totals.income)} de ingresos")
+                        Pill(
+                            text = stringResource(
+                                R.string.analysis_of_income,
+                                percentText(totals.expense.toFloat() / totals.income),
+                            ),
+                        )
                     }
                 }
                 Spacer(Modifier.height(18.dp))
                 if (spends.isEmpty()) {
                     EmptyState(
                         icon = Icons.Rounded.PieChartOutline,
-                        title = "Sin gastos este mes",
-                        message = "Cuando apuntes gastos, aquí verás el desglose por categorías.",
+                        title = stringResource(R.string.analysis_no_expenses_title),
+                        message = stringResource(R.string.analysis_no_expenses_body),
                     )
                     if (futureCount > 0) {
                         Text(
-                            text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} sin incluir todavía.",
+                            text = pluralStringResource(
+                                R.plurals.analysis_scheduled_note,
+                                futureCount,
+                                futureCount,
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.warning,
                         )
@@ -315,7 +336,7 @@ fun AnalysisScreen(
                                         maxLines = 1,
                                     )
                                     Text(
-                                        text = "gastos",
+                                        text = stringResource(R.string.analysis_expenses_total),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = colors.inkMuted,
                                     )
@@ -340,7 +361,11 @@ fun AnalysisScreen(
                     if (futureCount > 0) {
                         Spacer(Modifier.height(14.dp))
                         Text(
-                            text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} sin incluir todavía.",
+                            text = pluralStringResource(
+                                R.plurals.analysis_scheduled_note,
+                                futureCount,
+                                futureCount,
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.warning,
                         )
@@ -351,34 +376,40 @@ fun AnalysisScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Tu mes en datos")
+            SectionHeader(title = stringResource(R.string.analysis_month_in_data))
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StatCard(
-                    label = "GASTO MEDIO",
+                    label = stringResource(R.string.analysis_average_spend),
                     value = formatMoney(dailyAverage, currency),
-                    hint = "al día",
+                    hint = stringResource(R.string.analysis_per_day),
                     modifier = Modifier.weight(1f),
                 )
                 StatCard(
-                    label = "DÍAS SIN GASTAR",
+                    label = stringResource(R.string.analysis_no_spend_days),
                     value = noSpendDays.toString(),
-                    hint = "de $daysElapsed días",
+                    hint = stringResource(R.string.analysis_of_days, daysElapsed),
                     modifier = Modifier.weight(1f),
                 )
             }
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StatCard(
-                    label = "MAYOR GASTO",
+                    label = stringResource(R.string.analysis_biggest_expense),
                     value = biggestExpense?.let { formatMoney(it.amountCents, currency) } ?: "—",
-                    hint = biggestExpense?.note?.ifBlank { "Sin datos" } ?: "Sin datos",
+                    hint = biggestExpense?.note?.ifBlank {
+                        stringResource(R.string.analysis_no_data)
+                    } ?: stringResource(R.string.analysis_no_data),
                     modifier = Modifier.weight(1f),
                 )
                 StatCard(
-                    label = "AHORRO",
+                    label = stringResource(R.string.analysis_savings),
                     value = if (totals.income > 0) percentText(totals.savingsRate) else "—",
-                    hint = if (totals.income > 0) formatMoney(max(0L, totals.balance), currency) else "sin ingresos",
+                    hint = if (totals.income > 0) {
+                        formatMoney(max(0L, totals.balance), currency)
+                    } else {
+                        stringResource(R.string.analysis_no_income)
+                    },
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -386,22 +417,28 @@ fun AnalysisScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Comparativa", trailing = "6 meses")
+            SectionHeader(
+                title = stringResource(R.string.analysis_comparison),
+                trailing = stringResource(R.string.analysis_six_months),
+            )
             Spacer(Modifier.height(12.dp))
             BudCard {
                 CashflowChart(points = series, highlightMonth = month)
                 Spacer(Modifier.height(16.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    LegendDot(colors.income, "Ingresos")
+                    LegendDot(colors.income, stringResource(R.string.legend_income))
                     Spacer(Modifier.width(16.dp))
-                    LegendDot(colors.expense, "Gastos")
+                    LegendDot(colors.expense, stringResource(R.string.legend_expenses))
                 }
                 Spacer(Modifier.height(12.dp))
                 Text(
                     text = if (average > 0) {
-                        "Tu media de gasto de los últimos 3 meses es ${formatMoney(average, currency)}."
+                        stringResource(
+                            R.string.analysis_average_note,
+                            formatMoney(average, currency),
+                        )
                     } else {
-                        "Necesitas más historial para comparar meses."
+                        stringResource(R.string.analysis_need_history)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
@@ -429,14 +466,23 @@ fun AnalysisScreen(
                     }
                     Spacer(Modifier.width(12.dp))
                     Column {
-                        Overline("UNA OBSERVACIÓN", color = colors.primary)
+                        Overline(
+                            stringResource(R.string.analysis_insight),
+                            color = colors.primary,
+                        )
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text = when {
-                                deltaVsAverage == null -> "Aún estamos conociendo tus hábitos. Sigue apuntando movimientos."
-                                deltaVsAverage < -0.02f -> "Este mes gastas un ${percentText(abs(deltaVsAverage))} menos que tu media de los últimos 3 meses. Buen ritmo."
-                                deltaVsAverage > 0.02f -> "Este mes gastas un ${percentText(abs(deltaVsAverage))} más que tu media de los últimos 3 meses."
-                                else -> "Tu gasto va en línea con tu media de los últimos 3 meses."
+                                deltaVsAverage == null -> stringResource(R.string.analysis_insight_learning)
+                                deltaVsAverage < -0.02f -> stringResource(
+                                    R.string.analysis_insight_less,
+                                    percentText(abs(deltaVsAverage)),
+                                )
+                                deltaVsAverage > 0.02f -> stringResource(
+                                    R.string.analysis_insight_more,
+                                    percentText(abs(deltaVsAverage)),
+                                )
+                                else -> stringResource(R.string.analysis_insight_in_line)
                             },
                             style = MaterialTheme.typography.bodyLarge,
                             color = colors.ink,
@@ -444,8 +490,14 @@ fun AnalysisScreen(
                         if (biggestExpense != null) {
                             Spacer(Modifier.height(6.dp))
                             Text(
-                                text = "Tu mayor gasto fue el ${formatShortDate(LocalDate.ofEpochDay(biggestExpense.dateEpochDay))}: " +
-                                    "${biggestExpense.note.ifBlank { data.category(biggestExpense.categoryId)?.name ?: "un gasto" }}.",
+                                text = stringResource(
+                                    R.string.analysis_biggest_expense_note,
+                                    formatShortDate(LocalDate.ofEpochDay(biggestExpense.dateEpochDay)),
+                                    biggestExpense.note.ifBlank {
+                                        data.category(biggestExpense.categoryId)?.name
+                                            ?: stringResource(R.string.analysis_an_expense)
+                                    },
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.inkMuted,
                             )
@@ -476,7 +528,7 @@ fun AnalysisScreen(
                         }
                         showStartPicker = false
                     },
-                ) { Text("Aplicar", color = colors.primary) }
+                ) { Text(stringResource(R.string.action_apply), color = colors.primary) }
             },
             dismissButton = {
                 Row {
@@ -485,9 +537,9 @@ fun AnalysisScreen(
                             onSetStartDate(null)
                             showStartPicker = false
                         },
-                    ) { Text("Todo", color = colors.inkMuted) }
+                    ) { Text(stringResource(R.string.filter_all), color = colors.inkMuted) }
                     TextButton(onClick = { showStartPicker = false }) {
-                        Text("Cancelar", color = colors.inkMuted)
+                        Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
                     }
                 }
             },
@@ -513,7 +565,7 @@ private fun PatrimonioSummaryCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Overline("PATRIMONIO NETO")
+            Overline(stringResource(R.string.patrimonio_net_worth))
             Icon(
                 Icons.Rounded.AccountBalanceWallet,
                 contentDescription = null,
@@ -531,21 +583,33 @@ private fun PatrimonioSummaryCard(
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             Column {
-                Text("Efectivo", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                Text(
+                    stringResource(R.string.label_cash),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
                 Text(formatMoney(netWorth.cashCents, currency), style = BudTheme.type.moneySmall, color = colors.ink)
             }
             Column {
-                Text("Inversiones", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                Text(
+                    stringResource(R.string.label_investments),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
                 Text(formatMoney(netWorth.investmentsCents, currency), style = BudTheme.type.moneySmall, color = colors.ink)
             }
             Column {
-                Text("Deudas", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                Text(
+                    stringResource(R.string.label_debts),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkMuted,
+                )
                 Text(formatMoney(netWorth.liabilitiesCents, currency), style = BudTheme.type.moneySmall, color = colors.expense)
             }
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Efectivo + cartera − deudas · Toca para abrir",
+            text = stringResource(R.string.analysis_net_worth_hint),
             style = MaterialTheme.typography.bodySmall,
             color = colors.inkMuted,
         )
@@ -566,7 +630,7 @@ private fun PortfolioSummaryCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Overline("CARTERA DE INVERSIÓN")
+            Overline(stringResource(R.string.analysis_portfolio_overline))
             if (percent != null) {
                 val positive = percent >= 0f
                 Pill(
@@ -580,7 +644,7 @@ private fun PortfolioSummaryCard(
         if (summary.products.isEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Añade tu primer producto",
+                    text = stringResource(R.string.analysis_add_first_product),
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.ink,
                 )
@@ -594,7 +658,7 @@ private fun PortfolioSummaryCard(
             }
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Una cartera independiente de tu saldo disponible.",
+                text = stringResource(R.string.analysis_portfolio_empty_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )
@@ -608,7 +672,11 @@ private fun PortfolioSummaryCard(
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Column {
-                    Text("Aportado", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                    Text(
+                        stringResource(R.string.analysis_contributed),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
                     Text(
                         text = formatMoney(summary.contributedCents, currency),
                         style = BudTheme.type.moneySmall,
@@ -616,7 +684,11 @@ private fun PortfolioSummaryCard(
                     )
                 }
                 Column {
-                    Text("Rentabilidad", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                    Text(
+                        stringResource(R.string.analysis_return),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.inkMuted,
+                    )
                     Text(
                         text = (if (summary.returnsCents >= 0) "+" else "−") +
                             formatMoney(abs(summary.returnsCents), currency),
@@ -627,7 +699,7 @@ private fun PortfolioSummaryCard(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Puedes enlazarla con tus cuentas o seguirla por separado · Toca para abrir",
+                text = stringResource(R.string.analysis_portfolio_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )
@@ -654,16 +726,18 @@ private fun MonthBalanceCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Overline("BALANCE DEL MES")
+            Overline(stringResource(R.string.analysis_month_balance))
             Pill(
-                text = if (current) "En curso" else "Cerrado",
+                text = stringResource(
+                    if (current) R.string.analysis_in_progress else R.string.analysis_closed,
+                ),
                 container = colors.surfaceMuted,
                 content = colors.inkMuted,
             )
         }
         Spacer(Modifier.height(10.dp))
         Text(
-            text = "Saldo inicial",
+            text = stringResource(R.string.analysis_opening_balance),
             style = MaterialTheme.typography.bodySmall,
             color = colors.inkMuted,
         )
@@ -675,7 +749,7 @@ private fun MonthBalanceCard(
         )
         Spacer(Modifier.height(12.dp))
         BalanceFlowRow(
-            label = "Ingresos del mes",
+            label = stringResource(R.string.analysis_income_month),
             prefix = "+",
             value = income,
             color = colors.income,
@@ -683,7 +757,7 @@ private fun MonthBalanceCard(
         )
         Spacer(Modifier.height(5.dp))
         BalanceFlowRow(
-            label = "Gastos del mes",
+            label = stringResource(R.string.analysis_expenses_month),
             prefix = "−",
             value = expense,
             color = colors.expense,
@@ -699,12 +773,14 @@ private fun MonthBalanceCard(
         ) {
             Column {
                 Text(
-                    text = "Saldo final",
+                    text = stringResource(R.string.analysis_closing_balance),
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.ink,
                 )
                 Text(
-                    text = if (current) "Hasta hoy" else "Cierre del mes",
+                    text = stringResource(
+                        if (current) R.string.analysis_up_to_today else R.string.analysis_end_of_month,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -719,7 +795,7 @@ private fun MonthBalanceCard(
         if (filterActive) {
             Spacer(Modifier.height(10.dp))
             Text(
-                text = "El saldo se calcula con todo el historial, no con el filtro de fechas.",
+                text = stringResource(R.string.analysis_balance_filter_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )

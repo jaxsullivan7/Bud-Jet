@@ -42,12 +42,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
@@ -64,7 +67,9 @@ import com.budjet.app.ui.components.RingProgress
 import com.budjet.app.ui.components.ScreenTitle
 import com.budjet.app.ui.components.SectionHeader
 import com.budjet.app.ui.theme.BudTheme
+import com.budjet.app.util.centsToInput
 import com.budjet.app.util.formatMoney
+import com.budjet.app.util.parseMoneyInput
 import com.budjet.app.util.percentText
 import java.time.LocalDate
 import java.time.YearMonth
@@ -119,8 +124,8 @@ fun BudgetsScreen(
     ) {
         item {
             ScreenTitle(
-                overline = "PLANIFICACIÓN",
-                title = "Presupuestos",
+                overline = stringResource(R.string.budgets_overline),
+                title = stringResource(R.string.nav_budgets),
                 trailing = {
                     Box(
                         modifier = Modifier
@@ -132,7 +137,7 @@ fun BudgetsScreen(
                     ) {
                         Icon(
                             Icons.Rounded.Edit,
-                            contentDescription = "Editar presupuesto general",
+                            contentDescription = stringResource(R.string.action_edit_overall_budget),
                             tint = colors.primary,
                             modifier = Modifier.size(18.dp),
                         )
@@ -169,7 +174,7 @@ fun BudgetsScreen(
                                 color = colors.ink,
                             )
                             Text(
-                                text = "usado",
+                                text = stringResource(R.string.budget_used),
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                                 color = colors.inkMuted,
                             )
@@ -177,21 +182,31 @@ fun BudgetsScreen(
                     }
                     Spacer(Modifier.width(18.dp))
                     Column(Modifier.weight(1f)) {
-                        Overline("PRESUPUESTO GENERAL")
+                        Overline(stringResource(R.string.overline_overall_budget))
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = if (overall == null) "Sin definir" else formatMoney(overall.limitCents, currency),
+                            text = if (overall == null) {
+                                stringResource(R.string.budget_not_set)
+                            } else {
+                                formatMoney(overall.limitCents, currency)
+                            },
                             style = BudTheme.type.moneyLarge,
                             color = colors.ink,
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text = if (overall == null) {
-                                "Pon un límite mensual para controlar el ritmo."
+                                stringResource(R.string.budget_overall_hint)
                             } else if (remaining >= 0) {
-                                "${formatMoney(remaining, currency)} disponibles"
+                                stringResource(
+                                    R.string.home_budget_available,
+                                    formatMoney(remaining, currency),
+                                )
                             } else {
-                                "${formatMoney(abs(remaining), currency)} por encima"
+                                stringResource(
+                                    R.string.home_budget_over,
+                                    formatMoney(abs(remaining), currency),
+                                )
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (remaining < 0) colors.expense else colors.inkMuted,
@@ -214,15 +229,21 @@ fun BudgetsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = "${formatMoney(totals.expense, currency)} gastados",
+                        text = stringResource(
+                            R.string.budget_spent_amount,
+                            formatMoney(totals.expense, currency),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
                     Text(
                         text = if (remaining >= 0) {
-                            "≈ ${formatMoney(dailyAllowance, currency)}/día"
+                            stringResource(
+                                R.string.budget_daily_approx,
+                                formatMoney(dailyAllowance, currency),
+                            )
                         } else {
-                            "Presupuesto superado"
+                            stringResource(R.string.budget_exceeded)
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = if (remaining < 0) colors.expense else colors.inkMuted,
@@ -232,7 +253,11 @@ fun BudgetsScreen(
             if (futureCount > 0) {
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "$futureCount ${if (futureCount == 1) "movimiento programado" else "movimientos programados"} sin contar hasta su fecha.",
+                    text = pluralStringResource(
+                        R.plurals.budget_scheduled_note,
+                        futureCount,
+                        futureCount,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.warning,
                 )
@@ -242,8 +267,8 @@ fun BudgetsScreen(
         item {
             Spacer(Modifier.height(26.dp))
             SectionHeader(
-                title = "Por categoría",
-                trailing = if (unbudgeted.isNotEmpty()) "Añadir" else null,
+                title = stringResource(R.string.section_by_category),
+                trailing = if (unbudgeted.isNotEmpty()) stringResource(R.string.action_add) else null,
                 onTrailingClick = {
                     unbudgeted.firstOrNull()?.let { open(it.id, 0L, false) }
                 },
@@ -256,8 +281,8 @@ fun BudgetsScreen(
                 BudCard {
                     EmptyState(
                         icon = Icons.Rounded.PieChartOutline,
-                        title = "Sin presupuestos por categoría",
-                        message = "Asigna un límite a las categorías que más te importan.",
+                        title = stringResource(R.string.budgets_empty_title),
+                        message = stringResource(R.string.budgets_empty_body),
                     )
                 }
             }
@@ -288,14 +313,14 @@ fun BudgetsScreen(
                 Icon(Icons.Rounded.Add, contentDescription = null, tint = colors.primary, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    text = "Añadir presupuesto",
+                    text = stringResource(R.string.budget_add),
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.ink,
                 )
             }
             Spacer(Modifier.height(24.dp))
             Text(
-                text = "Los presupuestos se reinician cada mes. Tus movimientos no se tocan.",
+                text = stringResource(R.string.budget_reset_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )
@@ -353,7 +378,11 @@ private fun BudgetCategoryCard(
                     color = colors.ink,
                 )
                 Text(
-                    text = "${formatMoney(spent, currency)} de ${formatMoney(limit, currency)}",
+                    text = stringResource(
+                        R.string.budget_spent_of,
+                        formatMoney(spent, currency),
+                        formatMoney(limit, currency),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -369,7 +398,9 @@ private fun BudgetCategoryCard(
                     color = if (over) colors.expense else colors.ink,
                 )
                 Text(
-                    text = if (over) "de más" else "quedan",
+                    text = stringResource(
+                        if (over) R.string.budget_over_label else R.string.budget_left_label,
+                    ),
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                     color = colors.inkMuted,
                 )
@@ -401,15 +432,9 @@ private fun BudgetEditorDialog(
     val colors = BudTheme.colors
     var selected by remember { mutableStateOf(initialCategoryId) }
     var amount by remember {
-        mutableStateOf(
-            if (initialLimitCents == 0L) "" else {
-                val unit = initialLimitCents / 100
-                val cents = (initialLimitCents % 100).toString().padStart(2, '0')
-                "$unit,$cents"
-            }
-        )
+        mutableStateOf(if (initialLimitCents == 0L) "" else centsToInput(initialLimitCents))
     }
-    val preview = parseAmount(amount)
+    val preview = parseMoneyInput(amount)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -417,10 +442,24 @@ private fun BudgetEditorDialog(
         shape = RoundedCornerShape(26.dp),
         title = {
             Column {
-                Overline(if (initialCategoryId == null) "PRESUPUESTO GENERAL" else "PRESUPUESTO DE CATEGORÍA")
+                Overline(
+                    stringResource(
+                        if (initialCategoryId == null) {
+                            R.string.overline_overall_budget
+                        } else {
+                            R.string.overline_category_budget
+                        },
+                    ),
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = if (initialCategoryId == null) "¿Cuánto quieres gastar?" else "Ajusta el límite",
+                    text = stringResource(
+                        if (initialCategoryId == null) {
+                            R.string.budget_dialog_how_much
+                        } else {
+                            R.string.budget_dialog_adjust
+                        },
+                    ),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.ink,
                 )
@@ -430,7 +469,7 @@ private fun BudgetEditorDialog(
             Column {
                 if (!locked) {
                     Text(
-                        text = "Categoría",
+                        text = stringResource(R.string.label_category),
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.inkMuted,
                     )
@@ -438,7 +477,7 @@ private fun BudgetEditorDialog(
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         item {
                             CategoryChoice(
-                                label = "General",
+                                label = stringResource(R.string.budget_general_choice),
                                 category = null,
                                 selected = selected == null,
                                 onClick = { selected = null },
@@ -458,9 +497,12 @@ private fun BudgetEditorDialog(
                 val current = if (selected == null && initialLimitCents > 0) initialLimitCents else existingBudgets[selected] ?: 0L
                 Text(
                     text = if (current > 0) {
-                        "Límite actual: ${formatMoney(current, currency)}"
+                        stringResource(
+                            R.string.budget_current_limit,
+                            formatMoney(current, currency),
+                        )
                     } else {
-                        "Sin límite definido"
+                        stringResource(R.string.budget_no_limit)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
@@ -469,13 +511,13 @@ private fun BudgetEditorDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { text ->
-                        if (text.length <= 10 && text.all { it.isDigit() || it == ',' }) {
+                        if (text.length <= 12 && text.all { it.isDigit() || it == ',' || it == '.' }) {
                             amount = text
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Límite mensual") },
-                    placeholder = { Text("0,00") },
+                    label = { Text(stringResource(R.string.budget_monthly_limit)) },
+                    placeholder = { Text(stringResource(R.string.budget_amount_placeholder)) },
                     suffix = { Text(currency.symbol, color = colors.inkMuted) },
                     singleLine = true,
                     textStyle = TextStyle(
@@ -493,18 +535,21 @@ private fun BudgetEditorDialog(
                 onClick = { onSave(selected, preview) },
                 enabled = preview > 0,
             ) {
-                Text("Guardar", color = if (preview > 0) colors.primary else colors.inkMuted)
+                Text(
+                    text = stringResource(R.string.action_save),
+                    color = if (preview > 0) colors.primary else colors.inkMuted,
+                )
             }
         },
         dismissButton = {
             Row {
                 if (initialLimitCents > 0 && locked) {
                     TextButton(onClick = { onSave(selected, 0L) }) {
-                        Text("Eliminar", color = colors.expense)
+                        Text(stringResource(R.string.action_delete), color = colors.expense)
                     }
                 }
                 TextButton(onClick = onDismiss) {
-                    Text("Cancelar", color = colors.inkMuted)
+                    Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
                 }
             }
         },
@@ -543,10 +588,4 @@ private fun CategoryChoice(
             maxLines = 1,
         )
     }
-}
-
-private fun parseAmount(text: String): Long {
-    if (text.isBlank()) return 0L
-    val normalized = text.replace('.', ',').replace(',', '.')
-    return normalized.toDoubleOrNull()?.times(100)?.toLong() ?: 0L
 }

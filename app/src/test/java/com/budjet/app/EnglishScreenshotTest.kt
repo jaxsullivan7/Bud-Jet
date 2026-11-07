@@ -42,4 +42,19 @@ class EnglishScreenshotTest {
         compose.onNodeWithTag("sort-control").performClick()
         capture("04-transactions-sort")
     }
+
+    @Test
+    fun captureAnalysisInEnglish() {
+        compose.onNodeWithContentDescription("Analysis").performClick()
+        capture("05-analysis")
+        compose.onNodeWithTag("analysis-list")
+            .performScrollToNode(hasText("Your month in numbers"))
+        capture("06-analysis-stats")
+    }
+
+    @Test
+    fun captureBudgetsInEnglish() {
+        compose.onNodeWithContentDescription("Budgets").performClick()
+        capture("07-budgets")
+    }
 }

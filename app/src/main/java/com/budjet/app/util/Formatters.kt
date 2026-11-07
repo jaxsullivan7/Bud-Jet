@@ -75,6 +75,17 @@ fun formatMonthShort(month: YearMonth): String {
         .capitalizeEs()
 }
 
+/** Month and year in lowercase when the language requires it (Spanish). */
+fun formatMonthLower(month: YearMonth): String {
+    val text = formatMonth(month)
+    val locale = appLocale()
+    return if (isEnglish(locale)) {
+        text
+    } else {
+        text.replaceFirstChar { if (it.isUpperCase()) it.lowercase(locale) else it.toString() }
+    }
+}
+
 fun formatDayLabel(date: LocalDate, today: LocalDate = LocalDate.now()): String = when {
     date == today -> if (isEnglish()) "Today" else "Hoy"
     date == today.minusDays(1) -> if (isEnglish()) "Yesterday" else "Ayer"
