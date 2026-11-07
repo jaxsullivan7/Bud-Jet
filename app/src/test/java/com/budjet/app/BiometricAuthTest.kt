@@ -4,7 +4,9 @@ import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import android.content.Context
 import com.budjet.app.util.BiometricAuth
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -13,8 +15,10 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [36])
+@Config(sdk = [36], qualifiers = "es-rES")
 class BiometricAuthTest {
+
+    private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test
     fun `old devices use weak biometrics`() {
@@ -31,14 +35,29 @@ class BiometricAuthTest {
 
     @Test
     fun `cancelling is not shown as a scary error`() {
-        assertEquals("Autenticación cancelada.", BiometricAuth.friendlyError(BiometricPrompt.ERROR_USER_CANCELED))
-        assertEquals("Autenticación cancelada.", BiometricAuth.friendlyError(BiometricPrompt.ERROR_NEGATIVE_BUTTON))
+        assertEquals(
+            "Autenticación cancelada.",
+            BiometricAuth.friendlyErrorMessage(context, BiometricPrompt.ERROR_USER_CANCELED),
+        )
+        assertEquals(
+            "Autenticación cancelada.",
+            BiometricAuth.friendlyErrorMessage(context, BiometricPrompt.ERROR_NEGATIVE_BUTTON),
+        )
     }
 
     @Test
     fun `lockout errors explain how to recover`() {
-        assertTrue(BiometricAuth.friendlyError(BiometricPrompt.ERROR_LOCKOUT).contains("Demasiados intentos"))
-        assertTrue(BiometricAuth.friendlyError(BiometricPrompt.ERROR_LOCKOUT_PERMANENT).contains("PIN"))
-        assertTrue(BiometricAuth.friendlyError(BiometricPrompt.ERROR_NO_BIOMETRICS).contains("huellas"))
+        assertTrue(
+            BiometricAuth.friendlyErrorMessage(context, BiometricPrompt.ERROR_LOCKOUT)
+                .contains("Demasiados intentos"),
+        )
+        assertTrue(
+            BiometricAuth.friendlyErrorMessage(context, BiometricPrompt.ERROR_LOCKOUT_PERMANENT)
+                .contains("PIN"),
+        )
+        assertTrue(
+            BiometricAuth.friendlyErrorMessage(context, BiometricPrompt.ERROR_NO_BIOMETRICS)
+                .contains("huellas"),
+        )
     }
 }

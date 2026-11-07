@@ -104,7 +104,10 @@ class BudJetWidgetProvider : AppWidgetProvider() {
             setTextViewText(R.id.widget_balance, formatMoney(snapshot.balanceCents, currency))
             setTextViewText(
                 R.id.widget_month,
-                "Este mes · ${formatMoney(snapshot.monthExpenseCents, currency)} de gastos",
+                context.getString(
+                    R.string.widget_month_expense,
+                    formatMoney(snapshot.monthExpenseCents, currency),
+                ),
             )
             setOnClickPendingIntent(R.id.widget_brand, openPending)
             setOnClickPendingIntent(R.id.widget_balance, openPending)

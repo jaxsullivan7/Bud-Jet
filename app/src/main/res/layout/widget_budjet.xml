@@ -32,7 +32,7 @@
             android:paddingTop="5dp"
             android:paddingEnd="10dp"
             android:paddingBottom="5dp"
-            android:text="+ Añadir"
+            android:text="@string/widget_add"
             android:textColor="#F1EDE3"
             android:textSize="12sp" />
     </LinearLayout>
@@ -42,7 +42,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="10.680,22 €"
+        android:text="@string/widget_balance_preview"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
         android:textStyle="bold" />
@@ -52,7 +52,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:text="Este mes · 276,39 € de gastos"
+        android:text="@string/widget_month_preview"
         android:textColor="#B8D0C2"
         android:textSize="12sp" />
 </LinearLayout>

@@ -695,4 +695,70 @@
     </plurals>
     <string name="snackbar_movement_added">Movimiento añadido</string>
     <string name="snackbar_movement_updated">Movimiento actualizado</string>
+
+    <!-- Widget y notificaciones -->
+    <string name="widget_month_expense">Este mes · %1$s de gastos</string>
+    <string name="notification_channel_name">Recordatorios de BudJet</string>
+    <string name="notification_channel_description">Presupuestos, cargos recurrentes y revisión mensual.</string>
+    <string name="notif_budget_exceeded_title">Has superado el presupuesto de %1$s</string>
+    <string name="notif_budget_near_title">Presupuesto de %1$s al %2$d %%</string>
+    <string name="notif_budget_message">Llevas %1$s de %2$s este mes.</string>
+    <string name="notif_budget_general">general</string>
+    <string name="notif_recurring_fallback">Movimiento recurrente</string>
+    <string name="notif_recurring_title">Mañana se cobra %1$s</string>
+    <string name="notif_recurring_message">%1$s · %2$s previsto.</string>
+    <string name="notif_recurring_income">ingreso</string>
+    <string name="notif_recurring_expense">gasto</string>
+    <string name="notif_review_title">Es un buen momento para revisar %1$s</string>
+    <string name="notif_review_message">El mes pasado ahorraste %1$s. Abre Análisis para ver el detalle.</string>
+    <string name="notif_valuation_title">Actualiza el valor de tu cartera</string>
+    <string name="notif_valuation_message">Han pasado más de 3 meses desde el último ajuste. Tómate un minuto para ponerla al día.</string>
+
+    <!-- Bloqueo y biometría -->
+    <string name="lock_greeting">Hola, %1$s.</string>
+    <string name="lock_heading">Tu dinero, solo para ti.</string>
+    <string name="lock_subtitle">Desbloquea para ver tus cuentas.</string>
+    <string name="action_waiting">Esperando…</string>
+    <string name="action_unlock">Desbloquear</string>
+    <string name="lock_pin_hint">Si la huella falla, usa el PIN de tu móvil.</string>
+    <string name="lock_protected">Protegido con la biometría o el PIN de tu dispositivo.</string>
+    <string name="biometric_cancelled">Autenticación cancelada.</string>
+    <string name="biometric_lockout">Demasiados intentos. Espera un momento e inténtalo de nuevo.</string>
+    <string name="biometric_lockout_permanent">El sensor está bloqueado. Desbloquea el móvil con tu PIN e inténtalo otra vez.</string>
+    <string name="biometric_no_biometrics">No hay huellas o rostro registrados en este dispositivo.</string>
+    <string name="biometric_hw_unavailable">El sensor biométrico no está disponible ahora mismo.</string>
+    <string name="biometric_timeout">Se agotó el tiempo. Inténtalo de nuevo.</string>
+    <string name="biometric_generic">No se pudo verificar tu identidad. Inténtalo de nuevo.</string>
+    <string name="biometric_not_recognized">No te hemos reconocido. Inténtalo de nuevo.</string>
+    <string name="biometric_no_hardware">Este dispositivo no tiene lector de huellas.</string>
+    <string name="biometric_reader_unavailable">El lector no está disponible ahora mismo.</string>
+    <string name="biometric_none_enrolled">Añade una huella o un PIN de seguridad en los ajustes del móvil.</string>
+    <string name="biometric_unavailable">La autenticación no está disponible en este dispositivo.</string>
+
+    <!-- Captura rápida -->
+    <string name="quickadd_unlock_subtitle">Confirma tu identidad para usar el widget</string>
+    <string name="quickadd_locked_title">BudJet está bloqueado</string>
+    <string name="quickadd_locked_body">Desbloquea para añadir un movimiento desde el widget.</string>
+    <string name="quickadd_unlocking">Desbloqueando…</string>
+    <string name="quickadd_overline">DESDE EL WIDGET</string>
+    <string name="quickadd_title">Nuevo movimiento</string>
+    <string name="quickadd_save">Guardar movimiento</string>
+
+    <!-- Detalle de categoría -->
+    <string name="category_detail_overline">DETALLE DE CATEGORÍA</string>
+    <string name="category_income_lower">ingresos</string>
+    <string name="category_expenses_lower">gastos</string>
+    <string name="category_of_total">%1$s del total</string>
+    <string name="category_delta_more">%1$s más</string>
+    <string name="category_delta_less">%1$s menos</string>
+    <string name="category_vs_last_month">que el mes pasado</string>
+    <string name="category_in_line">En línea con el mes pasado.</string>
+    <string name="category_stat_movements">MOVIMIENTOS</string>
+    <string name="category_stat_average">MEDIA</string>
+    <string name="category_stat_biggest">MAYOR</string>
+    <string name="category_evolution">Evolución</string>
+    <string name="category_period_average">Gasto medio del periodo</string>
+    <string name="category_no_movements">Sin movimientos</string>
+    <string name="category_no_expenses_month">No hay gastos de %1$s en este mes.</string>
+    <string name="category_color_meaning">Este color representa %1$s en tus análisis.</string>
 </resources>

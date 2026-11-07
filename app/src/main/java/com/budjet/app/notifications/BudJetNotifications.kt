@@ -26,7 +26,7 @@ import com.budjet.app.data.Currency
 import com.budjet.app.data.Finance
 import com.budjet.app.data.InvestmentEntryKind
 import com.budjet.app.util.formatMoney
-import com.budjet.app.util.formatMonth
+import com.budjet.app.util.formatMonthLower
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Duration
@@ -60,10 +60,10 @@ object BudJetNotifications {
         val manager = context.getSystemService(NotificationManager::class.java)
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Recordatorios de Bud Jet",
+            context.getString(R.string.notification_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT,
         ).apply {
-            description = "Presupuestos, cargos recurrentes y revisión mensual."
+            description = context.getString(R.string.notification_channel_description)
         }
         manager.createNotificationChannel(channel)
     }
@@ -122,17 +122,26 @@ object BudJetNotifications {
                 if (level == 0) return@forEach
                 val key = "budget_${budget.id}_${month}_$level"
                 if (prefs.getBoolean(key, false)) return@forEach
-                val name = budget.categoryId?.let { data.category(it)?.name } ?: "general"
+                val name = budget.categoryId?.let { data.category(it)?.name }
+                    ?: context.getString(R.string.notif_budget_general)
                 val title = if (level == 100) {
-                    "Has superado el presupuesto de $name"
+                    context.getString(R.string.notif_budget_exceeded_title, name)
                 } else {
-                    "Presupuesto de $name al ${(ratio * 100).toInt()} %"
+                    context.getString(
+                        R.string.notif_budget_near_title,
+                        name,
+                        (ratio * 100).toInt(),
+                    )
                 }
                 notify(
                     context,
                     key.hashCode(),
                     title,
-                    "Llevas ${formatMoney(spent, currency)} de ${formatMoney(budget.limitCents, currency)} este mes.",
+                    context.getString(
+                        R.string.notif_budget_message,
+                        formatMoney(spent, currency),
+                        formatMoney(budget.limitCents, currency),
+                    ),
                 )
                 prefs.edit { putBoolean(key, true) }
             }
@@ -143,12 +152,25 @@ object BudJetNotifications {
             data.recurringRules.filter { it.active && it.dayOfMonth == tomorrow.dayOfMonth }.forEach { rule ->
                 val key = "recurring_${rule.id}_${month}"
                 if (prefs.getBoolean(key, false)) return@forEach
-                val name = rule.note.ifBlank { data.category(rule.categoryId)?.name ?: "Movimiento recurrente" }
+                val name = rule.note.ifBlank {
+                    data.category(rule.categoryId)?.name
+                        ?: context.getString(R.string.notif_recurring_fallback)
+                }
                 notify(
                     context,
                     key.hashCode(),
-                    "Mañana se cobra $name",
-                    "${formatMoney(rule.amountCents, currency)} · ${if (rule.type.name == "INCOME") "ingreso" else "gasto"} previsto.",
+                    context.getString(R.string.notif_recurring_title, name),
+                    context.getString(
+                        R.string.notif_recurring_message,
+                        formatMoney(rule.amountCents, currency),
+                        context.getString(
+                            if (rule.type.name == "INCOME") {
+                                R.string.notif_recurring_income
+                            } else {
+                                R.string.notif_recurring_expense
+                            },
+                        ),
+                    ),
                 )
                 prefs.edit { putBoolean(key, true) }
             }
@@ -162,8 +184,14 @@ object BudJetNotifications {
                 notify(
                     context,
                     key.hashCode(),
-                    "Es un buen momento para revisar ${formatMonth(previous).lowercase()}",
-                    "El mes pasado ahorraste ${formatMoney(previousTotals.balance, currency)}. Abre Análisis para ver el detalle.",
+                    context.getString(
+                        R.string.notif_review_title,
+                        formatMonthLower(previous),
+                    ),
+                    context.getString(
+                        R.string.notif_review_message,
+                        formatMoney(previousTotals.balance, currency),
+                    ),
                 )
                 prefs.edit { putBoolean(key, true) }
             }
@@ -180,8 +208,8 @@ object BudJetNotifications {
                 notify(
                     context,
                     key.hashCode(),
-                    "Actualiza el valor de tu cartera",
-                    "Han pasado más de 3 meses desde el último ajuste. Tómate un minuto para ponerla al día.",
+                    context.getString(R.string.notif_valuation_title),
+                    context.getString(R.string.notif_valuation_message),
                 )
                 prefs.edit { putBoolean(key, true) }
             }

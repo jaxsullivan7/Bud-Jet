@@ -30,9 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.ui.components.BrandMark
 import com.budjet.app.ui.components.PrimaryButton
 import com.budjet.app.ui.theme.BudTheme
@@ -81,7 +83,7 @@ fun LockScreen(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Hola, $name.",
+                text = stringResource(R.string.lock_greeting, name),
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.inkMuted,
             )
@@ -102,14 +104,14 @@ fun LockScreen(
             }
             Spacer(Modifier.height(20.dp))
             Text(
-                text = "Tu dinero, solo para ti.",
+                text = stringResource(R.string.lock_heading),
                 style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp),
                 color = colors.ink,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "Desbloquea para ver tus cuentas.",
+                text = stringResource(R.string.lock_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkMuted,
                 textAlign = TextAlign.Center,
@@ -125,7 +127,9 @@ fun LockScreen(
                 )
             }
             PrimaryButton(
-                text = if (authenticating) "Esperando…" else "Desbloquear",
+                text = stringResource(
+                    if (authenticating) R.string.action_waiting else R.string.action_unlock,
+                ),
                 onClick = onUnlock,
                 enabled = !authenticating,
                 icon = Icons.Rounded.Lock,
@@ -133,14 +137,14 @@ fun LockScreen(
             )
             Spacer(Modifier.height(14.dp))
             Text(
-                text = "Si la huella falla, usa el PIN de tu móvil.",
+                text = stringResource(R.string.lock_pin_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(22.dp))
             Text(
-                text = "Protegido con la biometría o el PIN de tu dispositivo.",
+                text = stringResource(R.string.lock_protected),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
                 textAlign = TextAlign.Center,

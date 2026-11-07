@@ -695,4 +695,70 @@
     </plurals>
     <string name="snackbar_movement_added">Transaction added</string>
     <string name="snackbar_movement_updated">Transaction updated</string>
+
+    <!-- Widget and notifications -->
+    <string name="widget_month_expense">This month · %1$s in expenses</string>
+    <string name="notification_channel_name">BudJet reminders</string>
+    <string name="notification_channel_description">Budgets, recurring charges and monthly review.</string>
+    <string name="notif_budget_exceeded_title">You have exceeded the %1$s budget</string>
+    <string name="notif_budget_near_title">%1$s budget at %2$d %%</string>
+    <string name="notif_budget_message">You have spent %1$s of %2$s this month.</string>
+    <string name="notif_budget_general">overall</string>
+    <string name="notif_recurring_fallback">Recurring transaction</string>
+    <string name="notif_recurring_title">%1$s is charged tomorrow</string>
+    <string name="notif_recurring_message">%1$s · %2$s expected.</string>
+    <string name="notif_recurring_income">income</string>
+    <string name="notif_recurring_expense">expense</string>
+    <string name="notif_review_title">Good time to review %1$s</string>
+    <string name="notif_review_message">Last month you saved %1$s. Open Analysis to see the details.</string>
+    <string name="notif_valuation_title">Update your portfolio value</string>
+    <string name="notif_valuation_message">It has been more than 3 months since the last adjustment. Take a minute to update it.</string>
+
+    <!-- Lock and biometrics -->
+    <string name="lock_greeting">Hi, %1$s.</string>
+    <string name="lock_heading">Your money, just for you.</string>
+    <string name="lock_subtitle">Unlock to see your accounts.</string>
+    <string name="action_waiting">Waiting…</string>
+    <string name="action_unlock">Unlock</string>
+    <string name="lock_pin_hint">If fingerprint fails, use your phone PIN.</string>
+    <string name="lock_protected">Protected with your device biometrics or PIN.</string>
+    <string name="biometric_cancelled">Authentication cancelled.</string>
+    <string name="biometric_lockout">Too many attempts. Wait a moment and try again.</string>
+    <string name="biometric_lockout_permanent">The sensor is locked. Unlock your phone with your PIN and try again.</string>
+    <string name="biometric_no_biometrics">No fingerprints or face are registered on this device.</string>
+    <string name="biometric_hw_unavailable">The biometric sensor is not available right now.</string>
+    <string name="biometric_timeout">Time ran out. Try again.</string>
+    <string name="biometric_generic">Could not verify your identity. Try again.</string>
+    <string name="biometric_not_recognized">We did not recognize you. Try again.</string>
+    <string name="biometric_no_hardware">This device does not have a fingerprint reader.</string>
+    <string name="biometric_reader_unavailable">The reader is not available right now.</string>
+    <string name="biometric_none_enrolled">Add a fingerprint or a security PIN in your phone settings.</string>
+    <string name="biometric_unavailable">Authentication is not available on this device.</string>
+
+    <!-- Quick capture -->
+    <string name="quickadd_unlock_subtitle">Confirm your identity to use the widget</string>
+    <string name="quickadd_locked_title">BudJet is locked</string>
+    <string name="quickadd_locked_body">Unlock to add a transaction from the widget.</string>
+    <string name="quickadd_unlocking">Unlocking…</string>
+    <string name="quickadd_overline">FROM THE WIDGET</string>
+    <string name="quickadd_title">New transaction</string>
+    <string name="quickadd_save">Save transaction</string>
+
+    <!-- Category detail -->
+    <string name="category_detail_overline">CATEGORY DETAIL</string>
+    <string name="category_income_lower">income</string>
+    <string name="category_expenses_lower">expenses</string>
+    <string name="category_of_total">%1$s of total</string>
+    <string name="category_delta_more">%1$s more</string>
+    <string name="category_delta_less">%1$s less</string>
+    <string name="category_vs_last_month">than last month</string>
+    <string name="category_in_line">In line with last month.</string>
+    <string name="category_stat_movements">TRANSACTIONS</string>
+    <string name="category_stat_average">AVERAGE</string>
+    <string name="category_stat_biggest">BIGGEST</string>
+    <string name="category_evolution">Trend</string>
+    <string name="category_period_average">Average spend for the period</string>
+    <string name="category_no_movements">No transactions</string>
+    <string name="category_no_expenses_month">No %1$s expenses this month.</string>
+    <string name="category_color_meaning">This color represents %1$s in your analysis.</string>
 </resources>

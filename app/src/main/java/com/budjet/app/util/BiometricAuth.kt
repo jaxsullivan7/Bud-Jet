@@ -1,5 +1,6 @@
 package com.budjet.app.util
 
+import android.content.Context
 import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
@@ -8,6 +9,7 @@ import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.budjet.app.R
 
 object BiometricAuth {
 
@@ -21,39 +23,40 @@ object BiometricAuth {
             BIOMETRIC_WEAK
         }
 
-    internal fun friendlyError(errorCode: Int): String = when (errorCode) {
-        BiometricPrompt.ERROR_USER_CANCELED,
-        BiometricPrompt.ERROR_NEGATIVE_BUTTON -> "Autenticación cancelada."
+    internal fun friendlyErrorMessage(context: Context, errorCode: Int): String =
+        context.getString(
+            when (errorCode) {
+                BiometricPrompt.ERROR_USER_CANCELED,
+                BiometricPrompt.ERROR_NEGATIVE_BUTTON -> R.string.biometric_cancelled
 
-        BiometricPrompt.ERROR_LOCKOUT ->
-            "Demasiados intentos. Espera un momento e inténtalo de nuevo."
+                BiometricPrompt.ERROR_LOCKOUT -> R.string.biometric_lockout
 
-        BiometricPrompt.ERROR_LOCKOUT_PERMANENT ->
-            "El sensor está bloqueado. Desbloquea el móvil con tu PIN e inténtalo otra vez."
+                BiometricPrompt.ERROR_LOCKOUT_PERMANENT -> R.string.biometric_lockout_permanent
 
-        BiometricPrompt.ERROR_NO_BIOMETRICS ->
-            "No hay huellas o rostro registrados en este dispositivo."
+                BiometricPrompt.ERROR_NO_BIOMETRICS -> R.string.biometric_no_biometrics
 
-        BiometricPrompt.ERROR_HW_NOT_PRESENT,
-        BiometricPrompt.ERROR_HW_UNAVAILABLE -> "El sensor biométrico no está disponible ahora mismo."
+                BiometricPrompt.ERROR_HW_NOT_PRESENT,
+                BiometricPrompt.ERROR_HW_UNAVAILABLE -> R.string.biometric_hw_unavailable
 
-        BiometricPrompt.ERROR_TIMEOUT ->
-            "Se agotó el tiempo. Inténtalo de nuevo."
+                BiometricPrompt.ERROR_TIMEOUT -> R.string.biometric_timeout
 
-        else -> "No se pudo verificar tu identidad. Inténtalo de nuevo."
-    }
+                else -> R.string.biometric_generic
+            },
+        )
 
     fun canAuthenticate(activity: FragmentActivity): Boolean =
         BiometricManager.from(activity).canAuthenticate(allowedAuthenticators()) ==
             BiometricManager.BIOMETRIC_SUCCESS
 
     fun unavailableReason(activity: FragmentActivity): String =
-        when (BiometricManager.from(activity).canAuthenticate(allowedAuthenticators())) {
-            BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> "Este dispositivo no tiene lector de huellas."
-            BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> "El lector no está disponible ahora mismo."
-            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> "Añade una huella o un PIN de seguridad en los ajustes del móvil."
-            else -> "La autenticación no está disponible en este dispositivo."
-        }
+        activity.getString(
+            when (BiometricManager.from(activity).canAuthenticate(allowedAuthenticators())) {
+                BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> R.string.biometric_no_hardware
+                BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> R.string.biometric_reader_unavailable
+                BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> R.string.biometric_none_enrolled
+                else -> R.string.biometric_unavailable
+            },
+        )
 
     fun request(
         activity: FragmentActivity,
@@ -76,11 +79,11 @@ object BiometricAuth {
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    onError(friendlyError(errorCode))
+                    onError(friendlyErrorMessage(activity, errorCode))
                 }
 
                 override fun onAuthenticationFailed() {
-                    onError("No te hemos reconocido. Inténtalo de nuevo.")
+                    onError(activity.getString(R.string.biometric_not_recognized))
                 }
             },
         )
@@ -90,7 +93,7 @@ object BiometricAuth {
             .setAllowedAuthenticators(allowedAuthenticators())
             .apply {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                    setNegativeButtonText("Cancelar")
+                    setNegativeButtonText(activity.getString(R.string.action_cancel))
                 }
             }
             .build()

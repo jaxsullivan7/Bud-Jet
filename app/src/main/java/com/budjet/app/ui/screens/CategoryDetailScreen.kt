@@ -30,9 +30,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.budjet.app.R
 import com.budjet.app.data.AppData
 import com.budjet.app.data.Category
 import com.budjet.app.data.Currency
@@ -71,6 +74,10 @@ fun CategoryDetailScreen(
 ) {
     val colors = BudTheme.colors
     val currency = Currency.from(data.settings.currencyCode)
+    val locale = LocalConfiguration.current.locales[0]
+    val categoryNameLower = remember(category.name, locale) {
+        category.name.lowercase(locale)
+    }
     val color = categoryColor(category.colorHex, colors.isDark)
     val startDate = data.settings.analysisStartEpochDay?.let(java.time.LocalDate::ofEpochDay)
     val scopedData = remember(data, startDate) {
@@ -109,11 +116,11 @@ fun CategoryDetailScreen(
             ) {
                 SoftIconButton(
                     icon = Icons.Rounded.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = stringResource(R.string.action_back),
                     onClick = onClose,
                     size = 38.dp,
                 )
-                Overline("DETALLE DE CATEGORÍA")
+                Overline(stringResource(R.string.category_detail_overline))
                 Spacer(Modifier.size(38.dp))
             }
             Spacer(Modifier.height(22.dp))
@@ -144,13 +151,19 @@ fun CategoryDetailScreen(
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.padding(bottom = 3.dp)) {
                     Text(
-                        text = if (category.type == TxType.INCOME) "ingresos" else "gastos",
+                        text = stringResource(
+                            if (category.type == TxType.INCOME) {
+                                R.string.category_income_lower
+                            } else {
+                                R.string.category_expenses_lower
+                            },
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
                     if (referenceTotal > 0) {
                         Text(
-                            text = "${percentText(share)} del total",
+                            text = stringResource(R.string.category_of_total, percentText(share)),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.inkMuted,
                         )
@@ -161,14 +174,17 @@ fun CategoryDetailScreen(
                 Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Pill(
-                        text = "${percentText(abs(delta))} ${if (delta > 0) "más" else "menos"}",
+                        text = stringResource(
+                            if (delta > 0) R.string.category_delta_more else R.string.category_delta_less,
+                            percentText(abs(delta)),
+                        ),
                         icon = if (delta > 0) Icons.Rounded.TrendingUp else Icons.Rounded.TrendingDown,
                         container = if (delta > 0) colors.expense.copy(alpha = 0.1f) else colors.primarySoft,
                         content = if (delta > 0) colors.expense else colors.primary,
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "que el mes pasado",
+                        text = stringResource(R.string.category_vs_last_month),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -176,7 +192,7 @@ fun CategoryDetailScreen(
             } else if (previous > 0) {
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "En línea con el mes pasado.",
+                    text = stringResource(R.string.category_in_line),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.inkMuted,
                 )
@@ -193,17 +209,17 @@ fun CategoryDetailScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     DetailStat(
-                        label = "MOVIMIENTOS",
+                        label = stringResource(R.string.category_stat_movements),
                         value = monthTransactions.size.toString(),
                         modifier = Modifier.weight(1f),
                     )
                     DetailStat(
-                        label = "MEDIA",
+                        label = stringResource(R.string.category_stat_average),
                         value = formatMoney(average, currency),
                         modifier = Modifier.weight(1f),
                     )
                     DetailStat(
-                        label = "MAYOR",
+                        label = stringResource(R.string.category_stat_biggest),
                         value = biggest?.let { formatMoney(it.amountCents, currency) } ?: "—",
                         modifier = Modifier.weight(1f),
                     )
@@ -213,7 +229,10 @@ fun CategoryDetailScreen(
 
         item {
             Spacer(Modifier.height(26.dp))
-            SectionHeader(title = "Evolución", trailing = "6 meses")
+            SectionHeader(
+                title = stringResource(R.string.category_evolution),
+                trailing = stringResource(R.string.analysis_six_months),
+            )
             Spacer(Modifier.height(12.dp))
             BudCard {
                 MiniBarChart(values = series, color = color)
@@ -224,7 +243,7 @@ fun CategoryDetailScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Gasto medio del periodo",
+                        text = stringResource(R.string.category_period_average),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.inkMuted,
                     )
@@ -241,7 +260,7 @@ fun CategoryDetailScreen(
         item {
             Spacer(Modifier.height(26.dp))
             SectionHeader(
-                title = "Movimientos",
+                title = stringResource(R.string.nav_transactions),
                 trailing = "${monthTransactions.size}",
             )
             Spacer(Modifier.height(8.dp))
@@ -252,8 +271,11 @@ fun CategoryDetailScreen(
                 BudCard {
                     EmptyState(
                         icon = Icons.Rounded.ReceiptLong,
-                        title = "Sin movimientos",
-                        message = "No hay gastos de ${category.name.lowercase()} en este mes.",
+                        title = stringResource(R.string.category_no_movements),
+                        message = stringResource(
+                            R.string.category_no_expenses_month,
+                            categoryNameLower,
+                        ),
                     )
                 }
             }
@@ -291,7 +313,10 @@ fun CategoryDetailScreen(
         item {
             Spacer(Modifier.height(18.dp))
             Text(
-                text = "Este color representa ${category.name.lowercase()} en tus análisis.",
+                text = stringResource(
+                    R.string.category_color_meaning,
+                    categoryNameLower,
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.inkMuted,
             )

@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -56,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.budjet.app.data.Currency
 import com.budjet.app.data.TxType
+import com.budjet.app.util.filterAmountInput
 import com.budjet.app.ui.AppViewModel
 import com.budjet.app.ui.EditorDraft
 import com.budjet.app.ui.components.BudCard
@@ -93,7 +95,11 @@ class QuickAddActivity : FragmentActivity() {
                     onSave = { draft ->
                         lifecycleScope.launch {
                             viewModel.saveTransaction(draft)?.join()
-                            Toast.makeText(this@QuickAddActivity, "Movimiento añadido", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                this@QuickAddActivity,
+                                getString(R.string.snackbar_movement_added),
+                                Toast.LENGTH_SHORT,
+                            ).show()
                             finish()
                         }
                     },
@@ -115,6 +121,8 @@ private fun QuickAddContent(
     var unlocked by remember { mutableStateOf(!data.settings.biometricLock) }
     var authenticating by remember { mutableStateOf(false) }
     var lockError by remember { mutableStateOf<String?>(null) }
+    val unlockTitle = stringResource(R.string.action_add_transaction)
+    val unlockSubtitle = stringResource(R.string.quickadd_unlock_subtitle)
 
     fun requestUnlock() {
         val host = activity ?: return
@@ -125,8 +133,8 @@ private fun QuickAddContent(
         authenticating = true
         BiometricAuth.request(
             activity = host,
-            title = "Añadir movimiento",
-            subtitle = "Confirma tu identidad para usar el widget",
+            title = unlockTitle,
+            subtitle = unlockSubtitle,
             onSuccess = {
                 authenticating = false
                 unlocked = true
@@ -164,29 +172,35 @@ private fun QuickAddContent(
                     Icon(Icons.Rounded.Lock, contentDescription = null, tint = colors.primary, modifier = Modifier.size(22.dp))
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("Bud Jet está bloqueado", style = MaterialTheme.typography.titleMedium, color = colors.ink)
                         Text(
-                            text = lockError ?: "Desbloquea para añadir un movimiento desde el widget.",
+                            stringResource(R.string.quickadd_locked_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colors.ink,
+                        )
+                        Text(
+                            text = lockError ?: stringResource(R.string.quickadd_locked_body),
                             style = MaterialTheme.typography.bodySmall,
                             color = if (lockError != null) colors.expense else colors.inkMuted,
                         )
                     }
                     SoftIconButton(
                         icon = Icons.Rounded.Close,
-                        contentDescription = "Cerrar",
+                        contentDescription = stringResource(R.string.action_close),
                         onClick = onCancel,
                         size = 30.dp,
                     )
                 }
                 Spacer(Modifier.height(16.dp))
                 PrimaryButton(
-                    text = if (authenticating) "Desbloqueando…" else "Desbloquear",
+                    text = stringResource(
+                        if (authenticating) R.string.quickadd_unlocking else R.string.action_unlock,
+                    ),
                     onClick = { requestUnlock() },
                     enabled = !authenticating,
                 )
                 Spacer(Modifier.height(10.dp))
                 TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                    Text("Cancelar", color = colors.inkMuted)
+                    Text(stringResource(R.string.action_cancel), color = colors.inkMuted)
                 }
                 return@BudCard
             }
@@ -207,13 +221,17 @@ private fun QuickAddContent(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Overline("DESDE EL WIDGET")
+                    Overline(stringResource(R.string.quickadd_overline))
                     Spacer(Modifier.height(4.dp))
-                    Text("Nuevo movimiento", style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+                    Text(
+                        stringResource(R.string.quickadd_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = colors.ink,
+                    )
                 }
                 SoftIconButton(
                     icon = Icons.Rounded.Close,
-                    contentDescription = "Cerrar",
+                    contentDescription = stringResource(R.string.action_close),
                     onClick = onCancel,
                     size = 32.dp,
                 )
@@ -227,7 +245,10 @@ private fun QuickAddContent(
                     .background(colors.surfaceMuted.copy(alpha = 0.6f))
                     .padding(3.dp),
             ) {
-                listOf("Gasto" to TxType.EXPENSE, "Ingreso" to TxType.INCOME).forEach { (label, option) ->
+                listOf(
+                    stringResource(R.string.type_expense) to TxType.EXPENSE,
+                    stringResource(R.string.type_income) to TxType.INCOME,
+                ).forEach { (label, option) ->
                     val selected = type == option
                     Box(
                         modifier = Modifier
@@ -254,11 +275,11 @@ private fun QuickAddContent(
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(
                 value = amount,
-                onValueChange = { if (it.length <= 11 && it.all { c -> c.isDigit() || c == ',' }) amount = it },
+                onValueChange = { amount = filterAmountInput(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("quickadd-amount"),
-                label = { Text("Importe") },
+                label = { Text(stringResource(R.string.label_amount)) },
                 placeholder = { Text("0") },
                 suffix = { Text(currency.symbol, color = colors.inkMuted) },
                 singleLine = true,
@@ -267,7 +288,7 @@ private fun QuickAddContent(
                 shape = RoundedCornerShape(14.dp),
             )
             Spacer(Modifier.height(10.dp))
-            Text("Categoría", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+            Text(stringResource(R.string.label_category), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
             Spacer(Modifier.height(4.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(data.categories.filter { it.type == type && !it.archived }, key = { it.id }) { category ->
@@ -289,7 +310,7 @@ private fun QuickAddContent(
                 }
             }
             Spacer(Modifier.height(10.dp))
-            Text("Cuenta", style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+            Text(stringResource(R.string.label_account), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
             Spacer(Modifier.height(4.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(data.accounts, key = { it.id }) { account ->
@@ -315,13 +336,13 @@ private fun QuickAddContent(
                 value = note,
                 onValueChange = { note = it.take(48) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Nota (opcional)") },
+                label = { Text(stringResource(R.string.label_note_optional)) },
                 singleLine = true,
                 shape = RoundedCornerShape(14.dp),
             )
             Spacer(Modifier.height(12.dp))
             PrimaryButton(
-                text = "Guardar movimiento",
+                text = stringResource(R.string.quickadd_save),
                 onClick = {
                     onSave(
                         EditorDraft(
